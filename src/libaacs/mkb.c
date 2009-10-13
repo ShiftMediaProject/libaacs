@@ -41,7 +41,7 @@ struct mkb *mkb_open(const char *path)
     
     buf = malloc(mkb->size);
     
-    fread(buf, 1, mkb->size, fp);
+    fread(mkb->buf, 1, mkb->size, fp);
     
     fclose(fp);
 
@@ -58,21 +58,21 @@ void mkb_close(MKB *mkb)
 
 uint8_t mkb_type(MKB *mkb)
 {
-    uint8_t *rec = _mkb_record(mkb, 0x10, NULL);
+    uint8_t *rec = _record(mkb, 0x10, NULL);
     
     return MKINT_BE32(rec + 4);
 }
 
 uint8_t mkb_version(MKB *mkb)
 {
-    uint8_t *rec = _mkb_record(mkb, 0x10, NULL);
+    uint8_t *rec = _record(mkb, 0x10, NULL);
     
     return MKINT_BE32(rec + 8);
 }
 
 uint8_t *mkb_subdiff_records(MKB *mkb, uint32_t *len)
 {
-    uint8_t *rec = _mkb_record(mkb, 0x04, len) + 4;
+    uint8_t *rec = _record(mkb, 0x04, len) + 4;
     *len -= 4;
     
     return rec;
@@ -80,7 +80,7 @@ uint8_t *mkb_subdiff_records(MKB *mkb, uint32_t *len)
 
 uint8_t *mkb_cvalues(MKB *mkb, uint32_t *len)
 {
-    uint8_t *rec = _mkb_record(mkb, 0x05, len) + 4;
+    uint8_t *rec = _record(mkb, 0x05, len) + 4;
     *len -= 4;
     
     return rec;
@@ -88,12 +88,12 @@ uint8_t *mkb_cvalues(MKB *mkb, uint32_t *len)
 
 uint8_t *mkb_mk_dv(MKB *mkb)
 {
-    return _mkb_record(mkb, 0x81, NULL) + 4;
+    return _record(mkb, 0x81, NULL) + 4;
 }
 
 uint8_t *mkb_signature(MKB *mkb, uint32_t *len)
 {
-    uint8_t *rec = _mkb_record(mkb, 0x02, len);
+    uint8_t *rec = _record(mkb, 0x02, len);
     *len -= 4;
     
     return rec + 4;
