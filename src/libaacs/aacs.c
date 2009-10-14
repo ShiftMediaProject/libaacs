@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <malloc.h>
 
 #include "aacs.h"
 #include "crypto.h"
@@ -16,13 +17,15 @@ int _verify_ts(uint8_t *buf);
 AACS *aacs_open(const char *path)
 {
     uint8_t key[16];
-    AACS aacs = malloc(sizeof(AACS));
+    AACS *aacs = malloc(sizeof(AACS));
 
     // perform aacs waterfall
     _calc_pk(key);
     _calc_mk(key);
     _calc_vuk(key, path);
     _calc_uks(aacs, key);
+
+    return aacs;
 }
 
 void aacs_close(AACS *aacs)
@@ -43,4 +46,6 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
 
     //AES_set_decrypt_key( seed, 128, &bluray->aes );
     //AES_cbc_encrypt( buf + 16, buf + 16, len - 16, &bluray->aes, bluray->iv, 0 );
+
+    return 1;
 }
