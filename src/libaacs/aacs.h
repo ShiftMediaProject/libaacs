@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <unistd.h>
+#include <openssl/aes.h>
 
 #include "mkb.h"
 #include "../file/keyfile.h"
@@ -16,18 +17,15 @@
 typedef struct aacs_keys AACS_KEYS;
 struct aacs_keys {
     uint8_t *pk, *mk, *vuk;
-    uint8_t *pks,           // processing key array (size = 16 * num_pks, each key is at 16-byte offset)
-            *dks,
-            *uks;           // unit key array (size = 16 * num_uks, each key is at 16-byte offset)
+    uint8_t *uks;           // unit key array (size = 16 * num_uks, each key is at 16-byte offset)
     uint16_t num_uks;       // number of unit keys
-    uint16_t num_pks;       // number of processing keys
-    uint16_t num_dks;       // number of device keys
-    uint8_t *host_priv_key[20], *host_cert[92], *host_nonce[20], *host_key_point[40]; // host keys
+    uint8_t iv[16];
+    AES_KEY aes;
     KEYFILE *kf;
 };
 
 AACS_KEYS *aacs_open(const char *path, const char *keyfile_path);
 void aacs_close(AACS_KEYS *aacs);
-int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf);
+int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len);
 
 #endif /* AACS_H_ */

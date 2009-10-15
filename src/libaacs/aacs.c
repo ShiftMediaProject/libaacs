@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
-#include <openssl/aes.h>
 
 #include "aacs.h"
 #include "crypto.h"
@@ -22,7 +21,7 @@ int _calc_mk(AACS_KEYS *aacs, const char *path)
     int a, num_uvs = 0;
     char f_name[100];
     size_t len;
-    uint8_t *buf = NULL, *rec, *uvs, *key_pos;
+    uint8_t *buf = NULL, *rec, *uvs, *key_pos, *pks;
     uint16_t num_pks;
     MKB *mkb = NULL;
 
@@ -40,8 +39,9 @@ int _calc_mk(AACS_KEYS *aacs, const char *path)
     }
 
     rec = mkb_cvalues(mkb, &len);
-    key_pos = keyfile_record(aacs->kf, KF_PK_ARRAY, &num_pks, NULL);
-    while (key_pos < aacs->pks + num_pks * 16) {
+    pks = keyfile_record(aacs->kf, KF_PK_ARRAY, &num_pks, NULL);
+    key_pos = pks;
+    while (key_pos < pks + num_pks * 16) {
         memcpy(aacs->pk, key_pos, 16);
 
         for (a = 0; a < num_uvs; a++)
@@ -167,21 +167,30 @@ void aacs_close(AACS_KEYS *aacs)
     X_FREE(aacs);
 }
 
-int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf)
+int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len)
 {
-    int a;
-    AES_KEY aes;
-    uint8_t key[16], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3, 0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
+    if (len % 6144) {
+        AES_cbc_encrypt(buf, buf, len, &aacs->aes, aacs->iv, 0);
 
-    AES_set_encrypt_key(aacs->uks, 128, &aes);
-    AES_encrypt(buf, key, &aes);
+        return 1;
+    } else {
+        int a;
+        uint8_t key[16], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3, 0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
 
-    for (a = 0; a < 16; a++) {
-        key[a] ^= buf[a];
+        memcpy(aacs->iv, iv, 16);
+
+        AES_set_encrypt_key(aacs->uks, 128, &aes);
+        AES_encrypt(buf, key, &aes);
+
+        for (a = 0; a < 16; a++) {
+            key[a] ^= buf[a];
+        }
+
+        AES_set_decrypt_key(key, 128, &aes);
+        AES_cbc_encrypt(buf + 16, buf + 16, 6144 - 16, &aes, iv, 0);
+
+        return 1;
     }
 
-    AES_set_decrypt_key(key, 128, &aes);
-    AES_cbc_encrypt(buf + 16, buf + 16, 6144 - 16, &aes, iv, 0);
-
-    return 1;
+    return 0;
 }
