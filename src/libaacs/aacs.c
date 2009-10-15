@@ -9,6 +9,7 @@
 #include "mmc.h"
 #include "../util/macro.h"
 #include "../file/file.h"
+#include "../file/keyfile.h"
 
 int _calc_pk(AACS_KEYS *aacs);
 int _calc_mk(AACS_KEYS *aacs, const char *path);
@@ -140,7 +141,20 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
 
 AACS_KEYS *aacs_open(const char *path, const char *keyfile_path)
 {
+    uint16_t entries = 0;
+    KEYFILE *kf = NULL;
     AACS_KEYS *aacs = malloc(sizeof(AACS_KEYS));
+
+    kf = keyfile_open(keyfile_path);
+
+    aacs->dks = keyfile_record(kf, KF_DK_ARRAY, &entries, NULL);
+    aacs->num_dks = entries;
+    aacs->pks = keyfile_record(kf, KF_PK_ARRAY, &entries, NULL);
+    aacs->num_pks = entries;
+    aacs->host_priv_key = keyfile_record(kf, KF_HOST_PRIV_KEY, NULL, NULL);
+    aacs->host_cert = keyfile_record(kf, KF_HOST_CERT, NULL, NULL);
+    aacs->host_nonce = keyfile_record(kf, KF_HOST_NONCE, NULL, NULL);
+    aacs->host_key_point = keyfile_record(kf, KF_HOST_KEY_POINT, NULL, NULL);
 
     // perform aacs waterfall
     _calc_pk(aacs);
