@@ -27,7 +27,7 @@ uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
     return NULL;
 }
 
-struct mkb *mkb_open(const char *path)
+MKB *mkb_open(const char *path)
 {
     FILE_H *fp = NULL;
     char f_name[100];

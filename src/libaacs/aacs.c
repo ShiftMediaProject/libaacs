@@ -11,12 +11,53 @@
 #include "../file/file.h"
 
 int _calc_pk(AACS_KEYS *aacs);
-int _calc_mk(AACS_KEYS *aacs);
+int _calc_mk(AACS_KEYS *aacs, const char *path);
 int _calc_vuk(AACS_KEYS *aacs, const char *path);
 int _calc_uks(AACS_KEYS *aacs, const char *path);
 int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t *mk);
-int _verify_ts(uint8_t *buf);
+int _verify_ts(uint8_t *buf, size_t size);
 
+int _calc_mk(AACS_KEYS *aacs, const char *path)
+{
+    int a, num_uvs = 0;
+    char f_name[100];
+    size_t len;
+    uint8_t *buf = NULL, *rec, *uvs, *key_pos;
+    MKB *mkb = NULL;
+
+    snprintf(f_name, 100, "%s/AACS/MKB_RO.inf", path);
+
+    mkb = mkb_open(f_name);
+
+    uvs = mkb_subdiff_records(mkb, &len);
+    rec = uvs;
+    while (rec < buf + len) {
+        if (rec[0] & 0xc0)
+            break;
+        rec += 5;
+        num_uvs++;
+    }
+
+    rec = mkb_cvalues(mkb, &len);
+    key_pos = aacs->pks;
+    while (key_pos < aacs->pks + aacs->num_pks * 16) {
+        memcpy(aacs->pk, key_pos, 16);
+
+        for (a = 0; a < num_uvs; a++)
+            if (_validate_pk(aacs->pk, rec + a * 16, uvs + 1 + a * 5, mkb_mk_dv(mkb), aacs->mk)) {
+                mkb_close(mkb);
+                X_FREE(buf);
+                return 1;
+            }
+
+        key_pos += 16;
+    }
+
+    mkb_close(mkb);
+    X_FREE(buf);
+
+    return 0;
+}
 
 int _calc_vuk(AACS_KEYS *aacs, const char *path)
 {
@@ -97,13 +138,13 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
     return 0;
 }
 
-AACS_KEYS *aacs_open(const char *path)
+AACS_KEYS *aacs_open(const char *path, const char *keyfile_path)
 {
     AACS_KEYS *aacs = malloc(sizeof(AACS_KEYS));
 
     // perform aacs waterfall
     _calc_pk(aacs);
-    _calc_mk(aacs);
+    _calc_mk(aacs, path);
     _calc_vuk(aacs, path);
     _calc_uks(aacs, path);
 
@@ -119,17 +160,17 @@ int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf)
 {
     int a;
     AES_KEY aes;
-    uint8_t seed[16], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3, 0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
+    uint8_t key[16], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3, 0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
 
     AES_set_encrypt_key(aacs->uks, 128, &aes);
-    AES_encrypt(buf, seed, &aes);
+    AES_encrypt(buf, key, &aes);
 
     for (a = 0; a < 16; a++) {
-        seed[a] ^= buf[a];
+        key[a] ^= buf[a];
     }
 
-    AES_set_decrypt_key( seed, 128, &aes );
-    AES_cbc_encrypt(buf + 16,buf + 16, 6144 - 16, &aes, iv, 0);
+    AES_set_decrypt_key(key, 128, &aes);
+    AES_cbc_encrypt(buf + 16, buf + 16, 6144 - 16, &aes, iv, 0);
 
     return 1;
 }
