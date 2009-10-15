@@ -16,7 +16,6 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
 int _verify_ts(uint8_t *buf);
 
 
-
 int _calc_vuk(uint8_t *key, const char *path)
 {
     int a;
