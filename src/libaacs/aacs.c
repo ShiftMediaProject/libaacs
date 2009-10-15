@@ -9,7 +9,6 @@
 #include "mmc.h"
 #include "../util/macro.h"
 #include "../file/file.h"
-#include "../file/keyfile.h"
 
 int _calc_pk(AACS_KEYS *aacs);
 int _calc_mk(AACS_KEYS *aacs, const char *path);
@@ -24,6 +23,7 @@ int _calc_mk(AACS_KEYS *aacs, const char *path)
     char f_name[100];
     size_t len;
     uint8_t *buf = NULL, *rec, *uvs, *key_pos;
+    uint16_t num_pks;
     MKB *mkb = NULL;
 
     snprintf(f_name, 100, "%s/AACS/MKB_RO.inf", path);
@@ -40,8 +40,8 @@ int _calc_mk(AACS_KEYS *aacs, const char *path)
     }
 
     rec = mkb_cvalues(mkb, &len);
-    key_pos = aacs->pks;
-    while (key_pos < aacs->pks + aacs->num_pks * 16) {
+    key_pos = keyfile_record(aacs->kf, KF_PK_ARRAY, &num_pks, NULL);
+    while (key_pos < aacs->pks + num_pks * 16) {
         memcpy(aacs->pk, key_pos, 16);
 
         for (a = 0; a < num_uvs; a++)
@@ -67,7 +67,11 @@ int _calc_vuk(AACS_KEYS *aacs, const char *path)
     uint8_t vid[16];
     MMC* mmc = NULL;
 
-    if ((mmc = mmc_open(path, aacs->host_priv_key, aacs->host_cert, aacs->host_nonce, aacs->host_key_point))) {
+    if ((mmc = mmc_open(path,
+            keyfile_record(aacs->kf, KF_HOST_PRIV_KEY, NULL, NULL),
+            keyfile_record(aacs->kf, KF_HOST_CERT, NULL, NULL),
+            keyfile_record(aacs->kf, KF_HOST_NONCE, NULL, NULL),
+            keyfile_record(aacs->kf, KF_HOST_KEY_POINT, NULL, NULL)))) {
         if (mmc_read_vid(mmc)) {
             AES_set_decrypt_key(aacs->mk, 128, &aes);
             AES_decrypt(vid, aacs->vuk, &aes);
@@ -141,32 +145,25 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
 
 AACS_KEYS *aacs_open(const char *path, const char *keyfile_path)
 {
-    uint16_t entries = 0;
-    KEYFILE *kf = NULL;
     AACS_KEYS *aacs = malloc(sizeof(AACS_KEYS));
 
-    kf = keyfile_open(keyfile_path);
+    aacs->kf = NULL;
+    if ((aacs->kf = keyfile_open(keyfile_path))) {
+        _calc_pk(aacs);
+        _calc_mk(aacs, path);
+        _calc_vuk(aacs, path);
+        _calc_uks(aacs, path);
 
-    aacs->dks = keyfile_record(kf, KF_DK_ARRAY, &entries, NULL);
-    aacs->num_dks = entries;
-    aacs->pks = keyfile_record(kf, KF_PK_ARRAY, &entries, NULL);
-    aacs->num_pks = entries;
-    aacs->host_priv_key = keyfile_record(kf, KF_HOST_PRIV_KEY, NULL, NULL);
-    aacs->host_cert = keyfile_record(kf, KF_HOST_CERT, NULL, NULL);
-    aacs->host_nonce = keyfile_record(kf, KF_HOST_NONCE, NULL, NULL);
-    aacs->host_key_point = keyfile_record(kf, KF_HOST_KEY_POINT, NULL, NULL);
+        return aacs;
+    }
 
-    // perform aacs waterfall
-    _calc_pk(aacs);
-    _calc_mk(aacs, path);
-    _calc_vuk(aacs, path);
-    _calc_uks(aacs, path);
-
-    return aacs;
+    return NULL;
 }
 
 void aacs_close(AACS_KEYS *aacs)
 {
+    keyfile_close(aacs->kf);
+
     X_FREE(aacs);
 }
 

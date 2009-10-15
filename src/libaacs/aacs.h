@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "mkb.h"
+#include "../file/keyfile.h"
 
 typedef struct aacs_keys AACS_KEYS;
 struct aacs_keys {
@@ -21,7 +22,8 @@ struct aacs_keys {
     uint16_t num_uks;       // number of unit keys
     uint16_t num_pks;       // number of processing keys
     uint16_t num_dks;       // number of device keys
-    uint8_t *host_priv_key, *host_cert, *host_nonce, *host_key_point; // host keys
+    uint8_t *host_priv_key[20], *host_cert[92], *host_nonce[20], *host_key_point[40]; // host keys
+    KEYFILE *kf;
 };
 
 AACS_KEYS *aacs_open(const char *path, const char *keyfile_path);
