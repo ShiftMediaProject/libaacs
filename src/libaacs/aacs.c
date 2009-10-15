@@ -6,46 +6,46 @@
 
 #include "aacs.h"
 #include "crypto.h"
+#include "mmc.h"
 #include "../util/macro.h"
 #include "../file/file.h"
 
-int _calc_pk(uint8_t *key);
-int _calc_mk(uint8_t *key);
-int _calc_vuk(uint8_t *key, const char *path);
-int _calc_uks(AACS *aacs, uint8_t *vuk, const char *path);
+int _calc_pk(AACS_KEYS *aacs);
+int _calc_mk(AACS_KEYS *aacs);
+int _calc_vuk(AACS_KEYS *aacs, const char *path);
+int _calc_uks(AACS_KEYS *aacs, const char *path);
 int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t *mk);
 int _verify_ts(uint8_t *buf);
 
 
-
-int _calc_vuk(uint8_t *key, const char *path)
+int _calc_vuk(AACS_KEYS *aacs, const char *path)
 {
     int a;
     AES_KEY aes;
     uint8_t vid[16];
-    /*MMC* mmc = NULL;
+    MMC* mmc = NULL;
 
-    if ((mmc = mmc_open(path))) {
-        if (mmc_read_vid(mmc, vid)) {*/
-            AES_set_decrypt_key(key, 128, &aes);
-            AES_decrypt(vid, key, &aes);
+    if ((mmc = mmc_open(path, aacs->host_priv_key, aacs->host_cert, aacs->host_nonce, aacs->host_key_point))) {
+        if (mmc_read_vid(mmc)) {
+            AES_set_decrypt_key(aacs->mk, 128, &aes);
+            AES_decrypt(vid, aacs->vuk, &aes);
 
             for (a = 0; a < 16; a++) {
-                key[a] ^= vid[a];
+                aacs->vuk[a] ^= vid[a];
             }
-/*
-            mmc_close(drive);
+
+            mmc_close(mmc);
 
             return 1;
         }
 
-        mmc_close(drive);
-    }*/
+        mmc_close(mmc);
+    }
 
     return 0;
 }
 
-int _calc_uks(AACS *aacs, uint8_t *vuk, const char *path)
+int _calc_uks(AACS_KEYS *aacs, const char *path)
 {
     AES_KEY aes;
     FILE_H *fp = NULL;
@@ -63,7 +63,7 @@ int _calc_uks(AACS *aacs, uint8_t *vuk, const char *path)
         file_seek(fp, f_pos, SEEK_SET);
         file_read(fp, buf, 16);
 
-        AES_set_decrypt_key(vuk, 128, &aes);
+        AES_set_decrypt_key(aacs->vuk, 128, &aes);
         AES_decrypt(buf, aacs->uks, &aes);
 
         file_close(fp);
@@ -97,26 +97,25 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
     return 0;
 }
 
-AACS *aacs_open(const char *path)
+AACS_KEYS *aacs_open(const char *path)
 {
-    uint8_t key[16];
-    AACS *aacs = malloc(sizeof(AACS));
+    AACS_KEYS *aacs = malloc(sizeof(AACS_KEYS));
 
     // perform aacs waterfall
-    _calc_pk(key);
-    _calc_mk(key);
-    _calc_vuk(key, path);
-    _calc_uks(aacs, key, path);
+    _calc_pk(aacs);
+    _calc_mk(aacs);
+    _calc_vuk(aacs, path);
+    _calc_uks(aacs, path);
 
     return aacs;
 }
 
-void aacs_close(AACS *aacs)
+void aacs_close(AACS_KEYS *aacs)
 {
     X_FREE(aacs);
 }
 
-int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
+int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf)
 {
     int a;
     AES_KEY aes;

@@ -128,7 +128,7 @@ void mmc_close(MMC *mmc)
     X_FREE(mmc);
 }
 
-void mmc_read_vid(MMC *mmc, int patched)
+int mmc_read_vid(MMC *mmc)
 {
     int a;
     uint8_t agid, buf[116], cmd[16], hkp[40], hks[40], dn[20], dc[92], dkp[40], dks[40];
@@ -144,6 +144,7 @@ void mmc_read_vid(MMC *mmc, int patched)
     _mmc_report_key(mmc, 0, 0, 0, 0, buf, 8);
     agid = (buf[7] & 0xff) >> 6;
 
+    int patched = 0; //todo: get rid of this
     if (!patched) {
         memset(buf, 0, 116);
         buf[1] = 0x72;
@@ -179,6 +180,11 @@ void mmc_read_vid(MMC *mmc, int patched)
     cmd[9] = 0x24;
     cmd[10] = (agid << 6) & 0xc0;
 
-    if (_mmc_send_cmd(mmc, cmd, buf, 0, 36) == 0)
+    if (_mmc_send_cmd(mmc, cmd, buf, 0, 36) == 0) {
         memcpy(mmc->vid, buf + 4, 16);
+
+        return 1;
+    }
+
+    return 0;
 }

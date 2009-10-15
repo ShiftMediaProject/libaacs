@@ -12,14 +12,15 @@
 
 #include "mkb.h"
 
-typedef struct aacs AACS;
-struct aacs {
-    uint8_t *uks;           // unit key array (size = 16 * num_uks, each key is at 16-byte offset)
+typedef struct aacs_keys AACS_KEYS;
+struct aacs_keys {
+    uint8_t *pk, *mk, *vuk, *uks;           // unit key array (size = 16 * num_uks, each key is at 16-byte offset)
     uint16_t num_uks;       // number of unit keys
+    uint8_t host_priv_key[10], host_cert[92], host_nonce[20], host_key_point[40]; // host keys
 };
 
-AACS *aacs_open(const char *path);
-void aacs_close(AACS *aacs);
-int aacs_decrypt_unit(AACS *aacs, uint8_t *buf);
+AACS_KEYS *aacs_open(const char *path);
+void aacs_close(AACS_KEYS *aacs);
+int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf);
 
 #endif /* AACS_H_ */

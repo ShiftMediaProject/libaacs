@@ -23,20 +23,24 @@ void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
     AES_set_decrypt_key(src_key, 128, &aes);
     AES_decrypt(seed, dst_key, &aes);
 
-    for (a = 0; a < 16; a++)
+    for (a = 0; a < 16; a++) {
         dst_key[a] ^= seed[a];
+    }
 }
 
 void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
 {
-    if (lsubk)
+    if (lsubk) {
         _aesg3(D, lsubk, 0);
+    }
 
-    if (pk)
+    if (pk) {
         _aesg3(D, pk, 1);
+    }
 
-    if (rsubk)
+    if (rsubk) {
         _aesg3(D, rsubk, 2);
+    }
 }
 
 void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig, uint8_t *n, const uint8_t *dhp)

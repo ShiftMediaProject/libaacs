@@ -15,6 +15,6 @@ struct mmc {
 
 MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint8_t *host_nonce, uint8_t *host_key_point);
 void mmc_close(MMC *drive);
-void mmc_read_vid(MMC *drive, int patched);
+int mmc_read_vid(MMC *drive);
 
 #endif /* MMC_H_ */
