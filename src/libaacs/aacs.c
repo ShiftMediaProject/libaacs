@@ -7,6 +7,7 @@
 #include "aacs.h"
 #include "crypto.h"
 #include "../util/macro.h"
+#include "../file/file.h"
 
 int _calc_pk(uint8_t *key);
 int _calc_mk(uint8_t *key);
@@ -47,25 +48,25 @@ int _calc_vuk(uint8_t *key, const char *path)
 int _calc_uks(AACS *aacs, uint8_t *vuk, const char *path)
 {
     AES_KEY aes;
-    FILE *fp = NULL;
+    FILE_H *fp = NULL;
     unsigned char buf[16];
     char f_name[100];
     off_t f_pos;
 
     snprintf(f_name, 100, "/%s/AACS/Unit_Key_RO.inf", path);
 
-    if ((fp = fopen(f_name, "rb"))) {
-        fread(buf, 1, 4, fp);
+    if ((fp = file_open(f_name, "rb"))) {
+        file_read(fp, buf, 4);
 
         f_pos = MKINT_BE32(buf) + 48;
 
-        fseek(fp, f_pos, SEEK_SET);
-        fread(buf, 1, 16, fp);
+        file_seek(fp, f_pos, SEEK_SET);
+        file_read(fp, buf, 16);
 
         AES_set_decrypt_key(vuk, 128, &aes);
         AES_decrypt(buf, aacs->uks, &aes);
 
-        fclose(fp);
+        file_close(fp);
 
         return 1;
     }

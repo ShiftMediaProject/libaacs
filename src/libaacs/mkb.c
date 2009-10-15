@@ -3,6 +3,7 @@
 
 #include "mkb.h"
 #include "../util/macro.h"
+#include "../file/file.h"
 
 uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len);  // returns ptr to requests MKB record
 
@@ -28,27 +29,29 @@ uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
 
 struct mkb *mkb_open(const char *path)
 {
-    FILE *fp = NULL;
+    FILE_H *fp = NULL;
     char f_name[100];
     MKB *mkb = malloc(sizeof(MKB));
 
     snprintf(f_name, 100, "%s/AACS/MKB_RO.inf", path);
     
-    fp = fopen(f_name, "rb");
-    
-    fseek(fp, 0, SEEK_END);
-    mkb->size = ftell(fp);
-    rewind(fp);
-    
-    mkb->buf = malloc(mkb->size);
-    
-    fread(mkb->buf, 1, mkb->size, fp);
-    
-    fclose(fp);
+    if ((fp = file_open(f_name, "rb"))) {
+        file_seek(fp, 0, SEEK_END);
+        mkb->size = file_tell(fp);
+        file_seek(fp, 0, SEEK_SET);
 
-    X_FREE(fp);
+        mkb->buf = malloc(mkb->size);
+
+        file_read(fp, mkb->buf, mkb->size);
+
+        file_close(fp);
     
-    return mkb; 
+        X_FREE(fp);
+
+        return mkb;
+    }
+    
+    return NULL;
 }
 
 void mkb_close(MKB *mkb)
