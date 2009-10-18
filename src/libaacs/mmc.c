@@ -27,7 +27,7 @@ int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t 
         memset(&cgc, 0, sizeof(cgc));
         memcpy(cgc.cmd, cmd, CDROM_PACKET_SIZE);
         cgc.sense = &sense;
-        cgc.timeout = 2000;
+        cgc.timeout = 5000;
 
         if (buf) {
             if (tx) {
@@ -58,8 +58,8 @@ int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t 
         mmc->asc = sense.asc;
         mmc->ascq = sense.ascq;
 
-        if (a) {
-            DEBUG(DBG_MMC, "  Send succeeded! (0x%08x)\n", print_hex(buf, tx), mmc);
+        if (a == 0) {
+            DEBUG(DBG_MMC, "  Send succeeded! (0x%08x)\n", mmc);
             return 1;
         }
     }
@@ -166,7 +166,7 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     _mmc_report_key(mmc, 0, 0, 0, 0, buf, 8);
     agid = (buf[7] & 0xff) >> 6;
 
-    int patched = 0; //todo: get rid of this
+    int patched = 1; //todo: get rid of this
     if (!patched) {
         memset(buf, 0, 116);
         buf[1] = 0x72;
@@ -202,7 +202,7 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     cmd[9] = 0x24;
     cmd[10] = (agid << 6) & 0xc0;
 
-    if (_mmc_send_cmd(mmc, cmd, buf, 0, 36) == 0) {
+    if (_mmc_send_cmd(mmc, cmd, buf, 0, 36)) {
         memcpy(vid, buf + 4, 16);
 
         DEBUG(DBG_MMC, "VID: %s (0x%08x)\n", print_hex(vid, 16), mmc);
