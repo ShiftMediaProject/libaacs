@@ -2,8 +2,9 @@
 #include <malloc.h>
 
 #include "mkb.h"
-#include "../util/macro.h"
 #include "../file/file.h"
+#include "../util/macro.h"
+#include "../util/logging.h"
 
 uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len);  // returns ptr to requests MKB record
 
@@ -11,15 +12,18 @@ uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
 {
     size_t pos = 0, len = 0;
     
-    while (pos + 4 <= len) {
+    while (pos + 4 <= mkb->size) {
         len = MKINT_BE24(mkb->buf + pos + 1);
-        
+
         if (rec_len) {
             *rec_len = len;
         }
         
-        if (mkb->buf[pos] == type)
+        if (mkb->buf[pos] == type) {
+            DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (0x%08x)\n", type, mkb->buf + pos);
+
             return mkb->buf + pos;
+        }
         
         pos += len;
     }
@@ -34,6 +38,7 @@ MKB *mkb_open(const char *path)
     MKB *mkb = malloc(sizeof(MKB));
 
     snprintf(f_name, 100, "%s/AACS/MKB_RO.inf", path);
+    DEBUG(DBG_MKB, "Opening MKB %s... (0x%08x)\n", f_name, mkb);
     
     if ((fp = file_open(f_name, "rb"))) {
         file_seek(fp, 0, SEEK_END);
@@ -44,13 +49,15 @@ MKB *mkb_open(const char *path)
 
         file_read(fp, mkb->buf, mkb->size);
 
-        file_close(fp);
-    
-        X_FREE(fp);
+        DEBUG(DBG_MKB, "MKB size: %d (0x%08x)\n", mkb->size, mkb);
+        DEBUG(DBG_MKB, "MKB version: %d (0x%08x)\n", mkb_version(mkb), mkb);
 
+        file_close(fp);
         return mkb;
     }
     
+    DEBUG(DBG_MKB, "Error opening MKB! (0x%08x)\n", mkb);
+
     return NULL;
 }
 

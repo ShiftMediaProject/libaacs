@@ -7,6 +7,7 @@
 #include "crypto.h"
 #include "mmc.h"
 #include "../util/macro.h"
+#include "../util/logging.h"
 #include "../file/file.h"
 
 int _calc_pk(AACS_KEYS *aacs);
@@ -16,46 +17,51 @@ int _calc_uks(AACS_KEYS *aacs, const char *path);
 int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t *mk);
 int _verify_ts(uint8_t *buf, size_t size);
 
+
 int _calc_mk(AACS_KEYS *aacs, const char *path)
 {
+    DEBUG(DBG_AACS, "Calculate media key...\n");
+
     int a, num_uvs = 0;
-    char f_name[100];
     size_t len;
     uint8_t *buf = NULL, *rec, *uvs, *key_pos, *pks;
     uint16_t num_pks;
     MKB *mkb = NULL;
 
-    snprintf(f_name, 100, "%s/AACS/MKB_RO.inf", path);
+    if ((mkb = mkb_open(path))) {
+        DEBUG(DBG_AACS, "Get UVS...\n");
+        uvs = mkb_subdiff_records(mkb, &len);
+        rec = uvs;
+        while (rec < uvs + len) {
+            if (rec[0] & 0xc0)
+                break;
+            rec += 5;
+            num_uvs++;
+        }
 
-    mkb = mkb_open(f_name);
+        DEBUG(DBG_AACS, "Get cvalues...\n");
+        rec = mkb_cvalues(mkb, &len);
+        if ((pks = configfile_record(aacs->kf, KF_PK_ARRAY, &num_pks, NULL))) {
+            key_pos = pks;
+            while (key_pos < pks + num_pks * 16) {
+                memcpy(aacs->pk, key_pos, 16);
+                DEBUG(DBG_AACS, "Trying processing key...\n");
 
-    uvs = mkb_subdiff_records(mkb, &len);
-    rec = uvs;
-    while (rec < buf + len) {
-        if (rec[0] & 0xc0)
-            break;
-        rec += 5;
-        num_uvs++;
-    }
+                for (a = 0; a < num_uvs; a++) {
+                    if (_validate_pk(aacs->pk, rec + a * 16, uvs + 1 + a * 5, mkb_mk_dv(mkb), aacs->mk)) {
+                        mkb_close(mkb);
+                        X_FREE(buf);
+                        return 1;
+                    }
+                }
 
-    rec = mkb_cvalues(mkb, &len);
-    pks = configfile_record(aacs->kf, KF_PK_ARRAY, &num_pks, NULL);
-    key_pos = pks;
-    while (key_pos < pks + num_pks * 16) {
-        memcpy(aacs->pk, key_pos, 16);
-
-        for (a = 0; a < num_uvs; a++)
-            if (_validate_pk(aacs->pk, rec + a * 16, uvs + 1 + a * 5, mkb_mk_dv(mkb), aacs->mk)) {
-                mkb_close(mkb);
-                X_FREE(buf);
-                return 1;
+                key_pos += 16;
             }
+        }
 
-        key_pos += 16;
+        mkb_close(mkb);
+        X_FREE(buf);
     }
-
-    mkb_close(mkb);
-    X_FREE(buf);
 
     return 0;
 }
@@ -97,7 +103,7 @@ int _calc_uks(AACS_KEYS *aacs, const char *path)
     FILE_H *fp = NULL;
     unsigned char buf[16];
     char f_name[100];
-    off_t f_pos;
+    uint64_t f_pos;
 
     snprintf(f_name, 100, "/%s/AACS/Unit_Key_RO.inf", path);
 
@@ -126,6 +132,12 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
     AES_KEY aes;
     uint8_t dec_vd[16];
 
+    DEBUG(DBG_AACS, "Validate processing key %s...\n", print_hex(pk, 16));
+    DEBUG(DBG_AACS, " Using:\n");
+    DEBUG(DBG_AACS, "   UV: %s\n", print_hex(uv, 4));
+    DEBUG(DBG_AACS, "   cvalue: %s\n", print_hex(cvalue, 16));
+    DEBUG(DBG_AACS, "   Verification data: %s\n", print_hex(vd, 16));
+
     AES_set_decrypt_key(pk, 128, &aes);
     AES_decrypt(cvalue, mk, &aes);
 
@@ -137,6 +149,7 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
     AES_decrypt(vd, dec_vd, &aes);
 
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
+        DEBUG(DBG_AACS, "Processing key is valid!\n");
         return 1;
     }
 
@@ -149,12 +162,16 @@ AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
 
     aacs->kf = NULL;
     if ((aacs->kf = configfile_open(configfile_path))) {
-        _calc_pk(aacs);
-        _calc_mk(aacs, path);
-        _calc_vuk(aacs, path);
-        _calc_uks(aacs, path);
-
-        return aacs;
+        DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
+        //_calc_pk(aacs);
+        if (_calc_mk(aacs, path)) {
+            if (_calc_vuk(aacs, path)) {
+                if (_calc_uks(aacs, path)) {
+                    DEBUG(DBG_AACS, "AACS initialized (0x%08x)!\n", aacs);
+                    return aacs;
+                }
+            }
+        }
     }
 
     return NULL;
