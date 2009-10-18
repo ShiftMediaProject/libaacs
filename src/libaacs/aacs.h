@@ -26,6 +26,6 @@ struct aacs_keys {
 
 AACS_KEYS *aacs_open(const char *path, const char *keyfile_path);
 void aacs_close(AACS_KEYS *aacs);
-int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len);
+int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offset);
 
 #endif /* AACS_H_ */

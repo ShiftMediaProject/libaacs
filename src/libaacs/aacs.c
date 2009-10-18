@@ -51,6 +51,8 @@ int _calc_mk(AACS_KEYS *aacs, const char *path)
                     if (_validate_pk(aacs->pk, rec + a * 16, uvs + 1 + a * 5, mkb_mk_dv(mkb), aacs->mk)) {
                         mkb_close(mkb);
                         X_FREE(buf);
+
+                        DEBUG(DBG_AACS, "Media key: %s\n", print_hex(aacs->mk, 16));
                         return 1;
                     }
                 }
@@ -73,12 +75,14 @@ int _calc_vuk(AACS_KEYS *aacs, const char *path)
     uint8_t vid[16];
     MMC* mmc = NULL;
 
+    DEBUG(DBG_AACS, "Calculate volume unique key...\n");
+
     if ((mmc = mmc_open(path,
             configfile_record(aacs->kf, KF_HOST_PRIV_KEY, NULL, NULL),
             configfile_record(aacs->kf, KF_HOST_CERT, NULL, NULL),
             configfile_record(aacs->kf, KF_HOST_NONCE, NULL, NULL),
             configfile_record(aacs->kf, KF_HOST_KEY_POINT, NULL, NULL)))) {
-        if (mmc_read_vid(mmc)) {
+        if (mmc_read_vid(mmc, vid)) {
             AES_set_decrypt_key(aacs->mk, 128, &aes);
             AES_decrypt(vid, aacs->vuk, &aes);
 
@@ -88,11 +92,15 @@ int _calc_vuk(AACS_KEYS *aacs, const char *path)
 
             mmc_close(mmc);
 
+            DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(aacs->vuk, 16));
+
             return 1;
         }
 
         mmc_close(mmc);
     }
+
+    DEBUG(DBG_AACS, "Error calculating VUK!\n");
 
     return 0;
 }
@@ -101,27 +109,38 @@ int _calc_uks(AACS_KEYS *aacs, const char *path)
 {
     AES_KEY aes;
     FILE_H *fp = NULL;
-    unsigned char buf[16];
+    uint8_t buf[16];
     char f_name[100];
     uint64_t f_pos;
 
-    snprintf(f_name, 100, "/%s/AACS/Unit_Key_RO.inf", path);
+    DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
+
+    snprintf(f_name , 100, "/%s/AACS/Unit_Key_RO.inf", path);
 
     if ((fp = file_open(f_name, "rb"))) {
-        file_read(fp, buf, 4);
+        if ((file_read(fp, buf, 4)) == 4) {
+            f_pos = MKINT_BE32(buf) + 48;
 
-        f_pos = MKINT_BE32(buf) + 48;
+            file_seek(fp, f_pos, SEEK_SET);
+            if ((file_read(fp, buf, 16)) == 16) {
+                // TODO: support more than a single UK!!!
+                aacs->uks = malloc(16);
 
-        file_seek(fp, f_pos, SEEK_SET);
-        file_read(fp, buf, 16);
+                AES_set_decrypt_key(aacs->vuk, 128, &aes);
+                AES_decrypt(buf, aacs->uks, &aes);
 
-        AES_set_decrypt_key(aacs->vuk, 128, &aes);
-        AES_decrypt(buf, aacs->uks, &aes);
+                file_close(fp);
+
+                DEBUG(DBG_AACS, "Unit key 1: %s\n", print_hex(aacs->uks, 16));
+
+                return 1;
+            }
+        }
 
         file_close(fp);
-
-        return 1;
     }
+
+    DEBUG(DBG_AACS, "Could not calculate unit keys!\n");
 
     return 0;
 }
@@ -156,18 +175,26 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
     return 0;
 }
 
+int _verify_ts(uint8_t *buf, size_t size)
+{
+    return 1;
+}
+
 AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
 {
     AACS_KEYS *aacs = malloc(sizeof(AACS_KEYS));
 
+    aacs->uks = NULL;
     aacs->kf = NULL;
     if ((aacs->kf = configfile_open(configfile_path))) {
         DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
         //_calc_pk(aacs);
         if (_calc_mk(aacs, path)) {
-            if (_calc_vuk(aacs, path)) {
+           if (_calc_vuk(aacs, path)) {
                 if (_calc_uks(aacs, path)) {
-                    DEBUG(DBG_AACS, "AACS initialized (0x%08x)!\n", aacs);
+                   // configfile_close(aacs->kf);
+
+                    DEBUG(DBG_AACS, "AACS initialized! (0x%08x)\n", aacs);
                     return aacs;
                 }
             }
@@ -179,17 +206,17 @@ AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
 
 void aacs_close(AACS_KEYS *aacs)
 {
-    configfile_close(aacs->kf);
+    X_FREE(aacs->uks);
+
+    DEBUG(DBG_AACS, "AACS destroyed! (0x%08x)\n", aacs);
 
     X_FREE(aacs);
 }
 
-int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len)
+int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offset)
 {
-    if (len % 6144) {
+    if (offset % 6144) {
         AES_cbc_encrypt(buf, buf, len, &aacs->aes, aacs->iv, 0);
-
-        return 1;
     } else {
         int a;
         uint8_t key[16], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3, 0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
@@ -204,7 +231,11 @@ int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len)
         }
 
         AES_set_decrypt_key(key, 128, &aacs->aes);
-        AES_cbc_encrypt(buf + 16, buf + 16, 6144 - 16, &aacs->aes, iv, 0);
+        AES_cbc_encrypt(buf + 16, buf + 16, 6144 - 16, &aacs->aes, aacs->iv, 0);
+    }
+
+    if (_verify_ts(buf,len)) {
+        DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %ld (0x%08x)\n", len % 6144 ? "PARTIAL" : "FULL", len, offset, aacs);
 
         return 1;
     }
