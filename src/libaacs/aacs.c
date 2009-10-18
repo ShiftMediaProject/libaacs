@@ -179,15 +179,15 @@ int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len)
 
         memcpy(aacs->iv, iv, 16);
 
-        AES_set_encrypt_key(aacs->uks, 128, &aes);
-        AES_encrypt(buf, key, &aes);
+        AES_set_encrypt_key(aacs->uks, 128, &aacs->aes);
+        AES_encrypt(buf, key, &aacs->aes);
 
         for (a = 0; a < 16; a++) {
             key[a] ^= buf[a];
         }
 
-        AES_set_decrypt_key(key, 128, &aes);
-        AES_cbc_encrypt(buf + 16, buf + 16, 6144 - 16, &aes, iv, 0);
+        AES_set_decrypt_key(key, 128, &aacs->aes);
+        AES_cbc_encrypt(buf + 16, buf + 16, 6144 - 16, &aacs->aes, iv, 0);
 
         return 1;
     }
