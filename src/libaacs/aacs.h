@@ -12,7 +12,7 @@
 #include <openssl/aes.h>
 
 #include "mkb.h"
-#include "../file/keyfile.h"
+#include "../file/configfile.h"
 
 typedef struct aacs_keys AACS_KEYS;
 struct aacs_keys {
@@ -21,7 +21,7 @@ struct aacs_keys {
     uint16_t num_uks;       // number of unit keys
     uint8_t iv[16];
     AES_KEY aes;
-    KEYFILE *kf;
+    CONFIGFILE *kf;
 };
 
 AACS_KEYS *aacs_open(const char *path, const char *keyfile_path);

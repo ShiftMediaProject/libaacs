@@ -39,7 +39,7 @@ int _calc_mk(AACS_KEYS *aacs, const char *path)
     }
 
     rec = mkb_cvalues(mkb, &len);
-    pks = keyfile_record(aacs->kf, KF_PK_ARRAY, &num_pks, NULL);
+    pks = configfile_record(aacs->kf, KF_PK_ARRAY, &num_pks, NULL);
     key_pos = pks;
     while (key_pos < pks + num_pks * 16) {
         memcpy(aacs->pk, key_pos, 16);
@@ -68,10 +68,10 @@ int _calc_vuk(AACS_KEYS *aacs, const char *path)
     MMC* mmc = NULL;
 
     if ((mmc = mmc_open(path,
-            keyfile_record(aacs->kf, KF_HOST_PRIV_KEY, NULL, NULL),
-            keyfile_record(aacs->kf, KF_HOST_CERT, NULL, NULL),
-            keyfile_record(aacs->kf, KF_HOST_NONCE, NULL, NULL),
-            keyfile_record(aacs->kf, KF_HOST_KEY_POINT, NULL, NULL)))) {
+            configfile_record(aacs->kf, KF_HOST_PRIV_KEY, NULL, NULL),
+            configfile_record(aacs->kf, KF_HOST_CERT, NULL, NULL),
+            configfile_record(aacs->kf, KF_HOST_NONCE, NULL, NULL),
+            configfile_record(aacs->kf, KF_HOST_KEY_POINT, NULL, NULL)))) {
         if (mmc_read_vid(mmc)) {
             AES_set_decrypt_key(aacs->mk, 128, &aes);
             AES_decrypt(vid, aacs->vuk, &aes);
@@ -143,12 +143,12 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
     return 0;
 }
 
-AACS_KEYS *aacs_open(const char *path, const char *keyfile_path)
+AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
 {
     AACS_KEYS *aacs = malloc(sizeof(AACS_KEYS));
 
     aacs->kf = NULL;
-    if ((aacs->kf = keyfile_open(keyfile_path))) {
+    if ((aacs->kf = configfile_open(configfile_path))) {
         _calc_pk(aacs);
         _calc_mk(aacs, path);
         _calc_vuk(aacs, path);
@@ -162,7 +162,7 @@ AACS_KEYS *aacs_open(const char *path, const char *keyfile_path)
 
 void aacs_close(AACS_KEYS *aacs)
 {
-    keyfile_close(aacs->kf);
+    configfile_close(aacs->kf);
 
     X_FREE(aacs);
 }
