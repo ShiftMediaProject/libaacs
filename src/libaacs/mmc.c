@@ -27,7 +27,7 @@ int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t 
         memset(&cgc, 0, sizeof(cgc));
         memcpy(cgc.cmd, cmd, CDROM_PACKET_SIZE);
         cgc.sense = &sense;
-        cgc.timeout = 5000;
+        cgc.timeout = 2000;
 
         if (buf) {
             if (tx) {
@@ -94,7 +94,7 @@ void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_
     uint8_t cmd[16];
     memset(cmd, 0, 16);
 
-    DEBUG(DBG_MMC, "MMC send key... (0x%08x)\n", mmc);
+    DEBUG(DBG_MMC, "MMC send key [%d] %s... (0x%08x)\n", len, print_hex(buf, len),mmc);
 
     cmd[0] = 0xa3;
     cmd[7] = 0x02;
@@ -102,7 +102,8 @@ void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_
     cmd[9] = len & 0xff;
     cmd[10] = agid << 6 | (format & 0x3f);
 
-    _mmc_send_cmd(mmc, cmd, buf, 0, len);
+    DEBUG(DBG_MMC, "cmd: %s\n", print_hex(cmd, 16), 16);
+    _mmc_send_cmd(mmc, cmd, buf, len, 0);
 }
 
 MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint8_t *host_nonce, uint8_t *host_key_point)
@@ -165,7 +166,7 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     _mmc_report_key(mmc, 0, 0, 0, 0, buf, 8);
     agid = (buf[7] & 0xff) >> 6;
 
-    int patched = 1; //todo: get rid of this
+    int patched = 0; //todo: get rid of this
     if (!patched) {
         memset(buf, 0, 116);
         buf[1] = 0x72;
