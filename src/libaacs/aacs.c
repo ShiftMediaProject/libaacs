@@ -182,6 +182,8 @@ int _verify_ts(uint8_t *buf, size_t size)
 
 AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
 {
+    DEBUG(DBG_AACS, "libaacs v%s\n", LIBAACS_VERSION);
+
     AACS_KEYS *aacs = malloc(sizeof(AACS_KEYS));
 
     aacs->uks = NULL;
@@ -192,7 +194,7 @@ AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
         if (_calc_mk(aacs, path)) {
            if (_calc_vuk(aacs, path)) {
                 if (_calc_uks(aacs, path)) {
-                   // configfile_close(aacs->kf);
+                    configfile_close(aacs->kf);
 
                     DEBUG(DBG_AACS, "AACS initialized! (0x%08x)\n", aacs);
                     return aacs;
@@ -200,6 +202,8 @@ AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
             }
         }
     }
+
+    DEBUG(DBG_AACS, "Failed to initialize AACS! (0x%08x)\n", aacs);
 
     return NULL;
 }
@@ -231,7 +235,7 @@ int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offs
         }
 
         AES_set_decrypt_key(key, 128, &aacs->aes);
-        AES_cbc_encrypt(buf + 16, buf + 16, 6144 - 16, &aacs->aes, aacs->iv, 0);
+        AES_cbc_encrypt(buf + 16, buf + 16, len - 16, &aacs->aes, aacs->iv, 0);
     }
 
     if (_verify_ts(buf,len)) {
