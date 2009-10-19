@@ -41,9 +41,9 @@ MKB *mkb_open(const char *path)
     DEBUG(DBG_MKB, "Opening MKB %s... (0x%08x)\n", f_name, mkb);
     
     if ((fp = file_open(f_name, "rb"))) {
-        file_seeko(fp, 0, SEEK_END);
-        mkb->size = file_tello(fp);
-        file_seeko(fp, 0, SEEK_SET);
+        file_seek(fp, 0, SEEK_END);
+        mkb->size = file_tell(fp);
+        file_seek(fp, 0, SEEK_SET);
 
         mkb->buf = malloc(mkb->size);
 
