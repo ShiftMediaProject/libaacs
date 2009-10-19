@@ -121,7 +121,7 @@ int _calc_uks(AACS_KEYS *aacs, const char *path)
         if ((file_read(fp, buf, 4)) == 4) {
             f_pos = MKINT_BE32(buf) + 48;
 
-            file_seek(fp, f_pos, SEEK_SET);
+            file_seeko(fp, f_pos, SEEK_SET);
             if ((file_read(fp, buf, 16)) == 16) {
                 // TODO: support more than a single UK!!!
                 aacs->uks = malloc(16);
