@@ -72,7 +72,6 @@ int _calc_vuk(AACS_KEYS *aacs, const char *path)
 {
     int a;
     AES_KEY aes;
-    uint8_t vid[16];
     MMC* mmc = NULL;
 
     DEBUG(DBG_AACS, "Calculate volume unique key...\n");
@@ -82,12 +81,12 @@ int _calc_vuk(AACS_KEYS *aacs, const char *path)
             configfile_record(aacs->kf, KF_HOST_CERT, NULL, NULL),
             configfile_record(aacs->kf, KF_HOST_NONCE, NULL, NULL),
             configfile_record(aacs->kf, KF_HOST_KEY_POINT, NULL, NULL)))) {
-        if (mmc_read_vid(mmc, vid)) {
+        if (mmc_read_vid(mmc, aacs->vid)) {
             AES_set_decrypt_key(aacs->mk, 128, &aes);
-            AES_decrypt(vid, aacs->vuk, &aes);
+            AES_decrypt(aacs->vid, aacs->vuk, &aes);
 
             for (a = 0; a < 16; a++) {
-                aacs->vuk[a] ^= vid[a];
+                aacs->vuk[a] ^= aacs->vid[a];
             }
 
             mmc_close(mmc);
@@ -177,6 +176,21 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
 
 int _verify_ts(uint8_t *buf, size_t size)
 {
+    uint8_t *ptr;
+
+    for (ptr=buf; ptr < buf+size; ptr++) {
+        if(*ptr == 0x47) {
+            uint8_t *ptr2;
+
+            for (ptr2=ptr; ptr2 < buf + size; ptr2 += 192) {
+                if (*ptr2 != 0x47) {
+                    return 0;
+                }
+            }
+        }
+        ptr++;
+    }
+
     return 1;
 }
 
