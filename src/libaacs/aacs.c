@@ -10,13 +10,35 @@
 #include "../util/logging.h"
 #include "../file/file.h"
 
-int _calc_pk(AACS_KEYS *aacs);
-int _calc_mk(AACS_KEYS *aacs, const char *path);
-int _calc_vuk(AACS_KEYS *aacs, const char *path);
-int _calc_uks(AACS_KEYS *aacs, const char *path);
-int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t *mk);
-int _verify_ts(uint8_t *buf, size_t size);
+int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t *mk)
+{
+    int a;
+    AES_KEY aes;
+    uint8_t dec_vd[16];
 
+    DEBUG(DBG_AACS, "Validate processing key %s...\n", print_hex(pk, 16));
+    DEBUG(DBG_AACS, " Using:\n");
+    DEBUG(DBG_AACS, "   UV: %s\n", print_hex(uv, 4));
+    DEBUG(DBG_AACS, "   cvalue: %s\n", print_hex(cvalue, 16));
+    DEBUG(DBG_AACS, "   Verification data: %s\n", print_hex(vd, 16));
+
+    AES_set_decrypt_key(pk, 128, &aes);
+    AES_decrypt(cvalue, mk, &aes);
+
+    for (a = 0; a < 4; a++) {
+        mk[a + 12] ^= uv[a];
+    }
+
+    AES_set_decrypt_key(mk, 128, &aes);
+    AES_decrypt(vd, dec_vd, &aes);
+
+    if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
+        DEBUG(DBG_AACS, "Processing key is valid!\n");
+        return 1;
+    }
+
+    return 0;
+}
 
 int _calc_mk(AACS_KEYS *aacs, const char *path)
 {
@@ -144,36 +166,6 @@ int _calc_uks(AACS_KEYS *aacs, const char *path)
     return 0;
 }
 
-int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t *mk)
-{
-    int a;
-    AES_KEY aes;
-    uint8_t dec_vd[16];
-
-    DEBUG(DBG_AACS, "Validate processing key %s...\n", print_hex(pk, 16));
-    DEBUG(DBG_AACS, " Using:\n");
-    DEBUG(DBG_AACS, "   UV: %s\n", print_hex(uv, 4));
-    DEBUG(DBG_AACS, "   cvalue: %s\n", print_hex(cvalue, 16));
-    DEBUG(DBG_AACS, "   Verification data: %s\n", print_hex(vd, 16));
-
-    AES_set_decrypt_key(pk, 128, &aes);
-    AES_decrypt(cvalue, mk, &aes);
-
-    for (a = 0; a < 4; a++) {
-        mk[a + 12] ^= uv[a];
-    }
-
-    AES_set_decrypt_key(mk, 128, &aes);
-    AES_decrypt(vd, dec_vd, &aes);
-
-    if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
-        DEBUG(DBG_AACS, "Processing key is valid!\n");
-        return 1;
-    }
-
-    return 0;
-}
-
 int _verify_ts(uint8_t *buf, size_t size)
 {
     uint8_t *ptr;
@@ -192,6 +184,48 @@ int _verify_ts(uint8_t *buf, size_t size)
     }
 
     return 1;
+}
+
+int _decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offset, uint32_t curr_uk)
+{
+    uint8_t *tmp_buf = malloc(len);
+
+    memcpy(tmp_buf, buf, len);
+
+    if (offset % 6144) {
+        AES_cbc_encrypt(tmp_buf, tmp_buf, len, &aacs->aes, aacs->iv, 0);
+    } else {
+        int a;
+        uint8_t key[16], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3, 0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
+
+        memcpy(aacs->iv, iv, 16);
+
+        AES_set_encrypt_key(aacs->uks + curr_uk * 16, 128, &aacs->aes);
+        AES_encrypt(tmp_buf, key, &aacs->aes);
+
+        for (a = 0; a < 16; a++) {
+            key[a] ^= tmp_buf[a];
+        }
+
+        AES_set_decrypt_key(key, 128, &aacs->aes);
+        AES_cbc_encrypt(tmp_buf + 16, tmp_buf + 16, len - 16, &aacs->aes, aacs->iv, 0);
+    }
+
+    if (_verify_ts(tmp_buf,len)) {
+        DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %ld (0x%08x)\n", len % 6144 ? "PARTIAL" : "FULL", len, offset, aacs);
+
+        memcpy(buf, tmp_buf, len);
+
+        X_FREE(tmp_buf);
+
+        return 1;
+    } else if (curr_uk < aacs->num_uks - 1) {
+        return _decrypt_unit(aacs, buf, len, offset, curr_uk++);
+    }
+
+    X_FREE(tmp_buf);
+
+    return 0;
 }
 
 AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
@@ -233,30 +267,5 @@ void aacs_close(AACS_KEYS *aacs)
 
 int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offset)
 {
-    if (offset % 6144) {
-        AES_cbc_encrypt(buf, buf, len, &aacs->aes, aacs->iv, 0);
-    } else {
-        int a;
-        uint8_t key[16], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3, 0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
-
-        memcpy(aacs->iv, iv, 16);
-
-        AES_set_encrypt_key(aacs->uks, 128, &aacs->aes);
-        AES_encrypt(buf, key, &aacs->aes);
-
-        for (a = 0; a < 16; a++) {
-            key[a] ^= buf[a];
-        }
-
-        AES_set_decrypt_key(key, 128, &aacs->aes);
-        AES_cbc_encrypt(buf + 16, buf + 16, len - 16, &aacs->aes, aacs->iv, 0);
-    }
-
-    if (_verify_ts(buf,len)) {
-        DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %ld (0x%08x)\n", len % 6144 ? "PARTIAL" : "FULL", len, offset, aacs);
-
-        return 1;
-    }
-
-    return 0;
+    return _decrypt_unit(aacs, buf, len, offset, 0);
 }
