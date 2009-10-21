@@ -1,11 +1,28 @@
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
+#if HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+
+#if HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
+#if HAVE_MNTENT_H
 #include <mntent.h>
+#endif
+
 #include <stdio.h>
 #include <unistd.h>
+
+#if HAVE_LINUX_CDROM_H
 #include <linux/cdrom.h>
+#endif
+
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
-#include <malloc.h>
 
 #include "mmc.h"
 #include "crypto.h"
@@ -20,6 +37,7 @@ void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_
 
 int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t rx)
 {
+#if HAVE_LINUX_CDROM_H
     if (mmc->fd) {
         struct cdrom_generic_command cgc;
         struct request_sense sense;
@@ -65,6 +83,7 @@ int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t 
             DEBUG(DBG_MMC, "  Send failed! [%d] (0x%08x)\n", a, mmc);
         }
     }
+#endif
 
     return 0;
 }
@@ -110,6 +129,8 @@ void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_
 
 MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint8_t *host_nonce, uint8_t *host_key_point)
 {
+#if HAVE_LINUX_CDROM_H
+
     FILE_H *proc_mounts = malloc(sizeof(FILE_H));
     struct mntent* mount_entry = NULL;
     MMC *mmc = malloc(sizeof(MMC));
@@ -138,6 +159,8 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
     X_FREE(proc_mounts);
 
     return mmc;
+#endif
+    return NULL;
 }
 
 void mmc_close(MMC *mmc)
