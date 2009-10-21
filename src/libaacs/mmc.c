@@ -65,7 +65,7 @@ int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t 
 
         int a = ioctl(mmc->fd, CDROM_SEND_PACKET, &cgc);
 
-        DEBUG(DBG_MMC, "Send MMC cmd %s: (0x%08x)\n", print_hex((uint8_t *)cmd, 16), mmc);
+        DEBUG(DBG_MMC, "Send LINUX MMC cmd %s: (0x%08x)\n", print_hex((uint8_t *)cmd, 16), mmc);
         if (tx) {
             DEBUG(DBG_MMC, "  Buffer: %s -> (0x%08x)\n", print_hex(buf, tx), mmc);
         } else {
@@ -140,7 +140,7 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
     memcpy(mmc->host_nonce, host_nonce, 20);
     memcpy(mmc->host_key_point, host_key_point, 40);
 
-    DEBUG(DBG_MMC, "Opening MMC drive... (0x%08x)\n", mmc);
+    DEBUG(DBG_MMC, "Opening LINUX MMC drive... (0x%08x)\n", mmc);
 
     if ((proc_mounts->internal = setmntent("/proc/mounts", "r"))) {
         while ((mount_entry = getmntent(proc_mounts->internal)) != NULL)
@@ -149,7 +149,7 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
                 if (a >= 0) {
                     mmc->fd = a;
 
-                    DEBUG(DBG_MMC, "MMC drive opened - fd: %d (0x%08x)\n", a, mmc);
+                    DEBUG(DBG_MMC, "LINUX MMC drive opened - fd: %d (0x%08x)\n", a, mmc);
                 }
             }
     }
