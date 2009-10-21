@@ -160,6 +160,7 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
 
     return mmc;
 #endif
+
     return NULL;
 }
 
