@@ -35,13 +35,13 @@ static int ascii2hex(const char *ascii, unsigned char *hex, size_t count)
 {
     size_t idx = 0;
     const char *pos = ascii;
-    char c_byte[2];
+    char c_byte[3];
     char *c_end;
 
     /* check ascii and hex array buffer */
     if ( ascii && hex ) {
         for ( ; idx < count; idx += 1 ) {
-            if ( strncpy(c_byte, pos, sizeof c_byte) ) {
+            if ( strncpy(c_byte, pos, (sizeof c_byte)-1 )) {
                 hex[idx] = strtol(c_byte, &c_end, 16);
                 pos += 2;
             }
