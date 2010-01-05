@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
             printf("Number of entries in dec: ");
             scanf("%d", &entries);
 
-            printf("Record data (all entries): ");
+            printf("Record data (all entries together in ascii): ");
             memset(s, 0, sizeof(s));
             scanf("%s", s);
             memset(header, 0, 256);
