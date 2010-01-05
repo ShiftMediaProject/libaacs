@@ -194,6 +194,40 @@ int _verify_ts(uint8_t *buf, size_t size)
     }
 
     return 1;
+
+}
+
+int _cmp_hash(AACS_KEYS *aacs, uint8_t *hash)
+{
+    return 0;
+}
+
+int _find_vuk(AACS_KEYS *aacs, const char *path)
+{
+    uint8_t *vuks, *key_pos;
+    int num_vuks;
+
+    DEBUG(DBG_AACS, "Search for VUK...\n");
+
+    if ((vuks = configfile_record(aacs->kf, KF_VUK_ARRAY, &num_vuks, NULL))) {
+        key_pos = vuks;
+        while (key_pos < vuks + num_vuks * 46) {
+            if (_cmp_hash(aacs, key_pos)) {
+                uint8_t desc[11];
+
+                memcpy(key_pos + 20, desc, 10);
+                desc[10] = 0;
+
+                memcpy(aacs->vuk, key_pos + 36, 16);
+
+                DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n", desc, print_hex(aacs->vuk, 16));
+            }
+
+            key_pos += 46;
+        }
+    }
+
+    return 0;
 }
 
 int _decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offset, uint32_t curr_uk)
@@ -247,6 +281,16 @@ AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
     aacs->uks = NULL;
     aacs->kf = NULL;
     if ((aacs->kf = configfile_open(configfile_path))) {
+        DEBUG(DBG_AACS, "Searching for VUK...\n");
+        if(_find_vuk(aacs, path)) {
+            if (_calc_uks(aacs, path)) {
+                configfile_close(aacs->kf);
+
+                DEBUG(DBG_AACS, "AACS initialized! (0x%08x)\n", aacs);
+                return aacs;
+            }
+        }
+
         DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
         //_calc_pk(aacs);
         if (_calc_mk(aacs, path)) {
