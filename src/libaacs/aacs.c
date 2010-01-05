@@ -197,22 +197,20 @@ int _verify_ts(uint8_t *buf, size_t size)
 
 }
 
-int _cmp_hash(AACS_KEYS *aacs, uint8_t *hash)
-{
-    return 0;
-}
-
 int _find_vuk(AACS_KEYS *aacs, const char *path)
 {
-    uint8_t *vuks, *key_pos;
+    uint8_t *vuks, *key_pos, hash[20];
     int num_vuks;
 
     DEBUG(DBG_AACS, "Search for VUK...\n");
 
+    //crypto_aacs_title_hash(NULL, 0, hash);
+    DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(hash, 20));
+
     if ((vuks = configfile_record(aacs->kf, KF_VUK_ARRAY, &num_vuks, NULL))) {
         key_pos = vuks;
         while (key_pos < vuks + num_vuks * 46) {
-            if (_cmp_hash(aacs, key_pos)) {
+            if (!memcmp(hash, key_pos, 20)) {
                 uint8_t desc[11];
 
                 memcpy(key_pos + 20, desc, 10);
