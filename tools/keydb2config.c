@@ -10,8 +10,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "../src/file/configfile.h"
 
-#define OPTS "c:d:"
+#define OPTS "c:d:o:ha"
 
 /* Keys are stored in a binary file in a record format
  *
@@ -28,13 +29,13 @@
  */
 
 /* config header structure */
-typedef struct confheader
+typedef struct recordheader
 {
     unsigned char type;              /* Record type in hex */
     unsigned char length[3];         /* Entire record length inc header */
     unsigned char count[2];          /* Record count */
     unsigned char entry_length[4];   /* Record length */
-} CONFHEADER;
+} RECORDHEADER;
 
 
 /* config record structure */
@@ -43,18 +44,13 @@ typedef struct confrecord
     unsigned char key1[20];     /* first key */
     unsigned char info[10];     /* movie name / info */
     unsigned char key2[16];     /* second key */
-} CONFRECORD;
+} RECORDDATA;
 
 
-/* config header structure */
-typedef struct devkeyheader
-{
-    unsigned char byte0;             /* Record type in hex */
-    unsigned char length[3];         /* Number of entries in dec */
-    unsigned char count[2];          /* Record counts */
-    unsigned char entry_length[4];   /* Record length */
-} DEVKEYHEADER;
-
+static char append_flag = 0;
+static const char *default_keydb   = "keydb.cfg";
+static const char *default_devkey  = "ProcessingDeviceKeysSimple.txt";
+static const char *default_outfile = "keyfile.db";
 
 
 /*
@@ -87,27 +83,33 @@ static int ascii2hex(const char *ascii, unsigned char *hex, size_t count)
 /* 
  * convert key db file into internal config file
  */
-static int convertKeyDB2Config(const char *keydb, const char *conffile)
+static int convertKeyDB2Config(const char *keydb, FILE *fpOutfile)
 {
     FILE *fpKeyDB = NULL;
-    FILE *fpConfig = NULL;
     int count = 0;
     size_t length = 0;
     size_t nwrite;
     const char *search_key2 = " | V | ";
     char *key2 = NULL;
     char buffer[512];
-    CONFHEADER header;
-    CONFRECORD record;
+    long hdrpos;
+    RECORDHEADER header;
+    RECORDDATA record;
 
-    if ( (fpKeyDB = fopen(keydb, "r")) && 
-         (fpConfig = fopen(conffile, "w")) ) {
+    if ( fpOutfile && (fpKeyDB = fopen(keydb, "r")) ) {
  
         memset(&header, 0, sizeof header);
-        header.type = 0x07;
+        header.type = KF_VUK_ARRAY;
         header.entry_length[3] = 0x2E;
  
-        nwrite = fwrite(&header, sizeof (char), sizeof header, fpConfig);
+        /* seek the the last position */
+        fseek(fpOutfile, 0, SEEK_END);
+
+        /* store the current header position */
+        hdrpos = ftell(fpOutfile);
+
+        /* write dummy (first) header */
+        nwrite = fwrite(&header, sizeof (char), sizeof header, fpOutfile);
         if ( nwrite != sizeof header ) {
             /* print error message and stop process */
             fprintf(stderr, "error while write file header\n");
@@ -138,7 +140,7 @@ static int convertKeyDB2Config(const char *keydb, const char *conffile)
                     }
  
                     /* write data record into config file */
-                    nwrite = fwrite(&record, sizeof (char), sizeof record, fpConfig);
+                    nwrite = fwrite(&record, sizeof (char), sizeof record, fpOutfile);
                     if ( nwrite != sizeof record ) {
                         /* print error message and stop process */
                         fprintf(stderr, "error while write record %d\n", count + 1);
@@ -163,9 +165,9 @@ static int convertKeyDB2Config(const char *keydb, const char *conffile)
         header.count[1] = count & 0xFF;
 
         /* seek to header position (0) */
-	if (fseek(fpConfig, 0, SEEK_SET) == 0 ) {
+	if (fseek(fpOutfile, hdrpos, SEEK_SET) == 0 ) {
             /* write the new header with all data */
-            nwrite = fwrite(&header, sizeof (char), sizeof header, fpConfig);
+            nwrite = fwrite(&header, sizeof (char), sizeof header, fpOutfile);
             if ( nwrite != sizeof header ) {
                 fprintf(stderr, "while write header (last)\n");
                 return -1;
@@ -178,34 +180,35 @@ static int convertKeyDB2Config(const char *keydb, const char *conffile)
         fclose(fpKeyDB);
     }
 
-    /* close config (output) file */
-    if ( fpConfig ) {
-        fclose(fpConfig);
-    }
-
     return 0;
 }
 
 
 
-static int convertDeviceKey(const char *devkey, const char *outfile)
+static int convertDeviceKey(const char *devkey, FILE *fpOutfile)
 {
     FILE *fpDevKey = NULL;
-    FILE *fpOutfile = NULL;
     size_t count = 0;
     size_t length = 0;
     size_t nwrite;
     char buffer[64];
-    DEVKEYHEADER header;
+    RECORDHEADER header;
     unsigned char record[16];
+    long hdrpos;
 
-    if ( (fpDevKey = fopen(devkey, "r")) && 
-         (fpOutfile = fopen(outfile, "w")) ) {
+    if ( fpOutfile && (fpDevKey = fopen(devkey, "r")) ) {
  
         memset(&header, 0, sizeof header);
-        header.byte0 = 2;
+        header.type = KF_PK_ARRAY;
         header.entry_length[3] = 0x10;
  
+        /* seek the the last position */
+        fseek(fpOutfile, 0, SEEK_END);
+
+        /* store the current header position */
+        hdrpos = ftell(fpOutfile);
+
+        /* write dummy (first) header */
         nwrite = fwrite(&header, sizeof (char), sizeof header, fpOutfile);
         if ( nwrite != sizeof header ) {
             /* print error message and stop process */
@@ -246,7 +249,7 @@ static int convertDeviceKey(const char *devkey, const char *outfile)
         header.count[0] = count >> 8;
         header.count[1] = count & 0xFF;
 
-	if (fseek(fpOutfile, 0, SEEK_SET) == 0 ) {
+	if (fseek(fpOutfile, hdrpos, SEEK_SET) == 0 ) {
             nwrite = fwrite(&header, sizeof (char), sizeof header, fpOutfile);
             if ( nwrite != sizeof header ) {
                 fprintf(stderr, "while write header (last)\n");
@@ -260,60 +263,83 @@ static int convertDeviceKey(const char *devkey, const char *outfile)
         fclose(fpDevKey);
     }
 
-    /* close config (output) file */
-    if ( fpOutfile ) {
-        fclose(fpOutfile);
-    }
-
     return 0;
 }
 
 
 static int print_usage(const char *name)
 {
-    fprintf(stderr, "Usage: %s -c <keydb> -d <devkey>\n"
-                    "         <keydb>       export file name for keydb\n"
-                    "         <devkey>      export file name for device key\n", name);
+    fprintf(stderr, "Usage: %s -a -h -c <in_keydb> -d <in_devkey> -o <out_keyfile>\n"
+                    "    -a                append key information\n"
+                    "    -h                print this usage\n"
+                    "    -c <in_keydb>     keydb input file (default: %s)\n"
+                    "    -d <in_devkey>    device key input file (default: %s)\n"
+                    "    -o <out_keyfile>  keyfile file name (default: %s)\n", 
+                    name, default_keydb, default_devkey, default_outfile);
     exit(EXIT_FAILURE);
 }
 
 
 int main(int argc, char *argv[])
 {
-    const char *keydb_file = "keydb.cfg";
-    char keydb_outfile[512];
-    const char *devkey_file = "ProcessingDeviceKeysSimple.txt";
-    char devkey_outfile[512];
+    FILE *fpOutput;
+    char keydb_file[512];
+    char devkey_file[512];
+    char out_keyfile[512];
     struct stat fsCheck;
     int opt;
 
-
-    strncpy(keydb_outfile,  "_gen_config.db", sizeof keydb_outfile);
-    strncpy(devkey_outfile, "_gen_devkey.db", sizeof devkey_outfile);
+    strncpy(keydb_file,  "keydb.cfg", sizeof keydb_file);
+    strncpy(devkey_file, "ProcessingDeviceKeysSimple.txt", sizeof devkey_file);
+    strncpy(out_keyfile, "keyfile.db", sizeof out_keyfile);
 
     do {
         opt = getopt(argc, argv, OPTS);
         switch(opt) {
             case -1:
-               break;
+                break;
 
             case 'c':
-               strncpy(keydb_outfile, optarg, sizeof keydb_outfile);
-               break;
+                strncpy(keydb_file, optarg, sizeof keydb_file);
+                break;
 
             case 'd':
-               strncpy(devkey_outfile, optarg, sizeof devkey_outfile);
-               break;
+                strncpy(devkey_file, optarg, sizeof devkey_file);
+                break;
+
+            case 'o':
+                strncpy(out_keyfile, optarg, sizeof out_keyfile);
+                break;
+
+	    case 'h':
+	        print_usage(argv[0]);
+                break;
+
+            case 'a':
+                append_flag = 1;
+                break;
 
             default:
               print_usage(argv[0]);
         }
     } while (opt != -1);
 
+    if ( append_flag == 1 ) {
+        fpOutput = fopen(out_keyfile, "a");
+    }
+    else {
+        fpOutput = fopen(out_keyfile, "w");
+    }
+
+    if ( fpOutput == NULL ) {
+        fprintf(stderr, "cannot open output file '%s'\n", out_keyfile);
+        exit(EXIT_FAILURE);
+    }
+
     if ( stat(keydb_file, &fsCheck) == 0 ) {
-        if ( convertKeyDB2Config(keydb_file, keydb_outfile) ) {
+        if ( convertKeyDB2Config(keydb_file, fpOutput) ) {
             fprintf(stderr, "while convert keydb '%s' -> '%s'\n", 
-                    keydb_file, keydb_outfile);
+                    keydb_file, out_keyfile);
         }
     }
     else {
@@ -321,13 +347,17 @@ int main(int argc, char *argv[])
     }
 
     if ( stat(devkey_file, &fsCheck) == 0 ) {
-        if ( convertDeviceKey(devkey_file, devkey_outfile) ) {
+        if ( convertDeviceKey(devkey_file, fpOutput) ) {
             fprintf(stderr, "while convert device key '%s' -> '%s'\n",
-                    keydb_file, keydb_outfile);
+                    keydb_file, out_keyfile);
         }
     }
     else {
         fprintf(stderr, "file '%s' missing\n", devkey_file);
+    }
+
+    if ( fpOutput ) {
+        fclose(fpOutput);
     }
 
     return -1;
