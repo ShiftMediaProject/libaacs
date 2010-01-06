@@ -315,7 +315,7 @@ AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
 {
     DEBUG(DBG_AACS, "libaacs v%s [%ld]\n", LIBAACS_VERSION, sizeof(AACS_KEYS));
 
-    AACS_KEYS *aacs = malloc(sizeof(AACS_KEYS));
+    AACS_KEYS *aacs = calloc(1, sizeof(AACS_KEYS));
 
     aacs->uks = NULL;
     aacs->kf = NULL;
