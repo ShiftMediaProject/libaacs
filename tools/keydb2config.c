@@ -102,7 +102,7 @@ static int convertKeyDB2Config(const char *keydb, const char *conffile)
         while (!feof(fpKeyDB)) {
             if ( fgets(buffer, sizeof buffer, fpKeyDB) ) {
                 if ( (key2 = strstr(buffer, search_key2)) ) {
-
+                    key2 += 7;
                     if ( ascii2hex(buffer, record.key1, 20) ) {
                         /* print error message and skip current line */
                         fprintf(stderr, "while convert key1\n");
