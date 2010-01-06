@@ -135,10 +135,10 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
     struct mntent* mount_entry = NULL;
     MMC *mmc = malloc(sizeof(MMC));
 
-    memcpy(mmc->host_priv_key, host_priv_key, 20);
-    memcpy(mmc->host_cert, host_cert, 92);
-    memcpy(mmc->host_nonce, host_nonce, 20);
-    memcpy(mmc->host_key_point, host_key_point, 40);
+    if (host_priv_key) memcpy(mmc->host_priv_key, host_priv_key, 20);
+    if (host_cert) memcpy(mmc->host_cert, host_cert, 92);
+    if (host_nonce) memcpy(mmc->host_nonce, host_nonce, 20);
+    if (host_key_point) memcpy(mmc->host_key_point, host_key_point, 40);
 
     memcpy(file_path, path, strlen(path) + 1);
     if (file_path[strlen(path)] == '/') {
