@@ -246,13 +246,15 @@ int _find_vuk(AACS_KEYS *aacs, const char *path)
                 memcpy(aacs->vuk, key_pos + 30, 16);
 
                 DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n", desc, print_hex(aacs->vuk, 16));
+
+                return 1;
             }
 
             key_pos += 46;
         }
     }
 
-    return 1;
+    return 0;
 }
 
 int _decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offset, uint32_t curr_uk)
