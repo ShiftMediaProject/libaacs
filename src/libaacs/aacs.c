@@ -199,13 +199,42 @@ int _verify_ts(uint8_t *buf, size_t size)
 
 int _find_vuk(AACS_KEYS *aacs, const char *path)
 {
-    uint8_t *vuks, *key_pos, hash[20];
+    uint8_t *vuks, *key_pos, hash[20], *ukf_buf;
     int num_vuks;
+    char f_name[100];
+
+    snprintf(f_name , 100, "/%s/AACS/Unit_Key_RO.inf", path);
+
+    if ((fp = file_open(f_name, "rb"))) {
+        uint64_t f_size;
+
+        file_seek(fp, 0, SEEK_END);
+        f_size = file_tell(fp);
+        file_seek(fp, 0, SEEK_SET);
+
+        ukf_buf = malloc(f_size);
+
+        if ((file_read(fp, ukf_buf, f_size)) == f_size) {
+
+        } else {
+            DEBUG(DBG_AACS, "Failed to read %d bytes from unit key file!\n", f_size);
+            file_close(fp);
+            X_FREE(ukf_buf);
+            return 0;
+        }
+    } else {
+        DEBUG(DBG_AACS, "Failed to open unit key file: %s!\n", f_name);
+        return 0;
+    }
+
+    file_close(fp);
 
     DEBUG(DBG_AACS, "Search for VUK...\n");
 
-    //crypto_aacs_title_hash(NULL, 0, hash);
+    crypto_aacs_title_hash(ukf_buf, 0, hash);
     DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(hash, 20));
+
+    X_FREE(ukf_buf);
 
     if ((vuks = configfile_record(aacs->kf, KF_VUK_ARRAY, &num_vuks, NULL))) {
         key_pos = vuks;

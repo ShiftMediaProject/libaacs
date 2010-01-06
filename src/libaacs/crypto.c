@@ -139,7 +139,7 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig, uint8
     BN_free(bdr);
 }
 
-void crypto_aacs_title_hash(const uint8_t *tkf, uint64_t len, uint8_t *hash)
+void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
 {
     EVP_MD_CTX mdctx;
     unsigned int md_len;
