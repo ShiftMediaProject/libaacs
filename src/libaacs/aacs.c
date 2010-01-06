@@ -230,9 +230,7 @@ int _find_vuk(AACS_KEYS *aacs, const char *path)
 
     file_close(fp);
 
-    DEBUG(DBG_AACS, "Search for VUK...\n");
-
-    crypto_aacs_title_hash(ukf_buf, 0, hash);
+    crypto_aacs_title_hash(ukf_buf, f_size, hash);
     DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(hash, 20));
 
     X_FREE(ukf_buf);
