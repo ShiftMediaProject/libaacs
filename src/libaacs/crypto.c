@@ -149,7 +149,7 @@ void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
     EVP_MD_CTX_init(&mdctx);
 
     EVP_DigestInit(&mdctx, EVP_sha1());
-    EVP_DigestUpdate(&mdctx, tkf, len);
-    EVP_DigestFinal_ex(&mdctx, tkf, &md_len);
+    EVP_DigestUpdate(&mdctx, ukf, len);
+    EVP_DigestFinal_ex(&mdctx, ukf, &md_len);
 }
 
