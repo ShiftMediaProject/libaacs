@@ -252,7 +252,7 @@ int _find_vuk(AACS_KEYS *aacs, const char *path)
         }
     }
 
-    return 0;
+    return 1;
 }
 
 int _decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offset, uint32_t curr_uk)
