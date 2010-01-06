@@ -201,14 +201,13 @@ int _find_vuk(AACS_KEYS *aacs, const char *path)
 {
     uint8_t *vuks, *key_pos, hash[20], *ukf_buf;
     FILE_H *fp = NULL;
+    uint64_t f_size;
     int num_vuks;
     char f_name[100];
 
     snprintf(f_name , 100, "/%s/AACS/Unit_Key_RO.inf", path);
 
     if ((fp = file_open(f_name, "rb"))) {
-        uint64_t f_size;
-
         file_seek(fp, 0, SEEK_END);
         f_size = file_tell(fp);
         file_seek(fp, 0, SEEK_SET);
