@@ -200,6 +200,7 @@ int _verify_ts(uint8_t *buf, size_t size)
 int _find_vuk(AACS_KEYS *aacs, const char *path)
 {
     uint8_t *vuks, *key_pos, hash[20], *ukf_buf;
+    FILE_H *fp = NULL;
     int num_vuks;
     char f_name[100];
 
