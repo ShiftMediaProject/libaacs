@@ -9,6 +9,6 @@ clean:
 genkeyfile: genkeyfile.c
 	gcc -o $@ $?
 
-genconfigfile: genkeyfile.c
+genconfigfile: genconfigfile.c
 	gcc -o $@ $?
 
