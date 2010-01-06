@@ -176,25 +176,37 @@ int _calc_uks(AACS_KEYS *aacs, const char *path)
     return 0;
 }
 
+
+
 int _verify_ts(uint8_t *buf, size_t size)
 {
     uint8_t *ptr;
 
-    for (ptr=buf; ptr < buf+size; ptr++) {
-        if(*ptr == 0x47) {
+    if (size < 192) {
+        return 1;
+    }
+
+    for (ptr=buf; ptr < buf+192; ptr++) {
+        int failed = 0;
+        if (*ptr == 0x47) {
             uint8_t *ptr2;
 
             for (ptr2=ptr; ptr2 < buf + size; ptr2 += 192) {
                 if (*ptr2 != 0x47) {
-                    return 0;
+                    failed = 1;
+                    break;
                 }
+            }
+            if (!failed) {
+                return 1;
             }
         }
         ptr++;
     }
 
-    return 1;
+    DEBUG(DBG_AACS, "Failed to verify TS!\n");
 
+    return 0;
 }
 
 int _find_vuk(AACS_KEYS *aacs, const char *path)
