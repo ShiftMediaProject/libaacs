@@ -243,7 +243,7 @@ int _find_vuk(AACS_KEYS *aacs, const char *path)
                 memcpy(desc, key_pos + 20, 10);
                 desc[10] = 0;
 
-                memcpy(aacs->vuk, key_pos + 36, 16);
+                memcpy(aacs->vuk, key_pos + 30, 16);
 
                 DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n", desc, print_hex(aacs->vuk, 16));
             }
