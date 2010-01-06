@@ -8,24 +8,37 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Keys are stored in a binary file in a record format
+ *
+ * Record format:
+ *          0                   | type
+ *          1-3                 | length
+ *          4-5                 | num entries
+ *          6-9                 | entry length
+ *          10-(9+entry_length) | entry 1
+ *          .
+ *          .
+ *          length-1            | end
+ *
+ */
+
 /* config header structure */
 typedef struct confheader
 {
-    char type;         /* Record type in hex */
-    char length[3];    /* Number of entries in dec */
-    char count[2];     /* record counts */
-    char reserved[3];  
-    char byte9;
+    unsigned char type;              /* Record type in hex */
+    unsigned char length[3];         /* Entire record length inc header */
+    unsigned char count[2];          /* Record count */
+    unsigned char entry_length[4];   /* Record length */
 } CONFHEADER;
 
 
 /* config record structure */
 typedef struct confrecord
 {
-    char key1[20];     /* first key */
-    char info[10];     /* movie name / info */
-    char key2[16];     /* second key */
-}CONFRECORD;
+    unsigned char key1[20];     /* first key */
+    unsigned char info[10];     /* movie name / info */
+    unsigned char key2[16];     /* second key */
+} CONFRECORD;
 
 
 /*
@@ -34,7 +47,7 @@ typedef struct confrecord
 static int ascii2hex(const char *ascii, unsigned char *hex, size_t count)
 {
     size_t idx = 0;
-    const char *pos = ascii;
+    char *pos = (char *)ascii;
     char c_byte[3];
     char *c_end;
 
@@ -62,7 +75,7 @@ static int convertKeyDB2Config(const char *keydb, const char *conffile)
 {
     FILE *fpKeyDB = NULL;
     FILE *fpConfig = NULL;
-    size_t count = 0;
+    int count = 0;
     size_t length = 0;
     size_t nwrite;
     const char *search_key2 = " | V | ";
@@ -76,7 +89,7 @@ static int convertKeyDB2Config(const char *keydb, const char *conffile)
  
         memset(&header, 0, sizeof header);
         header.type = 0x07;
-        header.byte9 = 0x2E;
+        header.entry_length[3] = 0x2E;
  
         nwrite = fwrite(&header, sizeof (char), sizeof header, fpConfig);
         if ( nwrite != sizeof header ) {
@@ -102,7 +115,7 @@ static int convertKeyDB2Config(const char *keydb, const char *conffile)
                         continue;
                     }
 
-                    if ( !strncpy(record.info,  buffer + 43, sizeof record.info) ) {
+                    if ( !strncpy((char *)record.info,  buffer + 43, sizeof record.info) ) {
                         /* print error message and skip current line */
                         fprintf(stderr, "while read info\n");
                         continue;
