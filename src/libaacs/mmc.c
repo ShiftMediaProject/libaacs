@@ -129,6 +129,8 @@ void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_
 
 MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint8_t *host_nonce, uint8_t *host_key_point)
 {
+
+    DEBUG(DBG_MMC, "DEBUG!\n");
 #if HAVE_LINUX_CDROM_H
     char *file_path = malloc(strlen(path) + 1);
     FILE_H *proc_mounts = malloc(sizeof(FILE_H));
