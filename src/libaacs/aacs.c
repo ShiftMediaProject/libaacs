@@ -240,7 +240,7 @@ int _find_vuk(AACS_KEYS *aacs, const char *path)
             if (!memcmp(hash, key_pos, 20)) {
                 uint8_t desc[11];
 
-                memcpy(key_pos + 20, desc, 10);
+                memcpy(desc, key_pos + 20, 10);
                 desc[10] = 0;
 
                 memcpy(aacs->vuk, key_pos + 36, 16);
