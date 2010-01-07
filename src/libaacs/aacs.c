@@ -214,7 +214,7 @@ int _find_vuk(AACS *aacs, const char *path)
     uint8_t *vuks, *key_pos, hash[20], *ukf_buf;
     FILE_H *fp = NULL;
     uint64_t f_size;
-    int num_vuks;
+    uint16_t num_vuks;
     char f_name[100];
 
     snprintf(f_name , 100, "/%s/AACS/Unit_Key_RO.inf", path);
