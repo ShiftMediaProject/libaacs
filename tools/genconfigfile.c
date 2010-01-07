@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
             printf("Record data (all entries together in ascii): ");
             memset(s, 0, sizeof(s));
             scanf("%s", s);
-            memset(header, 0, 256);
             header[0] = type;
             header[1] = (strlen(s)/2 + 10) >> 16;
             header[2] = (strlen(s)/2 + 10) >> 8;
