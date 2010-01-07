@@ -50,7 +50,7 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
     return 0;
 }
 
-int _calc_mk(AACS_KEYS *aacs, const char *path)
+int _calc_mk(AACS *aacs, const char *path)
 {
     DEBUG(DBG_AACS, "Calculate media key...\n");
 
@@ -100,7 +100,7 @@ int _calc_mk(AACS_KEYS *aacs, const char *path)
     return 0;
 }
 
-int _calc_vuk(AACS_KEYS *aacs, const char *path)
+int _calc_vuk(AACS *aacs, const char *path)
 {
     int a;
     AES_KEY aes;
@@ -136,7 +136,7 @@ int _calc_vuk(AACS_KEYS *aacs, const char *path)
     return 0;
 }
 
-int _calc_uks(AACS_KEYS *aacs, const char *path)
+int _calc_uks(AACS *aacs, const char *path)
 {
     AES_KEY aes;
     FILE_H *fp = NULL;
@@ -209,7 +209,7 @@ int _verify_ts(uint8_t *buf, size_t size)
     return 0;
 }
 
-int _find_vuk(AACS_KEYS *aacs, const char *path)
+int _find_vuk(AACS *aacs, const char *path)
 {
     uint8_t *vuks, *key_pos, hash[20], *ukf_buf;
     FILE_H *fp = NULL;
@@ -269,7 +269,7 @@ int _find_vuk(AACS_KEYS *aacs, const char *path)
     return 0;
 }
 
-int _decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offset, uint32_t curr_uk)
+int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset, uint32_t curr_uk)
 {
     uint8_t *tmp_buf = malloc(len);
 
@@ -311,11 +311,11 @@ int _decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offset, 
     return 0;
 }
 
-AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
+AACS *aacs_open(const char *path, const char *configfile_path)
 {
-    DEBUG(DBG_AACS, "libaacs v%s [%ld]\n", LIBAACS_VERSION, sizeof(AACS_KEYS));
+    DEBUG(DBG_AACS, "libaacs v%s [%ld]\n", LIBAACS_VERSION, sizeof(AACS));
 
-    AACS_KEYS *aacs = calloc(1, sizeof(AACS_KEYS));
+    AACS *aacs = calloc(1, sizeof(AACS));
 
     aacs->uks = NULL;
     aacs->kf = NULL;
@@ -349,7 +349,7 @@ AACS_KEYS *aacs_open(const char *path, const char *configfile_path)
     return NULL;
 }
 
-void aacs_close(AACS_KEYS *aacs)
+void aacs_close(AACS *aacs)
 {
     X_FREE(aacs->uks);
 
@@ -358,12 +358,12 @@ void aacs_close(AACS_KEYS *aacs)
     X_FREE(aacs);
 }
 
-int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offset)
+int aacs_decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset)
 {
     return _decrypt_unit(aacs, buf, len, offset, 0);
 }
 
-uint8_t *aacs_get_vid(AACS_KEYS *aacs)
+uint8_t *aacs_get_vid(AACS *aacs)
 {
     return aacs->vid;
 }
