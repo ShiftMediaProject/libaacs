@@ -1,7 +1,5 @@
 /*
- * libaacs by Doom9 ppl 2009
- * The aim of libaacs is to achieve a complete open-source implementation of the AACS spec
- * The spec is freely available at http://www.aacsla.com/specifications/
+ * libaacs by Doom9 ppl 2009, 2010
  */
 
 #ifndef AACS_H_
