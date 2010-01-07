@@ -1,0 +1,25 @@
+===========
+THE KEYFILE
+===========
+
+A keyfile is required to play Bluray discs.
+This file consists of all the necessary 'secret' keys used by libbluray to decrypt your disc.
+
+NO KEYFILE IS DISTRIBUTED WITH LIBBLURAY - you'll need to find it elsewhere or generate it yourself!!
+
+====================
+GENERATING A KEYFILE
+====================
+
+1. Build the contents of tools/ , you'll get a 'genkeyfile' binary
+
+	cd tools/
+	make
+
+2. This binary can convert the bluray 'KEYBD.cfg' maintained by the Doom9 community on the forum 
+   and/or the any list of processing keys (such as 'ProcessingDeviceKeysSimple.txt' that comes with aacskeys)
+   to the keyfile format required by libbluray:
+
+	./genkeyfile -c KEYDB.cfg -d ProcessingDeviceKeysSimple.txt -o keys.bin
+	
+3. keys.bin will be created - this is your keyfile.
