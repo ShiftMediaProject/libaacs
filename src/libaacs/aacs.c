@@ -362,3 +362,8 @@ int aacs_decrypt_unit(AACS_KEYS *aacs, uint8_t *buf, uint32_t len, uint64_t offs
 {
     return _decrypt_unit(aacs, buf, len, offset, 0);
 }
+
+uint8_t *aacs_get_vid(AACS_KEYS *aacs)
+{
+    return aacs->vid;
+}
