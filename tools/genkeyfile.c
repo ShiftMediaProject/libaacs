@@ -229,7 +229,7 @@ static int convertDeviceKey(const char *devkey, FILE *fpOutfile)
                 nwrite = fwrite(&record, sizeof (char), sizeof record, fpOutfile);
                 if ( nwrite != sizeof record ) {
                     /* print error message and stop process */
-                    fprintf(stderr, "error while write record %d\n", count + 1);
+                    fprintf(stderr, "error while write record %zd\n", count + 1);
                     return -1;
                 }
 
