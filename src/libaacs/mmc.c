@@ -139,6 +139,7 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
     if (host_cert) memcpy(mmc->host_cert, host_cert, 92);
     if (host_nonce) memcpy(mmc->host_nonce, host_nonce, 20);
     if (host_key_point) memcpy(mmc->host_key_point, host_key_point, 40);
+    mmc->fd = -1;
 
     // strip trailing '/'s
     while (*(ptr = file_path + strlen(path)) == '/') {
@@ -157,7 +158,10 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
                     mmc->fd = a;
 
                     DEBUG(DBG_MMC, "LINUX MMC drive opened - fd: %d (0x%08x)\n", a, mmc);
+                    break;
                 }
+
+                DEBUG(DBG_MMC, "Failed opening LINUX MMC drive %s (0x%08x)\n", file_path, mmc);
             }
         }
 
@@ -165,6 +169,10 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
     }
 
     X_FREE(file_path);
+
+    if (mmc->fd < 0) {
+        X_FREE(mmc);
+    }
 
     return mmc;
 #endif
