@@ -131,7 +131,7 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
 {
 #if HAVE_LINUX_CDROM_H
     char *ptr;
-    char *file_path = malloc(strlen(path) + 1);
+    char *file_path = strdup(path);
     FILE *proc_mounts;
     MMC *mmc = malloc(sizeof(MMC));
 
@@ -140,7 +140,6 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
     if (host_nonce) memcpy(mmc->host_nonce, host_nonce, 20);
     if (host_key_point) memcpy(mmc->host_key_point, host_key_point, 40);
 
-    memcpy(file_path, path, strlen(path) + 1);
     // strip trailing '/'s
     while (*(ptr = file_path + strlen(path)) == '/') {
         *ptr-- = '\0';
