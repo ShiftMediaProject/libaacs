@@ -334,13 +334,12 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 
     AACS *aacs = calloc(1, sizeof(AACS));
 
-    aacs->uks = NULL;
-    aacs->kf = NULL;
     if ((aacs->kf = configfile_open(configfile_path))) {
         DEBUG(DBG_AACS, "Searching for VUK...\n");
         if(_find_vuk(aacs, path)) {
             if (_calc_uks(aacs, path)) {
                 configfile_close(aacs->kf);
+                aacs->kf = NULL;
 
                 DEBUG(DBG_AACS, "AACS initialized! (0x%08x)\n", aacs);
                 return aacs;
@@ -353,15 +352,21 @@ AACS *aacs_open(const char *path, const char *configfile_path)
            if (_calc_vuk(aacs, path)) {
                 if (_calc_uks(aacs, path)) {
                     configfile_close(aacs->kf);
+                    aacs->kf = NULL;
 
                     DEBUG(DBG_AACS, "AACS initialized! (0x%08x)\n", aacs);
                     return aacs;
                 }
             }
         }
+
+        configfile_close(aacs->kf);
+        aacs->kf = NULL;
     }
 
     DEBUG(DBG_AACS, "Failed to initialize AACS! (0x%08x)\n", aacs);
+
+    aacs_close(aacs);
 
     return NULL;
 }
