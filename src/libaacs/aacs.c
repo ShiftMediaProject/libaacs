@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <gcrypt.h>
 
 #include "aacs.h"
 #include "crypto.h"

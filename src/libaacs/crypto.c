@@ -7,6 +7,7 @@
 #include <openssl/err.h>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
+#include <gcrypt.h>
 
 #include "crypto.h"
 
@@ -15,13 +16,20 @@ void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc);
 void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 {
     int a;
-    AES_KEY aes;
+    gcry_cipher_hd_t gcry_h;
     uint8_t seed[16] = { 0x7B, 0x10, 0x3C, 0x5D, 0xCB, 0x08, 0xC4, 0xE5, 0x1A, 0x27, 0xB0, 0x17, 0x99, 0x05, 0x3B, 0xD9 };
 
     seed[15] += inc;
 
-    AES_set_decrypt_key(src_key, 128, &aes);
-    AES_decrypt(seed, dst_key, &aes);
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+
+    gcry_cipher_setkey(gcry_h, src_key, 16);
+    gcry_cipher_decrypt (gcry_h, dst_key, 16, seed, 16);
+
+    gcry_cipher_close(gcry_h);
+
+    //AES_set_decrypt_key(src_key, 128, &aes);
+    //AES_decrypt(seed, dst_key, &aes);
 
     for (a = 0; a < 16; a++) {
         dst_key[a] ^= seed[a];
@@ -141,15 +149,6 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig, uint8
 
 void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
 {
-    EVP_MD_CTX mdctx;
-    unsigned int md_len;
-
-    memset(hash, 0, 20);
-
-    EVP_MD_CTX_init(&mdctx);
-
-    EVP_DigestInit(&mdctx, EVP_sha1());
-    EVP_DigestUpdate(&mdctx, ukf, len);
-    EVP_DigestFinal_ex(&mdctx, hash, &md_len);
+    gcry_md_hash_buffer(GCRY_MD_SHA1, hash, ukf, len);
 }
 

@@ -7,8 +7,6 @@
 
 #include <stdint.h>
 #include <unistd.h>
-#include <openssl/aes.h>
-#include <gcrypt.h>
 
 #include "mkb.h"
 #include "../file/configfile.h"
