@@ -130,63 +130,51 @@ void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_
 MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint8_t *host_nonce, uint8_t *host_key_point)
 {
 #if HAVE_LINUX_CDROM_H
-    FILE *fp;
-    int   fd = -1;
+    char *ptr;
+    char *file_path = malloc(strlen(path) + 1);
+    FILE_H *proc_mounts = malloc(sizeof(FILE_H));
+    struct mntent* mount_entry = NULL;
+    MMC *mmc = malloc(sizeof(MMC));
 
-    DEBUG(DBG_MMC, "Opening LINUX MMC drive %s...\n", path);
+    if (host_priv_key) memcpy(mmc->host_priv_key, host_priv_key, 20);
+    if (host_cert) memcpy(mmc->host_cert, host_cert, 92);
+    if (host_nonce) memcpy(mmc->host_nonce, host_nonce, 20);
+    if (host_key_point) memcpy(mmc->host_key_point, host_key_point, 40);
 
-    if ((fp = setmntent("/proc/mounts", "r"))) {
-        char *ptr;
-	char *file_path = strdup(path);
-        struct mntent* mount_entry;
+    memcpy(file_path, path, strlen(path) + 1);
+    // strip trailing '/'s
+    while (*(ptr = file_path + strlen(path)) == '/') {
+        *ptr-- = '\0';
+    }
 
-	// strip trailing '/'s
-	while (*(ptr = file_path + strlen(path)) == '/') {
-  	    *ptr-- = '\0';
-	}
+    DEBUG(DBG_MMC, "Opening LINUX MMC drive %s... (0x%08x)\n", file_path, mmc);
 
-        while ((mount_entry = getmntent(fp)) != NULL) {
+    if ((proc_mounts->internal = setmntent("/proc/mounts", "r"))) {
+        while ((mount_entry = getmntent(proc_mounts->internal)) != NULL)
             if (strcmp(mount_entry->mnt_dir, file_path) == 0) {
-                fd = open(mount_entry->mnt_fsname, O_RDONLY | O_NONBLOCK);
-                if (fd >= 0) {
-		    DEBUG(DBG_MMC, "LINUX MMC drive %s opened - fd: %d\n", mount_entry->mnt_fsname, fd);
-		    break;
-                } else {
-		    DEBUG(DBG_MMC, "FAILED opening LINUX MMC drive %s mounted to %s\n",
-			  file_path, mount_entry->mnt_fsname);
-		}
+                int a = open(mount_entry->mnt_fsname, O_RDONLY | O_NONBLOCK);
+                if (a >= 0) {
+                    mmc->fd = a;
+
+                    DEBUG(DBG_MMC, "LINUX MMC drive opened - fd: %d (0x%08x)\n", a, mmc);
+                }
             }
-	}
-
-	X_FREE(file_path);
-	endmntent(fp);
-    } else {
-        DEBUG(DBG_MMC, "Opening /proc/mounts FAILED\n");
-	return NULL;
     }
 
-    if (fd >= 0) {
-        MMC  *mmc = calloc(1, sizeof(MMC));
+    X_FREE(file_path);
+    X_FREE(proc_mounts->internal);
+    X_FREE(mount_entry);
+    X_FREE(proc_mounts);
 
-	mmc->fd = fd;
-	if (host_priv_key) memcpy(mmc->host_priv_key, host_priv_key, 20);
-	if (host_cert) memcpy(mmc->host_cert, host_cert, 92);
-	if (host_nonce) memcpy(mmc->host_nonce, host_nonce, 20);
-	if (host_key_point) memcpy(mmc->host_key_point, host_key_point, 40);
-
-	return mmc;
-    }
-
+    return mmc;
 #endif
-
-    DEBUG(DBG_MMC, "Opening LINUX MMC drive mounted to %s failed\n", path);
 
     return NULL;
 }
 
 void mmc_close(MMC *mmc)
 {
-    if (mmc->fd >= 0)
+    if (mmc->fd)
         close(mmc->fd);
 
     DEBUG(DBG_MMC, "Closed MMC drive (0x%08x)\n", mmc);
@@ -212,7 +200,7 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     _mmc_report_key(mmc, 0, 0, 0, 0, buf, 8);
     agid = (buf[7] & 0xff) >> 6;
 
-    int patched = 0; //todo: get rid of this
+    int patched = 1; //todo: get rid of this
     if (!patched) {
         memset(buf, 0, 116);
         buf[1] = 0x72;
