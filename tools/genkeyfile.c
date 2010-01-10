@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include "../src/file/configfile.h"
 
-#define OPTS "c:d:o:ha"
+#define OPTS "c:d:H:o:ha"
 
 /* Keys are stored in a binary file in a record format
  *
@@ -46,10 +46,13 @@ typedef struct confrecord
     unsigned char key2[16];     /* second key */
 } RECORDDATA;
 
+typedef int TConvAction(const char *infile, FILE *outfile);
+
 
 static char append_flag = 0;
 static const char *default_keydb   = "keydb.cfg";
 static const char *default_devkey  = "ProcessingDeviceKeysSimple.txt";
+static const char *default_hostkey = "HostKeyCertificate.txt";
 static const char *default_outfile = "keyfile.db";
 
 
@@ -74,6 +77,30 @@ static int ascii2hex(const char *ascii, unsigned char *hex, size_t count)
     }
     else {
         return -1;
+    }
+
+    return 0;
+}
+
+/*
+ * small helper function, check infile and execute convert function
+ */
+static int checkAndExecute(TConvAction *action, const char *infile, FILE *outfile)
+{
+    struct stat fsCheck;
+
+    if ( action && infile && infile[0] && outfile ) {
+    
+        if ( stat(infile, &fsCheck) == 0 ) {
+            if ( action(infile, outfile) ) {
+                fprintf(stderr, "while convert file '%s'\n", infile);
+                return -1;
+            }
+        }
+        else {
+            fprintf(stderr, "file '%s' missing\n", infile);
+            return -1;
+        }
     }
 
     return 0;
@@ -153,7 +180,7 @@ static int convertKeyDB2Config(const char *keydb, FILE *fpOutfile)
         }
 
         /* calculate file length from record count */
-        length = count * 46 + 10;	
+        length = count * 46 + 10;
  
         /* store file length in header */
         header.length[0] = length >> 16;
@@ -267,32 +294,150 @@ static int convertDeviceKey(const char *devkey, FILE *fpOutfile)
 }
 
 
+static int convertHostKeyCertificate(const char *hostkey, FILE *fpOutfile)
+{
+    FILE *fpHostKey = NULL;
+    size_t index = 0;
+    int    length = 0;
+    size_t nwrite;
+    unsigned char buffer[256];
+    size_t data_length;
+    RECORDHEADER header;
+
+    if ( fpOutfile && (fpHostKey = fopen(hostkey, "r")) ) {
+ 
+        /* seek the the last position */
+        fseek(fpOutfile, 0, SEEK_END);
+
+        /* read  */
+        while (!feof(fpHostKey)) {
+            if ( fgets(buffer, sizeof buffer, fpHostKey)) {
+
+		switch(index) {
+                    case 0: { /* line 1 = KF_HOST_PRIV_KEY */
+                        data_length = 20;
+                        unsigned char hex_data[data_length];
+
+                        if ( strlen(buffer) >= data_length ) {
+                            memset(&header, 0, sizeof header);
+                            buffer[data_length] = '\0';
+                            header.type = KF_HOST_PRIV_KEY;
+                            header.entry_length[3] = 0x14;
+                            header.count[1] = 0x01;
+                            header.length[2] = header.entry_length[3] + 10;
+
+                            /* write record header */
+                            nwrite = fwrite(&header, sizeof (char), sizeof header, fpOutfile);
+                            if ( nwrite != sizeof header ) {
+                                /* print error message and stop process */
+                                fprintf(stderr, "error while write file header\n");
+                                return -1;
+                            }
+
+                            /* convert data string into hex data */
+                            if ( ascii2hex(buffer, hex_data, data_length) ) {
+                                fprintf(stderr, "error while convert data buffer\n");
+                                return -1;
+                            }
+
+                            /* write data buffer (20 bytes) */
+                            nwrite = fwrite(hex_data, sizeof (char), data_length, fpOutfile);
+                            if ( nwrite != data_length ) {
+                                /* print error message and stop process */
+                                fprintf(stderr, "error while write record data\n");
+                                return -1;
+                            }
+                        }
+                    
+                        break;
+                    }
+                    case 1: { /* line 2 = KF_HOST_CERT */
+                        data_length = 92;
+                        unsigned char hex_data[data_length];
+
+                        if ( strlen(buffer) >= data_length ) {
+                            memset(&header, 0, sizeof header);
+                            buffer[data_length] = '\0';
+                            header.type = KF_HOST_PRIV_KEY;
+                            header.entry_length[3] = 0x5C;
+                            header.count[1] = 0x01;
+                            header.length[2] = header.entry_length[3] + 10;
+
+                            /* write record header */
+                            nwrite = fwrite(&header, sizeof (char), sizeof header, fpOutfile);
+                            if ( nwrite != sizeof header ) {
+                                /* print error message and stop process */
+                                fprintf(stderr, "error while write file header\n");
+                                return -1;
+                            }
+
+                            /* convert data string into hex data */
+                            if ( ascii2hex(buffer, hex_data, data_length) ) {
+                                fprintf(stderr, "error while convert data buffer\n");
+                                return -1;
+                            }
+
+                            /* write data buffer (92 bytes) */
+                            nwrite = fwrite(hex_data, sizeof (char), data_length, fpOutfile);
+                            if ( nwrite != data_length ) {
+                                /* print error message and stop process */
+                                fprintf(stderr, "error while write file header\n");
+                                return -1;
+                            }
+                        }
+                    }
+                }
+                index += 1;
+            }
+        }
+    }
+
+    /* close key db (input) file */
+    if ( fpHostKey ) {
+        fclose(fpHostKey);
+    }
+
+    return 0;
+}
+
+
+/*
+ * small usage function
+ */
 static int print_usage(const char *name)
 {
-    fprintf(stderr, "Usage: %s -a -h -c <in_keydb> -d <in_devkey> -o <out_keyfile>\n"
+    fprintf(stderr, "Usage: %s -a -h -c <in_keydb> -d <in_devkey> -H <in_hostkey> -o <out_keyfile>\n"
                     "    -a                append key information\n"
                     "    -h                print this usage\n"
                     "    -c <in_keydb>     keydb input file (default: %s)\n"
                     "    -d <in_devkey>    device key input file (default: %s)\n"
+                    "    -H <in_hostkey>   host key input file (default: %s)\n"
                     "    -o <out_keyfile>  keyfile file name (default: %s)\n", 
-                    name, default_keydb, default_devkey, default_outfile);
+                    name, default_keydb, default_devkey, default_hostkey, default_outfile);
     exit(EXIT_FAILURE);
 }
 
 
+/*
+ * main function
+ */
 int main(int argc, char *argv[])
 {
     FILE *fpOutput;
     char keydb_file[512];
     char devkey_file[512];
+    char hostkey_file[512];
     char out_keyfile[512];
     struct stat fsCheck;
     int opt;
 
-    strncpy(keydb_file,  "keydb.cfg", sizeof keydb_file);
-    strncpy(devkey_file, "ProcessingDeviceKeysSimple.txt", sizeof devkey_file);
-    strncpy(out_keyfile, "keyfile.db", sizeof out_keyfile);
+    /* init file buffer with default values */
+    strncpy(keydb_file,   default_keydb, sizeof keydb_file);
+    strncpy(devkey_file,  default_devkey, sizeof devkey_file);
+    strncpy(hostkey_file, default_hostkey, sizeof hostkey_file);
+    strncpy(out_keyfile,  default_outfile, sizeof out_keyfile);
 
+    /* parse all given arguments */
     do {
         opt = getopt(argc, argv, OPTS);
         switch(opt) {
@@ -305,6 +450,10 @@ int main(int argc, char *argv[])
 
             case 'd':
                 strncpy(devkey_file, optarg, sizeof devkey_file);
+                break;
+
+            case 'H':
+                strncpy(hostkey_file, optarg, sizeof hostkey_file); 
                 break;
 
             case 'o':
@@ -336,26 +485,16 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    if ( stat(keydb_file, &fsCheck) == 0 ) {
-        if ( convertKeyDB2Config(keydb_file, fpOutput) ) {
-            fprintf(stderr, "while convert keydb '%s' -> '%s'\n", 
-                    keydb_file, out_keyfile);
-        }
-    }
-    else {
-        fprintf(stderr, "file '%s' missing\n", keydb_file);
-    }
+    /* check and convert KEYDB.cfg file into internal config structure */
+    checkAndExecute(convertKeyDB2Config, keydb_file, fpOutput);
 
-    if ( stat(devkey_file, &fsCheck) == 0 ) {
-        if ( convertDeviceKey(devkey_file, fpOutput) ) {
-            fprintf(stderr, "while convert device key '%s' -> '%s'\n",
-                    keydb_file, out_keyfile);
-        }
-    }
-    else {
-        fprintf(stderr, "file '%s' missing\n", devkey_file);
-    }
+    /* check and convert DeviceKey file into internal config structure */
+    checkAndExecute(convertDeviceKey, devkey_file, fpOutput);
 
+    /* check and convert HostKeyCertificate file info internal config structure */
+    checkAndExecute(convertHostKeyCertificate, hostkey_file, fpOutput);
+
+    /* close current output file */
     if ( fpOutput ) {
         fclose(fpOutput);
     }
