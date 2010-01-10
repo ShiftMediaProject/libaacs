@@ -132,8 +132,7 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
 #if HAVE_LINUX_CDROM_H
     char *ptr;
     char *file_path = malloc(strlen(path) + 1);
-    FILE_H *proc_mounts = malloc(sizeof(FILE_H));
-    struct mntent* mount_entry = NULL;
+    FILE *proc_mounts;
     MMC *mmc = malloc(sizeof(MMC));
 
     if (host_priv_key) memcpy(mmc->host_priv_key, host_priv_key, 20);
@@ -149,8 +148,10 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
 
     DEBUG(DBG_MMC, "Opening LINUX MMC drive %s... (0x%08x)\n", file_path, mmc);
 
-    if ((proc_mounts->internal = setmntent("/proc/mounts", "r"))) {
-        while ((mount_entry = getmntent(proc_mounts->internal)) != NULL)
+    if ((proc_mounts = setmntent("/proc/mounts", "r"))) {
+        struct mntent* mount_entry;
+
+        while ((mount_entry = getmntent(proc_mounts)) != NULL) {
             if (strcmp(mount_entry->mnt_dir, file_path) == 0) {
                 int a = open(mount_entry->mnt_fsname, O_RDONLY | O_NONBLOCK);
                 if (a >= 0) {
@@ -159,12 +160,12 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
                     DEBUG(DBG_MMC, "LINUX MMC drive opened - fd: %d (0x%08x)\n", a, mmc);
                 }
             }
+        }
+
+        endmntent(proc_mounts);
     }
 
     X_FREE(file_path);
-    X_FREE(proc_mounts->internal);
-    X_FREE(mount_entry);
-    X_FREE(proc_mounts);
 
     return mmc;
 #endif
