@@ -38,7 +38,7 @@ void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_
 int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t rx)
 {
 #if HAVE_LINUX_CDROM_H
-    if (mmc->fd) {
+    if (mmc->fd >= 0) {
         struct cdrom_generic_command cgc;
         struct request_sense sense;
 
