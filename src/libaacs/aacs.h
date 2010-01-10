@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <openssl/aes.h>
+#include <gcrypt.h>
 
 #include "mkb.h"
 #include "../file/configfile.h"
@@ -22,6 +23,7 @@ struct aacs {
     uint8_t iv[16];
     AES_KEY aes;
     CONFIGFILE *kf;
+    gcry_cipher_hd_t gcry_h;
 };
 
 AACS *aacs_open(const char *path, const char *keyfile_path);

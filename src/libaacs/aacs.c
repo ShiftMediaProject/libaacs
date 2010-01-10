@@ -22,8 +22,9 @@
 
 int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t *mk)
 {
-    int a;
+    int a, ret = 0;
     AES_KEY aes;
+    gcry_cipher_hd_t gcry_h;
     uint8_t dec_vd[16];
 
     DEBUG(DBG_AACS, "Validate processing key %s...\n", print_hex(pk, 16));
@@ -32,22 +33,32 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t
     DEBUG(DBG_AACS, "   cvalue: %s\n", print_hex(cvalue, 16));
     DEBUG(DBG_AACS, "   Verification data: %s\n", print_hex(vd, 16));
 
-    AES_set_decrypt_key(pk, 128, &aes);
-    AES_decrypt(cvalue, mk, &aes);
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, NULL);
+
+    gcry_cipher_setkey(gcry_h, pk, 16);
+    gcry_cipher_decrypt (gcry_h, mk, 16, cvalue, 16);
+
+    //AES_set_decrypt_key(pk, 128, &aes);
+    //AES_decrypt(cvalue, mk, &aes);
 
     for (a = 0; a < 4; a++) {
         mk[a + 12] ^= uv[a];
     }
 
-    AES_set_decrypt_key(mk, 128, &aes);
-    AES_decrypt(vd, dec_vd, &aes);
+    gcry_cipher_setkey(gcry_h, mk, 16);
+    gcry_cipher_decrypt (gcry_h, dec_vd, 16, vd, 16);
+
+   // AES_set_decrypt_key(mk, 128, &aes);
+   // AES_decrypt(vd, dec_vd, &aes);
 
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
         DEBUG(DBG_AACS, "Processing key is valid!\n");
-        return 1;
+        ret = 1;
     }
 
-    return 0;
+    gcry_cipher_close(gcry_h);
+
+    return ret;
 }
 
 int _calc_mk(AACS *aacs, const char *path)
@@ -316,6 +327,8 @@ AACS *aacs_open(const char *path, const char *configfile_path)
     DEBUG(DBG_AACS, "libaacs v%s [%ld]\n", LIBAACS_VERSION, sizeof(AACS));
 
     AACS *aacs = calloc(1, sizeof(AACS));
+
+    gcry_cipher_open (aacs->gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, NULL);
 
     aacs->uks = NULL;
     aacs->kf = NULL;
