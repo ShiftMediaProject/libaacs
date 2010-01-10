@@ -174,7 +174,7 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
 
 void mmc_close(MMC *mmc)
 {
-    if (mmc->fd)
+    if (mmc->fd >= 0)
         close(mmc->fd);
 
     DEBUG(DBG_MMC, "Closed MMC drive (0x%08x)\n", mmc);
