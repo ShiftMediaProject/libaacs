@@ -208,7 +208,7 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     _mmc_report_key(mmc, 0, 0, 0, 0, buf, 8);
     agid = (buf[7] & 0xff) >> 6;
 
-    int patched = 1; //todo: get rid of this
+    int patched = 0;
     if (!patched) {
         memset(buf, 0, 116);
         buf[1] = 0x72;
