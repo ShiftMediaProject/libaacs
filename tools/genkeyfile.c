@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include "../src/file/configfile.h"
 
-#define OPTS "c:d:H:o:ha"
+#define OPTS "c:d:H:o:hai"
 
 /* Keys are stored in a binary file in a record format
  *
@@ -50,6 +50,7 @@ typedef int TConvAction(const char *infile, FILE *outfile);
 
 
 static char append_flag = 0;
+static char interactive_flag = 0;
 static const char *default_keydb   = "keydb.cfg";
 static const char *default_devkey  = "ProcessingDeviceKeysSimple.txt";
 static const char *default_hostkey = "HostKeyCertificate.txt";
@@ -402,13 +403,118 @@ static int convertHostKeyCertificate(const char *hostkey, FILE *fpOutfile)
 
 
 /*
+ * 
+ */
+static int startInteractiveMode(const char *input, FILE *fpOutfile)
+{
+    FILE *fpInput;
+    char b_loop = 0;
+    long idx;
+    unsigned int type;
+    long record_count;
+    long record_length = -1;
+    char buffer[1024];
+    char hex_data[512];
+    char *pos;
+    RECORDHEADER hdr;
+
+    /* check interactive flag and read information */
+    if ( interactive_flag && fpOutfile && input && input[0] ) {
+
+        fpInput = fopen(input, "r");
+        if ( fpInput ) {
+            do {
+                memset(buffer, 0, sizeof buffer);
+                memset(&hdr, 0, sizeof hdr);
+
+                /* seek the the last position */
+                fseek(fpOutfile, 0, SEEK_END);
+
+                printf("Please enter a record type: ");
+                if ( !fgets(buffer, sizeof buffer, fpInput) ) {
+                    fprintf(stderr, "while read record type\n");
+                    return -1;
+                }
+
+                hdr.type =  atol(buffer);
+                
+                printf("How many entries? ");
+                if ( !fgets(buffer, sizeof buffer, fpInput) ) {
+                    fprintf(stderr, "while read record count\n");
+                    return -1;
+                }
+
+                record_count = atol(buffer);
+
+                /* store record count in header */
+                hdr.count[0] = record_count >> 8;
+                hdr.count[1] = record_count & 0xFF;
+
+                for ( idx = 1; idx <= record_count; idx += 1)
+                {
+                    memset(buffer, 0, sizeof buffer);
+                    printf("Enter entry #%ld in ascii-hex: ", idx);
+                    if ( !fgets(buffer, sizeof buffer, fpInput) ) {
+                        fprintf(stderr, "while read record data (index = %ld)\n", idx);
+                        return -1;
+                    }
+
+                    if ( !(pos = strrchr(buffer, '\0'))) {
+                        pos[0] = '\0';
+                    }
+
+                    if ( idx == 1 ) {
+                        /* read first record */
+                        record_length = strlen(buffer) / 2;
+                        hdr.length[0] = record_length + 10 >> 16;
+                        hdr.length[1] = record_length + 10 >> 8;
+                        hdr.length[2] = record_length + 10 & 0xFF;
+                        hdr.entry_length[0] = record_length >> 24;
+                        hdr.entry_length[1] = record_length >> 16;
+                        hdr.entry_length[2] = record_length >> 8;
+                        hdr.entry_length[3] = record_length & 0xFF;
+
+                        fwrite(&hdr, 1, sizeof hdr, fpOutfile);
+                    }
+
+                    if ( ascii2hex(buffer, hex_data, record_length) ) {
+                        fprintf(stderr, "error while convert data buffer\n");
+                        return -1;
+                    }
+
+                    if ( fwrite(hex_data, sizeof(char), record_length, fpOutfile) != record_length ) {
+                        fprintf(stderr, "error while write record data (%ld bytes)\n", record_length);
+                        return -1;
+                    }
+                }
+
+                printf("Would you like to enter another entry (y/n)? ");
+                if ( (fgets(buffer, sizeof buffer, fpInput))) {
+                    if ( buffer[0] == 'y' || buffer[0] == 'Y' ) {
+                        b_loop = 1;
+                    }
+                    else {
+                        b_loop = 0;
+                    }
+                }
+            } while ( b_loop );
+        }
+    }
+    
+    return 0;
+}
+
+
+
+/*
  * small usage function
  */
 static int print_usage(const char *name)
 {
-    fprintf(stderr, "Usage: %s -a -h -c <in_keydb> -d <in_devkey> -H <in_hostkey> -o <out_keyfile>\n"
+    fprintf(stderr, "Usage: %s -a -h -i -c <in_keydb> -d <in_devkey> -H <in_hostkey> -o <out_keyfile>\n"
                     "    -a                append key information\n"
                     "    -h                print this usage\n"
+                    "    -i                start interactive mode\n"
                     "    -c <in_keydb>     keydb input file (default: %s)\n"
                     "    -d <in_devkey>    device key input file (default: %s)\n"
                     "    -H <in_hostkey>   host key input file (default: %s)\n"
@@ -468,6 +574,10 @@ int main(int argc, char *argv[])
                 append_flag = 1;
                 break;
 
+            case 'i':
+                interactive_flag = 1;
+                break;
+
             default:
               print_usage(argv[0]);
         }
@@ -494,6 +604,9 @@ int main(int argc, char *argv[])
     /* check and convert HostKeyCertificate file info internal config structure */
     checkAndExecute(convertHostKeyCertificate, hostkey_file, fpOutput);
 
+    /* check interactive flag and start interactive mode */
+    checkAndExecute(startInteractiveMode, "/dev/stdin", fpOutput);
+
     /* close current output file */
     if ( fpOutput ) {
         fclose(fpOutput);
@@ -501,3 +614,4 @@ int main(int argc, char *argv[])
 
     return -1;
 }
+
