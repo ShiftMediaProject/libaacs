@@ -151,6 +151,7 @@ int _calc_uks(AACS *aacs, const char *path)
     uint8_t buf[16];
     char f_name[100];
     uint64_t f_pos;
+    int i;
     gcry_cipher_hd_t gcry_h;
 
     DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
@@ -159,26 +160,47 @@ int _calc_uks(AACS *aacs, const char *path)
 
     if ((fp = file_open(f_name, "rb"))) {
         if ((file_read(fp, buf, 4)) == 4) {
-            f_pos = MKINT_BE32(buf) + 48;
+            f_pos = MKINT_BE32(buf);
 
+            // Read number of keys
             file_seek(fp, f_pos, SEEK_SET);
-            if ((file_read(fp, buf, 16)) == 16) {
-                // TODO: support more than a single UK!!!
-                aacs->uks = malloc(16);
+            if ((file_read(fp, buf, 2)) == 2) {
+                aacs->num_uks = MKINT_BE16(buf);
+
+                X_FREE(aacs->uks);
+                aacs->uks = calloc(aacs->num_uks, 16);
+
+                DEBUG(DBG_AACS, "%d CPS unit keys\n", aacs->num_uks);
+
+            } else {
+                aacs->num_uks = 0;
+                DEBUG(DBG_AACS, "Error reading number of unit keys!\n");
+            }
+
+            // Read keys
+            for (i = 0; i < aacs->num_uks; i++) {
+                f_pos += 48;
+
+                file_seek(fp, f_pos, SEEK_SET);
+                if ((file_read(fp, buf, 16)) != 16) {
+                    DEBUG(DBG_AACS, "Unit key %d: read error\n", i);
+                    aacs->num_uks = i;
+                    break;
+                }
 
                 gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
 
                 gcry_cipher_setkey(gcry_h, aacs->vuk, 16);
-                gcry_cipher_decrypt (gcry_h, aacs->uks, 16, buf, 16);
+                gcry_cipher_decrypt (gcry_h, aacs->uks + 16*i, 16, buf, 16);
 
                 gcry_cipher_close(gcry_h);
 
-                file_close(fp);
-
-                DEBUG(DBG_AACS, "Unit key 1: %s\n", print_hex(aacs->uks, 16));
-
-                return 1;
+                DEBUG(DBG_AACS, "Unit key %d: %s\n", i, print_hex(aacs->uks + 16*i, 16));
             }
+
+            file_close(fp);
+
+            return aacs->num_uks;
         }
 
         file_close(fp);
