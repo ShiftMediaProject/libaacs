@@ -358,7 +358,7 @@ static int convertHostKeyCertificate(const char *hostkey, FILE *fpOutfile)
                         if ( strlen(buffer) >= data_length ) {
                             memset(&header, 0, sizeof header);
                             buffer[data_length] = '\0';
-                            header.type = KF_HOST_PRIV_KEY;
+                            header.type = KF_HOST_CERT;
                             header.entry_length[3] = 0x5C;
                             header.count[1] = 0x01;
                             header.length[2] = header.entry_length[3] + 10;
