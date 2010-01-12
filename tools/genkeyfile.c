@@ -584,7 +584,7 @@ int main(int argc, char *argv[])
     } while (opt != -1);
 
     if ( append_flag == 1 ) {
-        fpOutput = fopen(out_keyfile, "a");
+        fpOutput = fopen(out_keyfile, "r+");
     }
     else {
         fpOutput = fopen(out_keyfile, "w");
