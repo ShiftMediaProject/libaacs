@@ -1,5 +1,6 @@
 
-AM_CPPFLAGS = -I$(top_builddir)/src
+AM_CPPFLAGS = -I$(top_builddir)/src @GCRYPT_CFLAGS@
+libaacs_la_LIBADD = @GCRYPT_LIBS@
 
 lib_LTLIBRARIES=libaacs.la
 
