@@ -130,8 +130,8 @@ void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_
 MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint8_t *host_nonce, uint8_t *host_key_point)
 {
 #if HAVE_LINUX_CDROM_H
-    char *ptr;
     char *file_path = strdup(path);
+    int   path_len  = strlen(file_path);
     FILE *proc_mounts;
     MMC *mmc = malloc(sizeof(MMC));
 
@@ -142,8 +142,8 @@ MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint
     mmc->fd = -1;
 
     // strip trailing '/'s
-    while (*(ptr = file_path + strlen(path)) == '/') {
-        *ptr-- = '\0';
+    while (path_len > 0 && file_path[--path_len] == '/') {
+        file_path[path_len] = '\0';
     }
 
     DEBUG(DBG_MMC, "Opening LINUX MMC drive %s... (0x%08x)\n", file_path, mmc);
