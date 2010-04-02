@@ -192,7 +192,7 @@ void mmc_close(MMC *mmc)
 int mmc_read_vid(MMC *mmc, uint8_t *vid)
 {
     int a;
-    uint8_t agid, buf[116], cmd[16], hkp[40], hks[40], dn[20], dc[92], dkp[40], dks[40];
+    uint8_t agid, buf[116], cmd[16], hks[40], dn[20], dc[92], dkp[40], dks[40];
 
     memset(cmd, 0, 16);
     memset(hks, 0, 40);
@@ -229,7 +229,7 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
 
         memset(buf, 0, 84);
         buf[1] = 0x52;
-        memcpy(buf + 4, hkp, 40);
+        memcpy(buf + 4, mmc->host_key_point, 40);
         memcpy(buf + 44, hks, 40);
         _mmc_send_key(mmc, agid, 0x02, buf, 84); // send signed host key and point
     }
