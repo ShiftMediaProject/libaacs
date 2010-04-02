@@ -17,6 +17,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <errno.h>  /* errno */
+#include <string.h> /* strerror() */
+
 #if HAVE_LINUX_CDROM_H
 #include <linux/cdrom.h>
 #endif
@@ -72,12 +75,12 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, 
         mmc->asc = sense.asc;
         mmc->ascq = sense.ascq;
 
-        if (a == 0) {
-            DEBUG(DBG_MMC, "  Send succeeded! (0x%08x)\n", mmc);
+        if (a >= 0) {
+            DEBUG(DBG_MMC, "  Send succeeded! [%d] (0x%08x)\n", mmc, a);
             return 1;
-        } else {
-            DEBUG(DBG_MMC, "  Send failed! [%d] (0x%08x)\n", a, mmc);
         }
+
+        DEBUG(DBG_MMC, "  Send failed! [%d] %s (0x%08x)\n", a, strerror(errno), mmc);
     }
 #endif
 
