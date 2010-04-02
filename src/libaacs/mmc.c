@@ -30,12 +30,8 @@
 #include "../util/macro.h"
 #include "../util/logging.h"
 
-int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t rx);
-void _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr, uint8_t blocks, uint8_t format, uint8_t *buf, uint16_t len);
-void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_t len);
 
-
-int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t rx)
+static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t rx)
 {
 #if HAVE_LINUX_CDROM_H
     if (mmc->fd >= 0) {
@@ -88,7 +84,7 @@ int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t 
     return 0;
 }
 
-void _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr, uint8_t blocks, uint8_t format, uint8_t *buf, uint16_t len)
+static void _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr, uint8_t blocks, uint8_t format, uint8_t *buf, uint16_t len)
 {
     uint8_t cmd[16];
     memset(cmd, 0, 16);
@@ -110,7 +106,7 @@ void _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr, uint8_t blocks, uint
     _mmc_send_cmd(mmc, cmd, buf, 0, len);
 }
 
-void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_t len)
+static void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_t len)
 {
     uint8_t cmd[16];
     memset(cmd, 0, 16);
