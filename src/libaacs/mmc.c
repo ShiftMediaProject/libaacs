@@ -126,7 +126,7 @@ static void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, 
     _mmc_send_cmd(mmc, cmd, buf, len, 0);
 }
 
-MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint8_t *host_nonce, uint8_t *host_key_point)
+MMC *mmc_open(const char *path, const uint8_t *host_priv_key, const uint8_t *host_cert, const uint8_t *host_nonce, const uint8_t *host_key_point)
 {
 #if HAVE_LINUX_CDROM_H
     char *file_path = strdup(path);

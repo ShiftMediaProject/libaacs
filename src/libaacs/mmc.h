@@ -12,7 +12,7 @@ struct mmc {
     uint8_t host_priv_key[20], host_cert[92], host_nonce[20], host_key_point[40];
 };
 
-MMC *mmc_open(const char *path, uint8_t *host_priv_key, uint8_t *host_cert, uint8_t *host_nonce, uint8_t *host_key_point);
+MMC *mmc_open(const char *path, const uint8_t *host_priv_key, const uint8_t *host_cert, const uint8_t *host_nonce, const uint8_t *host_key_point);
 void mmc_close(MMC *drive);
 int mmc_read_vid(MMC *mmc, uint8_t *vid);
 
