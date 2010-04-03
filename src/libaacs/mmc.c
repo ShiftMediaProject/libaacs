@@ -76,7 +76,7 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, 
         mmc->ascq = sense.ascq;
 
         if (a >= 0) {
-            DEBUG(DBG_MMC, "  Send succeeded! [%d] (0x%08x)\n", mmc, a);
+            DEBUG(DBG_MMC, "  Send succeeded! [%d] (0x%08x)\n", a, mmc);
             return 1;
         }
 
