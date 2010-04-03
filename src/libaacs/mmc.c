@@ -87,7 +87,7 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, 
     return 0;
 }
 
-static void _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr, uint8_t blocks, uint8_t format, uint8_t *buf, uint16_t len)
+static int _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr, uint8_t blocks, uint8_t format, uint8_t *buf, uint16_t len)
 {
     uint8_t cmd[16];
     memset(cmd, 0, 16);
@@ -104,12 +104,12 @@ static void _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr, uint8_t block
     cmd[7] = 0x02;
     cmd[8] = (len >> 8) & 0xff;
     cmd[9] = len & 0xff;
-    cmd[10] = agid << 6 | (format & 0x3f);
+    cmd[10] = (agid << 6) | (format & 0x3f);
 
-    _mmc_send_cmd(mmc, cmd, buf, 0, len);
+    return _mmc_send_cmd(mmc, cmd, buf, 0, len);
 }
 
-static void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_t len)
+static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_t len)
 {
     uint8_t cmd[16];
     memset(cmd, 0, 16);
@@ -120,10 +120,40 @@ static void _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, 
     cmd[7] = 0x02;
     cmd[8] = (len >> 8) & 0xff;
     cmd[9] = len & 0xff;
-    cmd[10] = agid << 6 | (format & 0x3f);
+    cmd[10] = (agid << 6) | (format & 0x3f);
 
     DEBUG(DBG_MMC, "cmd: %s\n", print_hex(cmd, 16), 16);
-    _mmc_send_cmd(mmc, cmd, buf, len, 0);
+    return _mmc_send_cmd(mmc, cmd, buf, len, 0);
+}
+
+static int _mmc_invalidate_agid(MMC *mmc, uint8_t agid)
+{
+    uint8_t buf[2];
+    memset(buf, 0, sizeof(buf));
+
+    return _mmc_report_key(mmc, agid, 0, 0, 0x3f, buf, 2);
+}
+
+static void _mmc_invalidate_agids(MMC *mmc)
+{
+    int     agid;
+
+    /* invalidate all agids */
+    for (agid = 0; agid < 4; agid++) {
+        _mmc_invalidate_agid(mmc, agid);
+    }
+}
+
+static int _mmc_report_agid(MMC *mmc, uint8_t *agid)
+{
+    uint8_t buf[8];
+    memset(buf, 0, sizeof(buf));
+
+    int result = _mmc_report_key(mmc, 0, 0, 0, 0, buf, 8);
+    if (result) {
+        *agid = (buf[7] & 0xff) >> 6;
+    }
+    return result;
 }
 
 MMC *mmc_open(const char *path, const uint8_t *host_priv_key, const uint8_t *host_cert, const uint8_t *host_nonce, const uint8_t *host_key_point)
@@ -191,8 +221,7 @@ void mmc_close(MMC *mmc)
 
 int mmc_read_vid(MMC *mmc, uint8_t *vid)
 {
-    int a;
-    uint8_t agid, buf[116], cmd[16], hks[40], dn[20], dc[92], dkp[40], dks[40];
+    uint8_t agid = 0, buf[116], cmd[16], hks[40], dn[20], dc[92], dkp[40], dks[40];
 
     memset(cmd, 0, 16);
     memset(hks, 0, 40);
@@ -200,12 +229,13 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
 
     DEBUG(DBG_MMC, "Reading VID from drive... (0x%08x)\n", mmc);
 
-    for (a = 0; a < 4; a++) {
-        _mmc_report_key(mmc, a, 0, 0, 0x3f, buf, 2);
-    }
+    _mmc_invalidate_agids(mmc);
 
-    _mmc_report_key(mmc, 0, 0, 0, 0, buf, 8);
-    agid = (buf[7] & 0xff) >> 6;
+    if (!_mmc_report_agid(mmc, &agid)) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive (0x%08x)\n", mmc);
+        return 0;
+    }
+    DEBUG(DBG_MMC, "Got AGID from drive: %d (0x%08x)\n", agid, mmc);
 
     int patched = 0;
     if (!patched) {
@@ -248,10 +278,14 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
 
         DEBUG(DBG_MMC, "VID: %s (0x%08x)\n", print_hex(vid, 16), mmc);
 
+        _mmc_invalidate_agid(mmc, agid);
+
         return 1;
     }
 
-    DEBUG(DBG_MMC, "Unable to read VID from drive! (0x%08x)\n", mmc);
+    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive! (0x%08x)\n", mmc);
+
+    _mmc_invalidate_agid(mmc, agid);
 
     return 0;
 }
