@@ -64,11 +64,11 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, 
 
         int a = ioctl(mmc->fd, CDROM_SEND_PACKET, &cgc);
 
-        DEBUG(DBG_MMC, "Send LINUX MMC cmd %s: (0x%08x)\n", print_hex((uint8_t *)cmd, 16), mmc);
+        DEBUG(DBG_MMC, "Send LINUX MMC cmd %s: (%p)\n", print_hex((uint8_t *)cmd, 16), mmc);
         if (tx) {
-            DEBUG(DBG_MMC, "  Buffer: %s -> (0x%08x)\n", print_hex(buf, tx), mmc);
+            DEBUG(DBG_MMC, "  Buffer: %s -> (%p)\n", print_hex(buf, tx), mmc);
         } else {
-            DEBUG(DBG_MMC, "  Buffer: %s <- (0x%08x)\n", print_hex(buf, rx), mmc);
+            DEBUG(DBG_MMC, "  Buffer: %s <- (%p)\n", print_hex(buf, rx), mmc);
         }
 
         mmc->sk = sense.sense_key & 0x0f;
@@ -76,11 +76,11 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, 
         mmc->ascq = sense.ascq;
 
         if (a >= 0) {
-            DEBUG(DBG_MMC, "  Send succeeded! [%d] (0x%08x)\n", a, mmc);
+            DEBUG(DBG_MMC, "  Send succeeded! [%d] (%p)\n", a, mmc);
             return 1;
         }
 
-        DEBUG(DBG_MMC, "  Send failed! [%d] %s (0x%08x)\n", a, strerror(errno), mmc);
+        DEBUG(DBG_MMC, "  Send failed! [%d] %s (%p)\n", a, strerror(errno), mmc);
     }
 #endif
 
@@ -93,7 +93,7 @@ static int _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr, uint8_t blocks
     memset(cmd, 0, 16);
     memset(buf, 0, len);
 
-    DEBUG(DBG_MMC, "MMC report key... (0x%08x)\n", mmc);
+    DEBUG(DBG_MMC, "MMC report key... (%p)\n", mmc);
 
     cmd[0] = 0xa4;
     cmd[2] = (addr >> 24) & 0xff;
@@ -114,7 +114,7 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, u
     uint8_t cmd[16];
     memset(cmd, 0, 16);
 
-    DEBUG(DBG_MMC, "MMC send key [%d] %s... (0x%08x)\n", len, print_hex(buf, len),mmc);
+    DEBUG(DBG_MMC, "MMC send key [%d] %s... (%p)\n", len, print_hex(buf, len), mmc);
 
     cmd[0] = 0xa3;
     cmd[7] = 0x02;
@@ -122,7 +122,7 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, u
     cmd[9] = len & 0xff;
     cmd[10] = (agid << 6) | (format & 0x3f);
 
-    DEBUG(DBG_MMC, "cmd: %s\n", print_hex(cmd, 16), 16);
+    DEBUG(DBG_MMC, "cmd: %s (%p)\n", print_hex(cmd, 16), mmc);
     return _mmc_send_cmd(mmc, cmd, buf, len, 0);
 }
 
@@ -175,7 +175,7 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key, const uint8_t *hos
         file_path[path_len] = '\0';
     }
 
-    DEBUG(DBG_MMC, "Opening LINUX MMC drive %s... (0x%08x)\n", file_path, mmc);
+    DEBUG(DBG_MMC, "Opening LINUX MMC drive %s... (%p)\n", file_path, mmc);
 
     if ((proc_mounts = setmntent("/proc/mounts", "r"))) {
         struct mntent* mount_entry;
@@ -186,11 +186,11 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key, const uint8_t *hos
                 if (a >= 0) {
                     mmc->fd = a;
 
-                    DEBUG(DBG_MMC, "LINUX MMC drive opened - fd: %d (0x%08x)\n", a, mmc);
+                    DEBUG(DBG_MMC, "LINUX MMC drive opened - fd: %d (%p)\n", a, mmc);
                     break;
                 }
 
-                DEBUG(DBG_MMC, "Failed opening LINUX MMC drive %s (0x%08x)\n", file_path, mmc);
+                DEBUG(DBG_MMC, "Failed opening LINUX MMC drive %s (%p)\n", file_path, mmc);
             }
         }
 
@@ -214,7 +214,7 @@ void mmc_close(MMC *mmc)
     if (mmc->fd >= 0)
         close(mmc->fd);
 
-    DEBUG(DBG_MMC, "Closed MMC drive (0x%08x)\n", mmc);
+    DEBUG(DBG_MMC, "Closed MMC drive (%p)\n", mmc);
 
     X_FREE(mmc);
 }
@@ -227,15 +227,15 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     memset(hks, 0, 40);
     memset(buf, 0, 116);
 
-    DEBUG(DBG_MMC, "Reading VID from drive... (0x%08x)\n", mmc);
+    DEBUG(DBG_MMC, "Reading VID from drive... (%p)\n", mmc);
 
     _mmc_invalidate_agids(mmc);
 
     if (!_mmc_report_agid(mmc, &agid)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive (0x%08x)\n", mmc);
+        DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive (%p)\n", mmc);
         return 0;
     }
-    DEBUG(DBG_MMC, "Got AGID from drive: %d (0x%08x)\n", agid, mmc);
+    DEBUG(DBG_MMC, "Got AGID from drive: %d (%p)\n", agid, mmc);
 
     int patched = 0;
     if (!patched) {
@@ -276,14 +276,14 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     if (_mmc_send_cmd(mmc, cmd, buf, 0, 36)) {
         memcpy(vid, buf + 4, 16);
 
-        DEBUG(DBG_MMC, "VID: %s (0x%08x)\n", print_hex(vid, 16), mmc);
+        DEBUG(DBG_MMC, "VID: %s (%p)\n", print_hex(vid, 16), mmc);
 
         _mmc_invalidate_agid(mmc, agid);
 
         return 1;
     }
 
-    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive! (0x%08x)\n", mmc);
+    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive! (%p)\n", mmc);
 
     _mmc_invalidate_agid(mmc, agid);
 

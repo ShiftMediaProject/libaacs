@@ -29,7 +29,7 @@ uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
         }
 
         if (mkb->buf[pos] == type) {
-            DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (0x%08x)\n", type, mkb->buf + pos);
+            DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (%p)\n", type, mkb->buf + pos);
 
             return mkb->buf + pos;
         }
@@ -47,7 +47,7 @@ MKB *mkb_open(const char *path)
     MKB *mkb = malloc(sizeof(MKB));
 
     snprintf(f_name, 100, "%s/AACS/MKB_RO.inf", path);
-    DEBUG(DBG_MKB, "Opening MKB %s... (0x%08x)\n", f_name, mkb);
+    DEBUG(DBG_MKB, "Opening MKB %s... (%p)\n", f_name, mkb);
 
     if ((fp = file_open(f_name, "rb"))) {
         file_seek(fp, 0, SEEK_END);
@@ -58,14 +58,14 @@ MKB *mkb_open(const char *path)
 
         file_read(fp, mkb->buf, mkb->size);
 
-        DEBUG(DBG_MKB, "MKB size: %d (0x%08x)\n", mkb->size, mkb);
-        DEBUG(DBG_MKB, "MKB version: %d (0x%08x)\n", mkb_version(mkb), mkb);
+        DEBUG(DBG_MKB, "MKB size: %zd (%p)\n", mkb->size, mkb);
+        DEBUG(DBG_MKB, "MKB version: %d (%p)\n", mkb_version(mkb), mkb);
 
         file_close(fp);
         return mkb;
     }
 
-    DEBUG(DBG_MKB, "Error opening MKB! (0x%08x)\n", mkb);
+    DEBUG(DBG_MKB, "Error opening MKB! (%p)\n", mkb);
 
     return NULL;
 }

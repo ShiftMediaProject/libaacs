@@ -10,6 +10,10 @@
 #include <stdlib.h>
 #endif
 
+#if HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <gcrypt.h>
@@ -264,7 +268,7 @@ int _find_vuk(AACS *aacs, const char *path)
         if ((file_read(fp, ukf_buf, f_size)) == f_size) {
 
         } else {
-            DEBUG(DBG_AACS, "Failed to read %d bytes from unit key file!\n", f_size);
+            DEBUG(DBG_AACS, "Failed to read %"PRIu64" bytes from unit key file!\n", f_size);
             file_close(fp);
             X_FREE(ukf_buf);
             return 0;
@@ -334,7 +338,7 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset, uint3
     gcry_cipher_close(gcry_h);
 
     if (_verify_ts(tmp_buf,len)) {
-        DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %ld (0x%08x)\n", len % 6144 ? "PARTIAL" : "FULL", len, offset, aacs);
+        DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %ld (%p)\n", len % 6144 ? "PARTIAL" : "FULL", len, offset, aacs);
 
         memcpy(buf, tmp_buf, len);
 
@@ -363,7 +367,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
                 configfile_close(aacs->kf);
                 aacs->kf = NULL;
 
-                DEBUG(DBG_AACS, "AACS initialized! (0x%08x)\n", aacs);
+                DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
                 return aacs;
             }
         }
@@ -376,7 +380,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
                     configfile_close(aacs->kf);
                     aacs->kf = NULL;
 
-                    DEBUG(DBG_AACS, "AACS initialized! (0x%08x)\n", aacs);
+                    DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
                     return aacs;
                 }
             }
@@ -386,7 +390,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
         aacs->kf = NULL;
     }
 
-    DEBUG(DBG_AACS, "Failed to initialize AACS! (0x%08x)\n", aacs);
+    DEBUG(DBG_AACS, "Failed to initialize AACS! (%p)\n", aacs);
 
     aacs_close(aacs);
 
@@ -397,7 +401,7 @@ void aacs_close(AACS *aacs)
 {
     X_FREE(aacs->uks);
 
-    DEBUG(DBG_AACS, "AACS destroyed! (0x%08x)\n", aacs);
+    DEBUG(DBG_AACS, "AACS destroyed! (%p)\n", aacs);
 
     X_FREE(aacs);
 }
