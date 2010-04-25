@@ -156,6 +156,78 @@ static int _mmc_report_agid(MMC *mmc, uint8_t *agid)
     return result;
 }
 
+static int _mmc_send_host_cert(MMC *mmc, uint8_t agid, const uint8_t *host_nonce, const uint8_t *host_cert)
+{
+    uint8_t buf[116];
+    memset(buf, 0, sizeof(buf));
+
+    buf[1] = 0x72;
+    memcpy(buf + 4,  host_nonce, 20);
+    memcpy(buf + 24, host_cert,  92);
+
+    return _mmc_send_key(mmc, agid, 0x01, buf, 116);
+}
+
+static int _mmc_read_drive_cert(MMC *mmc, uint8_t agid, uint8_t *drive_nonce, uint8_t *drive_cert)
+{
+    uint8_t buf[116];
+    memset(buf, 0, sizeof(buf));
+
+    if (_mmc_report_key(mmc, agid, 0, 0, 0x01, buf, 116)) {
+        memcpy(drive_nonce, buf + 4,  20);
+        memcpy(drive_cert,  buf + 24, 92);
+        return 1;
+    }
+    return 0;
+}
+
+static int _mmc_read_drive_key(MMC *mmc, uint8_t agid, uint8_t *drive_key_point, uint8_t *drive_key_signature)
+{
+    uint8_t buf[84];
+    memset(buf, 0, sizeof(buf));
+
+    if (_mmc_report_key(mmc, agid, 0, 0, 0x02, buf, 84)) {
+        memcpy(drive_key_point,     buf + 4,  40);
+        memcpy(drive_key_signature, buf + 44, 40);
+        return 1;
+    }
+    return 0;
+}
+
+static int _mmc_send_host_key(MMC *mmc, uint8_t agid, const uint8_t *host_key_point, const uint8_t *host_key_signature)
+{
+    uint8_t buf[84];
+    memset(buf, 0, 84);
+
+    buf[1] = 0x52;
+    memcpy(buf + 4,  host_key_point,     40);
+    memcpy(buf + 44, host_key_signature, 40);
+
+    return _mmc_send_key(mmc, agid, 0x02, buf, 84);
+}
+
+static int _mmc_read_vid(MMC *mmc, uint8_t agid, uint8_t *volume_id, uint8_t *mac)
+{
+    uint8_t buf[36];
+    uint8_t cmd[16];
+    memset(cmd, 0, 16);
+    memset(buf, 0, 36);
+
+    cmd[0] = 0xad;
+    cmd[1] = 1;    // 1 = BLURAY
+    cmd[7] = 0x80;
+    cmd[9] = 0x24;
+    cmd[10] = (agid << 6) & 0xc0;
+
+    if (_mmc_send_cmd(mmc, cmd, buf, 0, 36)) {
+        memcpy(volume_id, buf + 4,  16);
+        memcpy(mac,       buf + 20, 16);
+        return 1;
+    }
+
+    return 0;
+}
+
 MMC *mmc_open(const char *path, const uint8_t *host_priv_key, const uint8_t *host_cert, const uint8_t *host_nonce, const uint8_t *host_key_point)
 {
 #if HAVE_LINUX_CDROM_H
@@ -221,11 +293,9 @@ void mmc_close(MMC *mmc)
 
 int mmc_read_vid(MMC *mmc, uint8_t *vid)
 {
-    uint8_t agid = 0, buf[116], cmd[16], hks[40], dn[20], dc[92], dkp[40], dks[40];
+    uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40], mac[16];
 
-    memset(cmd, 0, 16);
     memset(hks, 0, 40);
-    memset(buf, 0, 116);
 
     DEBUG(DBG_MMC, "Reading VID from drive... (%p)\n", mmc);
 
@@ -238,45 +308,44 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     DEBUG(DBG_MMC, "Got AGID from drive: %d (%p)\n", agid, mmc);
 
     int patched = 0;
-    if (!patched) {
-        memset(buf, 0, 116);
-        buf[1] = 0x72;
-        memcpy(buf + 4, mmc->host_nonce, 20);
-        memcpy(buf + 24, mmc->host_cert, 92);
-        _mmc_send_key(mmc, agid, 0x01, buf, 116); // send host cert + nonce
+    if (!patched) do {
 
-        memset(buf, 0, 116);
-        _mmc_report_key(mmc, agid, 0, 0, 0x01, buf, 116); // receive mmc cert + nonce
-        memcpy(dn, buf + 4, 20);
-        memcpy(dc, buf + 24, 92);
+        // send host cert + nonce
+        if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, mmc->host_cert)) {
+            DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate has been revoked by your drive ? (%p)\n", mmc);
+            break;
+        }
 
-        memset(buf, 0, 84);
-        _mmc_report_key(mmc, agid, 0, 0, 0x02, buf, 84); // receive mmc key
-        memcpy(dkp, buf + 4, 40);
-        memcpy(dks, buf + 44, 40);
+        // receive mmc cert + nonce
+        if (!_mmc_read_drive_cert(mmc, agid, dn, dc)) {
+            DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its certificate (%p)\n", mmc);
+            break;
+        }
+        //DEBUG(DBG_MMC, "Drive certificate   : %s (%p)\n", print_hex(dc, 92), mmc);
+        //DEBUG(DBG_MMC, "Drive nonce         : %s (%p)\n", print_hex(dn, 20), mmc);
+
+        // receive mmc key
+        if (!_mmc_read_drive_key(mmc, agid, dkp, dks)) {
+            DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its drive key (%p)\n", mmc);
+            break;
+        }
+        //DEBUG(DBG_MMC, "Drive key point     : %s (%p)\n", print_hex(dkp, 40), mmc);
+        //DEBUG(DBG_MMC, "Drive key signature : %s (%p)\n", print_hex(dks, 40), mmc);
 
         crypto_aacs_sign(mmc->host_cert, mmc->host_priv_key, hks, dn, mmc->host_key_point);
 
-        memset(buf, 0, 84);
-        buf[1] = 0x52;
-        memcpy(buf + 4, mmc->host_key_point, 40);
-        memcpy(buf + 44, hks, 40);
-        _mmc_send_key(mmc, agid, 0x02, buf, 84); // send signed host key and point
-    }
+        // send signed host key and point
+        if (!_mmc_send_host_key(mmc, agid, mmc->host_key_point, hks)) {
+            DEBUG(DBG_MMC | DBG_CRIT, "Error sending host signature (%p)\n", mmc);
+            DEBUG(DBG_MMC,  "Host key signature : %s (%p)\n", print_hex(hks, 40), mmc);
+            break;
+        }
 
-    memset(cmd, 0, 16);
-    memset(buf, 0, 116);
+    } while (0);
 
-    cmd[0] = 0xad;
-    cmd[1] = 1;
-    cmd[7] = 0x80;
-    cmd[9] = 0x24;
-    cmd[10] = (agid << 6) & 0xc0;
-
-    if (_mmc_send_cmd(mmc, cmd, buf, 0, 36)) {
-        memcpy(vid, buf + 4, 16);
-
+    if (_mmc_read_vid(mmc, agid, vid, mac)) {
         DEBUG(DBG_MMC, "VID: %s (%p)\n", print_hex(vid, 16), mmc);
+        DEBUG(DBG_MMC, "MAC: %s (%p)\n", print_hex(mac, 16), mmc);
 
         _mmc_invalidate_agid(mmc, agid);
 
