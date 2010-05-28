@@ -10,8 +10,6 @@
 
 #include "crypto.h"
 
-void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc);
-
 void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 {
     int a;
