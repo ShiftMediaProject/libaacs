@@ -7,7 +7,6 @@
 #include <openssl/err.h>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
-#include <gcrypt.h>
 
 #include "crypto.h"
 
@@ -16,17 +15,15 @@ void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc);
 void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 {
     int a;
-    gcry_cipher_hd_t gcry_h;
     uint8_t seed[16] = { 0x7B, 0x10, 0x3C, 0x5D, 0xCB, 0x08, 0xC4, 0xE5, 0x1A, 0x27, 0xB0, 0x17, 0x99, 0x05, 0x3B, 0xD9 };
-
     seed[15] += inc;
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-
-    gcry_cipher_setkey(gcry_h, src_key, 16);
-    gcry_cipher_decrypt (gcry_h, dst_key, 16, seed, 16);
-
-    gcry_cipher_close(gcry_h);
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    EVP_DecryptInit(ctx, EVP_aes_128_ecb(), src_key, NULL);
+    EVP_CIPHER_CTX_set_key_length(ctx, 16);
+    EVP_DecryptUpdate(ctx, dst_key, (int*)16, seed, 16);
+    EVP_DecryptFinal(ctx, dst_key, (int*)16);
+    EVP_CIPHER_CTX_cleanup(ctx);
 
     for (a = 0; a < 16; a++) {
         dst_key[a] ^= seed[a];
@@ -179,6 +176,10 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig, uint8
 
 void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
 {
-    gcry_md_hash_buffer(GCRY_MD_SHA1, hash, ukf, len);
+    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
+    EVP_DigestInit(ctx, EVP_sha1());
+    EVP_DigestUpdate(ctx, ukf, len);
+    EVP_DigestFinal(ctx, hash, NULL);
+    EVP_MD_CTX_cleanup(ctx);
 }
 
