@@ -47,39 +47,6 @@ void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
 
 void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig, uint8_t *n, const uint8_t *dhp)
 {
-    /*
-     * S-expressions for libgcrypt
-     * (private-key
-       (ecc
-         (p p-mpi)
-         (a a-mpi)
-         (b b-mpi)
-         (g g-point)
-         (n n-mpi)
-         (q q-point)
-         (d d-mpi)))
-     *
-     *(private-key
-      (dsa
-        (p p-mpi )
-        (q q-mpi )
-        (g g-mpi )
-        (y y-mpi )
-        (x x-mpi )))
-     *
-     */
-
-    /* start of libgcrypt implementation
-    gcry_mpi_t *p, *a, *b, *x, *y, *r;
-
-    gcry_mpi_scan(p, GCRYMPI_FMT_HEX, "900812823637587646514106462588455890498729007071", 0, NULL);
-    gcry_mpi_scan(a, GCRYMPI_FMT_HEX, "-3", 0, NULL);
-    gcry_mpi_scan(b, GCRYMPI_FMT_HEX, "366394034647231750324370400222002566844354703832", 0, NULL);
-    gcry_mpi_scan(x, GCRYMPI_FMT_HEX, "264865613959729647018113670854605162895977008838", 0, NULL);
-    gcry_mpi_scan(y, GCRYMPI_FMT_HEX, "51841075954883162510413392745168936296187808697", 0, NULL);
-    gcry_mpi_scan(r, GCRYMPI_FMT_HEX, "900812823637587646514106555566573588779770753047", 0, NULL);
-*/
-
     EC_GROUP *grp;
     const EC_GROUP *pkgrp;
     EC_POINT *p;
