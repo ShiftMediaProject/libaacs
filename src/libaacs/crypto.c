@@ -13,7 +13,8 @@
 void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 {
     int a;
-    uint8_t seed[16] = { 0x7B, 0x10, 0x3C, 0x5D, 0xCB, 0x08, 0xC4, 0xE5, 0x1A, 0x27, 0xB0, 0x17, 0x99, 0x05, 0x3B, 0xD9 };
+    uint8_t seed[16] = { 0x7B, 0x10, 0x3C, 0x5D, 0xCB, 0x08, 0xC4, 0xE5,
+                         0x1A, 0x27, 0xB0, 0x17, 0x99, 0x05, 0x3B, 0xD9 };
     seed[15] += inc;
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
@@ -43,7 +44,8 @@ void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
     }
 }
 
-void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig, uint8_t *n, const uint8_t *dhp)
+void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig,
+                      uint8_t *n, const uint8_t *dhp)
 {
     EC_GROUP *grp;
     const EC_GROUP *pkgrp;
@@ -147,4 +149,3 @@ void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
     EVP_DigestFinal(ctx, hash, NULL);
     EVP_MD_CTX_cleanup(ctx);
 }
-
