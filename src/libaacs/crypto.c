@@ -14,8 +14,8 @@ void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
     seed[15] += inc;
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit(ctx, EVP_aes_128_ecb(), src_key, NULL);
     EVP_CIPHER_CTX_set_key_length(ctx, 16);
+    EVP_DecryptInit(ctx, EVP_aes_128_ecb(), src_key, NULL);
     EVP_DecryptUpdate(ctx, dst_key, (int*)16, seed, 16);
     EVP_DecryptFinal(ctx, dst_key, (int*)16);
     EVP_CIPHER_CTX_cleanup(ctx);
