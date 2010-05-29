@@ -113,7 +113,7 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig,
     EVP_DigestInit(&mdctx, EVP_ecdsa());
     EVP_DigestUpdate(&mdctx, n, 20);
     EVP_DigestUpdate(&mdctx, dhp, 40);
-    EVP_DigestFinal_ex(&mdctx, md_value, &md_len);
+    EVP_DigestFinal(&mdctx, md_value, &md_len);
 
     s = ECDSA_do_sign(md_value, md_len, k);
 
