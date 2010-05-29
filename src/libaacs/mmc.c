@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <mntent.h>
 
-#include <errno.h>  /* errno */
+#include <errno.h>
 
 #if HAVE_LINUX_CDROM_H
 #include <linux/cdrom.h>
@@ -20,8 +20,8 @@
 #include "../util/macro.h"
 #include "../util/logging.h"
 
-
-static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t rx)
+static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
+                         size_t rx)
 {
 #if HAVE_LINUX_CDROM_H
     if (mmc->fd >= 0) {
@@ -51,7 +51,8 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, 
 
         int a = ioctl(mmc->fd, CDROM_SEND_PACKET, &cgc);
 
-        DEBUG(DBG_MMC, "Send LINUX MMC cmd %s: (%p)\n", print_hex((uint8_t *)cmd, 16), mmc);
+        DEBUG(DBG_MMC, "Send LINUX MMC cmd %s: (%p)\n",
+              print_hex((uint8_t *)cmd, 16), mmc);
         if (tx) {
             DEBUG(DBG_MMC, "  Buffer: %s -> (%p)\n", print_hex(buf, tx), mmc);
         } else {
@@ -67,14 +68,17 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, 
             return 1;
         }
 
-        DEBUG(DBG_MMC, "  Send failed! [%d] %s (%p)\n", a, strerror(errno), mmc);
+        DEBUG(DBG_MMC, "  Send failed! [%d] %s (%p)\n", a, strerror(errno),
+              mmc);
     }
 #endif
 
     return 0;
 }
 
-static int _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr, uint8_t blocks, uint8_t format, uint8_t *buf, uint16_t len)
+static int _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr,
+                           uint8_t blocks, uint8_t format, uint8_t *buf,
+                           uint16_t len)
 {
     uint8_t cmd[16];
     memset(cmd, 0, 16);
@@ -96,12 +100,14 @@ static int _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr, uint8_t blocks
     return _mmc_send_cmd(mmc, cmd, buf, 0, len);
 }
 
-static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf, uint16_t len)
+static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
+                         uint16_t len)
 {
     uint8_t cmd[16];
     memset(cmd, 0, 16);
 
-    DEBUG(DBG_MMC, "MMC send key [%d] %s... (%p)\n", len, print_hex(buf, len), mmc);
+    DEBUG(DBG_MMC, "MMC send key [%d] %s... (%p)\n", len, print_hex(buf, len),
+          mmc);
 
     cmd[0] = 0xa3;
     cmd[7] = 0x02;
@@ -143,7 +149,9 @@ static int _mmc_report_agid(MMC *mmc, uint8_t *agid)
     return result;
 }
 
-static int _mmc_send_host_cert(MMC *mmc, uint8_t agid, const uint8_t *host_nonce, const uint8_t *host_cert)
+static int _mmc_send_host_cert(MMC *mmc, uint8_t agid,
+                               const uint8_t *host_nonce,
+                               const uint8_t *host_cert)
 {
     uint8_t buf[116];
     memset(buf, 0, sizeof(buf));
@@ -155,7 +163,8 @@ static int _mmc_send_host_cert(MMC *mmc, uint8_t agid, const uint8_t *host_nonce
     return _mmc_send_key(mmc, agid, 0x01, buf, 116);
 }
 
-static int _mmc_read_drive_cert(MMC *mmc, uint8_t agid, uint8_t *drive_nonce, uint8_t *drive_cert)
+static int _mmc_read_drive_cert(MMC *mmc, uint8_t agid, uint8_t *drive_nonce,
+                                uint8_t *drive_cert)
 {
     uint8_t buf[116];
     memset(buf, 0, sizeof(buf));
@@ -168,7 +177,8 @@ static int _mmc_read_drive_cert(MMC *mmc, uint8_t agid, uint8_t *drive_nonce, ui
     return 0;
 }
 
-static int _mmc_read_drive_key(MMC *mmc, uint8_t agid, uint8_t *drive_key_point, uint8_t *drive_key_signature)
+static int _mmc_read_drive_key(MMC *mmc, uint8_t agid, uint8_t *drive_key_point,
+                               uint8_t *drive_key_signature)
 {
     uint8_t buf[84];
     memset(buf, 0, sizeof(buf));
@@ -181,7 +191,9 @@ static int _mmc_read_drive_key(MMC *mmc, uint8_t agid, uint8_t *drive_key_point,
     return 0;
 }
 
-static int _mmc_send_host_key(MMC *mmc, uint8_t agid, const uint8_t *host_key_point, const uint8_t *host_key_signature)
+static int _mmc_send_host_key(MMC *mmc, uint8_t agid,
+                              const uint8_t *host_key_point,
+                              const uint8_t *host_key_signature)
 {
     uint8_t buf[84];
     memset(buf, 0, 84);
@@ -193,7 +205,8 @@ static int _mmc_send_host_key(MMC *mmc, uint8_t agid, const uint8_t *host_key_po
     return _mmc_send_key(mmc, agid, 0x02, buf, 84);
 }
 
-static int _mmc_read_vid(MMC *mmc, uint8_t agid, uint8_t *volume_id, uint8_t *mac)
+static int _mmc_read_vid(MMC *mmc, uint8_t agid, uint8_t *volume_id,
+                         uint8_t *mac)
 {
     uint8_t buf[36];
     uint8_t cmd[16];
@@ -215,7 +228,9 @@ static int _mmc_read_vid(MMC *mmc, uint8_t agid, uint8_t *volume_id, uint8_t *ma
     return 0;
 }
 
-MMC *mmc_open(const char *path, const uint8_t *host_priv_key, const uint8_t *host_cert, const uint8_t *host_nonce, const uint8_t *host_key_point)
+MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
+              const uint8_t *host_cert, const uint8_t *host_nonce,
+              const uint8_t *host_key_point)
 {
 #if HAVE_LINUX_CDROM_H
     char *file_path = strdup(path);
@@ -245,11 +260,13 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key, const uint8_t *hos
                 if (a >= 0) {
                     mmc->fd = a;
 
-                    DEBUG(DBG_MMC, "LINUX MMC drive opened - fd: %d (%p)\n", a, mmc);
+                    DEBUG(DBG_MMC, "LINUX MMC drive opened - fd: %d (%p)\n", a,
+                          mmc);
                     break;
                 }
 
-                DEBUG(DBG_MMC, "Failed opening LINUX MMC drive %s (%p)\n", file_path, mmc);
+                DEBUG(DBG_MMC, "Failed opening LINUX MMC drive %s (%p)\n",
+                      file_path, mmc);
             }
         }
 
@@ -299,32 +316,43 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
 
         // send host cert + nonce
         if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, mmc->host_cert)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate has been revoked by your drive ? (%p)\n", mmc);
+            DEBUG(DBG_MMC | DBG_CRIT,
+                  "Host key / Certificate has been revoked by your drive ? "
+                  "(%p)\n", mmc);
             break;
         }
 
         // receive mmc cert + nonce
         if (!_mmc_read_drive_cert(mmc, agid, dn, dc)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its certificate (%p)\n", mmc);
+            DEBUG(DBG_MMC | DBG_CRIT,
+                  "Drive doesn't give its certificate (%p)\n", mmc);
             break;
         }
-        //DEBUG(DBG_MMC, "Drive certificate   : %s (%p)\n", print_hex(dc, 92), mmc);
-        //DEBUG(DBG_MMC, "Drive nonce         : %s (%p)\n", print_hex(dn, 20), mmc);
+        //DEBUG(DBG_MMC, "Drive certificate   : %s (%p)\n", print_hex(dc, 92),
+        //      mmc);
+        //DEBUG(DBG_MMC, "Drive nonce         : %s (%p)\n", print_hex(dn, 20),
+        //      mmc);
 
         // receive mmc key
         if (!_mmc_read_drive_key(mmc, agid, dkp, dks)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its drive key (%p)\n", mmc);
+            DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its drive key (%p)\n",
+                  mmc);
             break;
         }
-        //DEBUG(DBG_MMC, "Drive key point     : %s (%p)\n", print_hex(dkp, 40), mmc);
-        //DEBUG(DBG_MMC, "Drive key signature : %s (%p)\n", print_hex(dks, 40), mmc);
+        //DEBUG(DBG_MMC, "Drive key point     : %s (%p)\n", print_hex(dkp, 40),
+        //      mmc);
+        //DEBUG(DBG_MMC, "Drive key signature : %s (%p)\n", print_hex(dks, 40),
+        //      mmc);
 
-        crypto_aacs_sign(mmc->host_cert, mmc->host_priv_key, hks, dn, mmc->host_key_point);
+        crypto_aacs_sign(mmc->host_cert, mmc->host_priv_key, hks, dn,
+                         mmc->host_key_point);
 
         // send signed host key and point
         if (!_mmc_send_host_key(mmc, agid, mmc->host_key_point, hks)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Error sending host signature (%p)\n", mmc);
-            DEBUG(DBG_MMC,  "Host key signature : %s (%p)\n", print_hex(hks, 40), mmc);
+            DEBUG(DBG_MMC | DBG_CRIT, "Error sending host signature (%p)\n",
+                  mmc);
+            DEBUG(DBG_MMC,  "Host key signature : %s (%p)\n",
+                  print_hex(hks, 40), mmc);
             break;
         }
 
