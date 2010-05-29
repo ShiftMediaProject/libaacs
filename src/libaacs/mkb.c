@@ -21,7 +21,8 @@ uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
         }
 
         if (mkb->buf[pos] == type) {
-            DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (%p)\n", type, mkb->buf + pos);
+            DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (%p)\n", type,
+                  mkb->buf + pos);
 
             return mkb->buf + pos;
         }
@@ -111,4 +112,3 @@ uint8_t *mkb_signature(MKB *mkb, size_t *len)
     return rec + 4;
 
 }
-
