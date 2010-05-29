@@ -9,8 +9,6 @@
 #include "../util/macro.h"
 #include "../util/logging.h"
 
-uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len);  // returns ptr to requests MKB record
-
 uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
 {
     size_t pos = 0, len = 0;
