@@ -2,23 +2,10 @@
 #include "config.h"
 #endif
 
-#if HAVE_MALLOC_H
-#include <malloc.h>
-#endif
-
-#if HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-#if HAVE_MNTENT_H
 #include <mntent.h>
-#endif
-
-#include <stdio.h>
-#include <unistd.h>
 
 #include <errno.h>  /* errno */
-#include <string.h> /* strerror() */
 
 #if HAVE_LINUX_CDROM_H
 #include <linux/cdrom.h>

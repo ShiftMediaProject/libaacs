@@ -2,7 +2,6 @@
 #ifndef MMC_H_
 #define MMC_H_
 
-#include <string.h>
 #include <stdint.h>
 
 typedef struct mmc MMC;
