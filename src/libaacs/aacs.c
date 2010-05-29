@@ -21,6 +21,7 @@
 #include "aacs.h"
 #include "crypto.h"
 #include "mmc.h"
+#include "mkb.h"
 #include "../util/macro.h"
 #include "../util/logging.h"
 #include "../file/file.h"

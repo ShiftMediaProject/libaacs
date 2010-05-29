@@ -7,7 +7,6 @@
 
 #include <stdint.h>
 
-#include "mkb.h"
 #include "../file/configfile.h"
 
 #define LIBAACS_VERSION "1.0"
