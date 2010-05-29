@@ -6,7 +6,6 @@
 #define AACS_H_
 
 #include <stdint.h>
-#include <unistd.h>
 
 #include "mkb.h"
 #include "../file/configfile.h"
