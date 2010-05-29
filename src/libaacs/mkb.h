@@ -3,8 +3,6 @@
 #define MKB_H_
 
 #include <stdint.h>
-#include <unistd.h>
-#include <stdio.h>
 
 typedef struct mkb MKB;
 struct mkb {

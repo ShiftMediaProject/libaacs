@@ -2,13 +2,7 @@
 #include "config.h"
 #endif
 
-#if HAVE_MALLOC_H
-#include <malloc.h>
-#endif
-
-#if HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 
 #include "mkb.h"
 #include "../file/file.h"
