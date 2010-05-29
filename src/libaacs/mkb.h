@@ -1,6 +1,7 @@
 #ifndef MKB_H_
 #define MKB_H_
 
+#include <stdlib.h>
 #include <stdint.h>
 
 typedef struct mkb MKB;

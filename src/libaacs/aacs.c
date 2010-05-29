@@ -2,9 +2,6 @@
 #include "config.h"
 #endif
 
-#include <inttypes.h>
-#include <openssl/evp.h>
-
 #include "aacs.h"
 #include "crypto.h"
 #include "mmc.h"
@@ -12,6 +9,9 @@
 #include "../util/macro.h"
 #include "../util/logging.h"
 #include "../file/file.h"
+
+#include <inttypes.h>
+#include <openssl/evp.h>
 
 int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
                  uint8_t *mk)

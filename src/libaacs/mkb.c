@@ -2,8 +2,6 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-
 #include "mkb.h"
 #include "../file/file.h"
 #include "../util/macro.h"

@@ -2,6 +2,12 @@
 #include "config.h"
 #endif
 
+#include "mmc.h"
+#include "crypto.h"
+#include "../file/file.h"
+#include "../util/macro.h"
+#include "../util/logging.h"
+
 #include <stdlib.h>
 #include <mntent.h>
 
@@ -13,12 +19,6 @@
 
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
-
-#include "mmc.h"
-#include "crypto.h"
-#include "../file/file.h"
-#include "../util/macro.h"
-#include "../util/logging.h"
 
 static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
                          size_t rx)
