@@ -2,10 +2,7 @@
 #include "config.h"
 #endif
 
-#if HAVE_INTTYPES_H
 #include <inttypes.h>
-#endif
-
 #include <openssl/evp.h>
 
 #include "aacs.h"
