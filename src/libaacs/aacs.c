@@ -2,20 +2,10 @@
 #include "config.h"
 #endif
 
-#if HAVE_MALLOC_H
-#include <malloc.h>
-#endif
-
-#if HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
 #if HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
 
-#include <stdio.h>
-#include <string.h>
 #include <openssl/evp.h>
 
 #include "aacs.h"
