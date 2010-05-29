@@ -10,15 +10,12 @@
 
 #include <stdlib.h>
 #include <mntent.h>
-
 #include <errno.h>
-
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
 #if HAVE_LINUX_CDROM_H
 #include <linux/cdrom.h>
 #endif
-
-#include <sys/fcntl.h>
-#include <sys/ioctl.h>
 
 static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
                          size_t rx)
