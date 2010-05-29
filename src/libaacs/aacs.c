@@ -13,7 +13,8 @@
 #include "../util/logging.h"
 #include "../file/file.h"
 
-int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd, uint8_t *mk)
+int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
+                 uint8_t *mk)
 {
     int a, ret = 0;
     uint8_t dec_vd[16];
@@ -77,11 +78,13 @@ int _calc_mk(AACS *aacs, const char *path)
                 DEBUG(DBG_AACS, "Trying processing key...\n");
 
                 for (a = 0; a < num_uvs; a++) {
-                    if (_validate_pk(aacs->pk, rec + a * 16, uvs + 1 + a * 5, mkb_mk_dv(mkb), aacs->mk)) {
+                    if (_validate_pk(aacs->pk, rec + a * 16, uvs + 1 + a * 5,
+                      mkb_mk_dv(mkb), aacs->mk)) {
                         mkb_close(mkb);
                         X_FREE(buf);
 
-                        DEBUG(DBG_AACS, "Media key: %s\n", print_hex(aacs->mk, 16));
+                        DEBUG(DBG_AACS, "Media key: %s\n", print_hex(aacs->mk,
+                                                                     16));
                         return 1;
                     }
                 }
@@ -123,7 +126,8 @@ int _calc_vuk(AACS *aacs, const char *path)
 
             mmc_close(mmc);
 
-            DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(aacs->vuk, 16));
+            DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(aacs->vuk,
+                                                                 16));
 
             return 1;
         }
@@ -185,7 +189,8 @@ int _calc_uks(AACS *aacs, const char *path)
                 EVP_DecryptFinal(ctx, aacs->uks, (int*)16);
                 EVP_CIPHER_CTX_cleanup(ctx);
 
-                DEBUG(DBG_AACS, "Unit key %d: %s\n", i, print_hex(aacs->uks + 16*i, 16));
+                DEBUG(DBG_AACS, "Unit key %d: %s\n", i,
+                      print_hex(aacs->uks + 16*i, 16));
             }
 
             file_close(fp);
@@ -254,7 +259,9 @@ int _find_vuk(AACS *aacs, const char *path)
         if ((file_read(fp, ukf_buf, f_size)) == f_size) {
 
         } else {
-            DEBUG(DBG_AACS, "Failed to read %"PRIu64" bytes from unit key file!\n", f_size);
+            DEBUG(DBG_AACS,
+                  "Failed to read %"PRIu64" bytes from unit key file!\n",
+                  f_size);
             file_close(fp);
             X_FREE(ukf_buf);
             return 0;
@@ -282,7 +289,8 @@ int _find_vuk(AACS *aacs, const char *path)
 
                 memcpy(aacs->vuk, key_pos + 30, 16);
 
-                DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n", desc, print_hex(aacs->vuk, 16));
+                DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n", desc,
+                      print_hex(aacs->vuk, 16));
 
                 return 1;
             }
@@ -294,14 +302,16 @@ int _find_vuk(AACS *aacs, const char *path)
     return 0;
 }
 
-int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset, uint32_t curr_uk)
+int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
+                  uint32_t curr_uk)
 {
     uint8_t *tmp_buf = malloc(len);
 
     memcpy(tmp_buf, buf, len);
 
     int a;
-    uint8_t key[16], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3, 0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
+    uint8_t key[16], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
+                              0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     EVP_CIPHER_CTX_set_key_length(ctx, 16);
@@ -324,7 +334,8 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset, uint3
     EVP_CIPHER_CTX_cleanup(ctx);
 
     if (_verify_ts(tmp_buf,len)) {
-        DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %ld (%p)\n", len % 6144 ? "PARTIAL" : "FULL", len, offset, aacs);
+        DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %ld (%p)\n",
+              len % 6144 ? "PARTIAL" : "FULL", len, offset, aacs);
 
         memcpy(buf, tmp_buf, len);
 
