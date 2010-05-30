@@ -3,7 +3,7 @@
 #define CONFIGFILE_H_
 
 #include <stdint.h>
-#include <unistd.h>
+#include <stdlib.h>
 
 typedef struct configfile CONFIGFILE;
 struct configfile {

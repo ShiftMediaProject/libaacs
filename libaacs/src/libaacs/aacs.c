@@ -11,6 +11,7 @@
 #include "../file/file.h"
 
 #include <inttypes.h>
+#include <string.h>
 #include <openssl/evp.h>
 
 int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,

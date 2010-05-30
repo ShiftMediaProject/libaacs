@@ -1,6 +1,8 @@
 #include "logging.h"
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 char out[512];
 debug_mask_t debug_mask = 0;

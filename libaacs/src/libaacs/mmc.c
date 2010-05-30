@@ -11,8 +11,10 @@
 #include <stdlib.h>
 #include <mntent.h>
 #include <errno.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
+#include <string.h>
 #if HAVE_LINUX_CDROM_H
 #include <linux/cdrom.h>
 #endif

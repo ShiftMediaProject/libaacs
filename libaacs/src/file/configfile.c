@@ -7,14 +7,6 @@
 #include "../util/macro.h"
 #include "../util/logging.h"
 
-#if HAVE_MALLOC_H
-#include <malloc.h>
-#endif
-
-#if HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
 uint8_t *configfile_record(CONFIGFILE *kf, enum configfile_types type, uint16_t *entries, size_t *entry_len)
 {
     size_t pos = 0, len = 0;
