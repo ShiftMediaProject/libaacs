@@ -15,6 +15,11 @@ AC_ARG_ENABLE([werror],
   [set warnings as errors via -Werror (default is yes)])],
   [use_werror=$enableval],
   [use_werror=yes])
+AC_ARG_ENABLE([optimizations],
+  [AS_HELP_STRING([--enable-optimizations],
+  [enable optimizations (default is yes)])],
+  [use_optimizations=$enableval],
+  [use_optimizations=yes])
 
 # required programs
 AC_PROG_CC
@@ -47,7 +52,13 @@ if [[ $use_werror = "yes" ]]; then
   WERROR="-Werror"
 fi
 
+# use optimizations
+if [[ $use_optimizations = "yes" ]]; then
+  OPTIMIZATIONS="-O3 -fomit-frame-pointer"
+fi
+
 # generate output files
 AC_SUBST(WERROR)
+AC_SUBST(OPTIMIZATIONS)
 AC_CONFIG_FILES([Makefile src/Makefile src/libaacs.pc])
 AC_OUTPUT
