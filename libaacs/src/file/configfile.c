@@ -4,8 +4,10 @@
 
 #include "configfile.h"
 #include "file.h"
-#include "../util/macro.h"
-#include "../util/logging.h"
+#include "util/macro.h"
+#include "util/logging.h"
+
+#include <stdio.h>
 
 uint8_t *configfile_record(CONFIGFILE *kf, enum configfile_types type, uint16_t *entries, size_t *entry_len)
 {

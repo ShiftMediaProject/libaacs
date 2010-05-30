@@ -5,7 +5,7 @@
 #ifndef AACS_H_
 #define AACS_H_
 
-#include "../file/configfile.h"
+#include "file/configfile.h"
 
 #define LIBAACS_VERSION "1.0"
 

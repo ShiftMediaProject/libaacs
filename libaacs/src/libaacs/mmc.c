@@ -4,9 +4,9 @@
 
 #include "mmc.h"
 #include "crypto.h"
-#include "../file/file.h"
-#include "../util/macro.h"
-#include "../util/logging.h"
+#include "file/file.h"
+#include "util/macro.h"
+#include "util/logging.h"
 
 #include <stdlib.h>
 #include <mntent.h>

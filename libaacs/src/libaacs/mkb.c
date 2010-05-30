@@ -3,9 +3,11 @@
 #endif
 
 #include "mkb.h"
-#include "../file/file.h"
-#include "../util/macro.h"
-#include "../util/logging.h"
+#include "file/file.h"
+#include "util/macro.h"
+#include "util/logging.h"
+
+#include <stdio.h>
 
 uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
 {

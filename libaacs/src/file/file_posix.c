@@ -3,9 +3,10 @@
 #endif
 
 #include "file.h"
-#include "../util/macro.h"
-#include "../util/logging.h"
+#include "util/macro.h"
+#include "util/logging.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 FILE_H *file_open_linux(const char* filename, const char *mode);
