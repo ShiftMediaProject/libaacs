@@ -1,4 +1,4 @@
-AM_CFLAGS = -I$(top_srcdir)
+AM_CFLAGS = -I$(top_srcdir) -std=c99
 
 lib_LTLIBRARIES = libaacs.la
 libaacs_la_SOURCES=libaacs/aacs.c libaacs/crypto.c libaacs/mkb.c libaacs/mmc.c \
