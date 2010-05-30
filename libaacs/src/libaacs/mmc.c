@@ -50,7 +50,7 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
         int a = ioctl(mmc->fd, CDROM_SEND_PACKET, &cgc);
 
         DEBUG(DBG_MMC, "Send LINUX MMC cmd %s: (%p)\n",
-              print_hex((uint8_t *)cmd, 16), mmc);
+              print_hex(cmd, 16), mmc);
         if (tx) {
             DEBUG(DBG_MMC, "  Buffer: %s -> (%p)\n", print_hex(buf, tx), mmc);
         } else {

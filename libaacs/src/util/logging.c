@@ -11,7 +11,7 @@ static int debug_init = 0;
 FILE *logfile = NULL;
 
 
-char *print_hex(uint8_t *buf, int count)
+char *print_hex(const uint8_t *buf, int count)
 {
     memset(out, 0, sizeof(out));
 
