@@ -9,6 +9,13 @@ AM_CONFIG_HEADER(config.h)
 library_not_found="Could not find required library!"
 function_not_found="Could not find required function!"
 
+# configure options
+AC_ARG_ENABLE([werror],
+  [AS_HELP_STRING([--enable-werror],
+  [set warnings as errors via -Werror (default is yes)])],
+  [use_werror=$enableval],
+  [use_werror=yes])
+
 # required programs
 AC_PROG_CC
 AC_PROG_LIBTOOL
@@ -35,6 +42,12 @@ AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 AC_CHECK_LIB([crypto], [ECDSA_do_sign],,
   [AC_MSG_ERROR($library_not_found)])
 
+# use -Werror
+if [[ $use_werror = "yes" ]]; then
+  WERROR="-Werror"
+fi
+
 # generate output files
+AC_SUBST(WERROR)
 AC_CONFIG_FILES([Makefile src/Makefile src/libaacs.pc])
 AC_OUTPUT

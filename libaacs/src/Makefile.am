@@ -1,7 +1,7 @@
 SET_FEATURES = -D_ISOC99_SOURCE -D_POSIX_C_SOURCE=200112L
 SET_WARNINGS = -Wall -Wno-switch -Wdisabled-optimization -Wpointer-arith \
 	-Wredundant-decls -Wno-pointer-sign -Wcast-qual -Wwrite-strings \
-	-Wtype-limits -Wundef
+	-Wtype-limits -Wundef @WERROR@
 SET_INCLUDES = -I$(top_srcdir)
 
 AM_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_WARNINGS) $(SET_INCLUDES)
