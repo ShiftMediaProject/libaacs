@@ -231,7 +231,8 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
               const uint8_t *host_key_point)
 {
 #if HAVE_LINUX_CDROM_H
-    char *file_path = strdup(path);
+    char *file_path = (char*)malloc(strlen(path) + 1);
+    strcpy(file_path, path);
     int   path_len  = strlen(file_path);
     FILE *proc_mounts;
     MMC *mmc = malloc(sizeof(MMC));
