@@ -31,15 +31,9 @@ AC_SYS_LARGEFILE
 AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
 # openssl check
-PKG_CHECK_MODULES([OPENSSL], [openssl],
-  [INCLUDES="$INCLUDES $OPENSSL_CFLAGS";
-   LIBS="$LIBS $OPENSSL_LIBS"],
-  AC_MSG_ERROR($library_not_found))
-# Make sure OpenSSL is cool enough to play with the big boys.
-AC_CHECK_HEADERS([openssl/ecdsa.h], [], [
-  AC_MSG_ERROR([Version of OpenSSL does not feature openssl/ecdsa.h, please
-    upgrade]) ]
-      , [])
+# check for ECDSA_do_sign, since it's needed
+AC_CHECK_LIB([crypto], [ECDSA_do_sign],,
+  [AC_MSG_ERROR($library_not_found)])
 
 # generate output files
 AC_CONFIG_FILES([Makefile src/Makefile src/libaacs.pc])
