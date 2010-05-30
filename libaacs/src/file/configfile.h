@@ -1,4 +1,3 @@
-
 #ifndef CONFIGFILE_H_
 #define CONFIGFILE_H_
 
@@ -23,9 +22,11 @@ enum configfile_types {
 
 CONFIGFILE *configfile_open(const char *path);
 void configfile_close(CONFIGFILE *kf);
-uint8_t *configfile_record(CONFIGFILE *kf, enum configfile_types type, uint16_t *entries, size_t *entry_len);
+uint8_t *configfile_record(CONFIGFILE *kf, enum configfile_types type,
+                           uint16_t *entries, size_t *entry_len);
 
-/* Keys are stored in a binary file in a record format which is queried from this code
+/* Keys are stored in a binary file in a record format which is queried from
+ * this code
  *
  * Record format:
  *          0                   | type

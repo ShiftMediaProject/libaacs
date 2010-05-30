@@ -1,4 +1,3 @@
-
 #ifndef LOGGING_H_
 #define LOGGING_H_
 
@@ -20,13 +19,15 @@ enum debug_mask_enum {
     DBG_NAV = 256,
     DBG_BDPLUS = 512,
     DBG_DLX = 1024,
-    DBG_CRIT = 2048          // this is libbluray's default debug mask so use this if you want to display critical info
+    DBG_CRIT = 2048 // this is the default debug mask so use this if you want to
+                    // display critical info
 };
 
 typedef enum debug_mask_enum debug_mask_t;
 extern debug_mask_t debug_mask;
 
 char *print_hex(uint8_t *str, int count);
-void debug(const char *file, int line, uint32_t mask, const char *format, ...) BD_ATTR_FORMAT_PRINTF(4,5);
+void debug(const char *file, int line, uint32_t mask, const char *format, ...)
+  BD_ATTR_FORMAT_PRINTF(4,5);
 
 #endif /* LOGGING_H_ */
