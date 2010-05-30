@@ -354,7 +354,7 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
 
 AACS *aacs_open(const char *path, const char *configfile_path)
 {
-    DEBUG(DBG_AACS, "libaacs v%s [%ld]\n", LIBAACS_VERSION, sizeof(AACS));
+    DEBUG(DBG_AACS, "libaacs [%ld]\n", sizeof(AACS));
 
     AACS *aacs = calloc(1, sizeof(AACS));
 

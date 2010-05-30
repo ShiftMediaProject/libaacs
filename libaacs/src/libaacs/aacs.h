@@ -7,8 +7,6 @@
 
 #include "file/configfile.h"
 
-#define LIBAACS_VERSION "1.0"
-
 typedef struct aacs AACS;
 struct aacs {
     uint8_t pk[16], mk[16], vuk[16], vid[16];
