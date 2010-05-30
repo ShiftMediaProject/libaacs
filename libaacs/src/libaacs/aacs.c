@@ -6,9 +6,9 @@
 #include "crypto.h"
 #include "mmc.h"
 #include "mkb.h"
+#include "file/file.h"
 #include "util/macro.h"
 #include "util/logging.h"
-#include "file/file.h"
 
 #include <inttypes.h>
 #include <string.h>
