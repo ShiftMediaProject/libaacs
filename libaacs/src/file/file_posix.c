@@ -1,7 +1,3 @@
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "file.h"
 #include "util/macro.h"
 #include "util/logging.h"

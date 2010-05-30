@@ -1,7 +1,3 @@
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "aacs.h"
 #include "crypto.h"
 #include "mmc.h"
