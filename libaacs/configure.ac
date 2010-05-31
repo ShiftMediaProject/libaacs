@@ -15,6 +15,7 @@ AC_ARG_ENABLE([werror],
   [set warnings as errors via -Werror (default is yes)])],
   [use_werror=$enableval],
   [use_werror=yes])
+
 AC_ARG_ENABLE([optimizations],
   [AS_HELP_STRING([--enable-optimizations],
   [enable optimizations (default is yes)])],
