@@ -8,8 +8,22 @@ AM_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_WARNINGS) $(SET_OPTIMIZATIONS) \
 CFLAGS=$(shell test -z "$$CFLAGS" && echo "-g" || echo "$$CFLAGS")
 
 lib_LTLIBRARIES = libaacs.la
-libaacs_la_SOURCES=libaacs/aacs.c libaacs/crypto.c libaacs/mkb.c libaacs/mmc.c \
-	file/configfile.c file/file_posix.c util/logging.c
+libaacs_la_SOURCES=libaacs/aacs.h \
+	libaacs/mmc.h \
+	libaacs/mkb.h \
+	libaacs/aacs.c \
+	libaacs/mmc.c \
+	libaacs/crypto.c \
+	libaacs/crypto.h \
+	libaacs/mkb.c \
+	file/configfile.c \
+	file/configfile.h \
+	file/file.h \
+	file/file_posix.c \
+	util/attributes.h \
+	util/macro.h \
+	util/logging.c \
+	util/logging.h
 libaacs_ladir= $(includedir)/libaacs
 libaacs_la_HEADERS= libaacs/aacs.h
 pkgconfigdir = $(libdir)/pkgconfig
