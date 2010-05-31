@@ -54,24 +54,66 @@ AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 AC_CHECK_LIB([crypto], [ECDSA_do_sign],,
   [AC_MSG_ERROR($library_not_found)])
 
+# function testing for supported compiler options
+check_gcc_options()
+{
+  local tmpfile=$(mktemp --suffix=.c)
+  local retval=1
+  printf "Checking if compiler supports $@... "
+  if $CC -c $@ $tmpfile -o /dev/null >/dev/null 2>&1; then
+    local retval=0
+  fi
+  rm $tmpfile
+  if [[ $retval = "0" ]]; then
+    echo "yes"
+  else
+    echo "no"
+  fi
+  return $retval
+}
+
+# set default warnings if supported
+check_gcc_options -Wall && \
+  SET_WARNINGS="$SET_WARNINGS -Wall"
+check_gcc_options -Wdisabled-optimization && \
+  SET_WARNINGS="$SET_WARNINGS -Wdisabled-optimization"
+check_gcc_options -Wpointer-arith && \
+  SET_WARNINGS="$SET_WARNINGS -Wpointer-arith"
+check_gcc_options -Wredundant-decls && \
+  SET_WARNINGS="$SET_WARNINGS -Wredundant-decls"
+check_gcc_options -Wcast-qual && \
+  SET_WARNINGS="$SET_WARNINGS -Wcast-qual"
+check_gcc_options -Wwrite-strings && \
+  SET_WARNINGS="$SET_WARNINGS -Wwrite-strings"
+check_gcc_options -Wtype-limits && \
+  SET_WARNINGS="$SET_WARNINGS -Wtype-limits"
+check_gcc_options -Wundef && \
+  SET_WARNINGS="$SET_WARNINGS -Wundef"
+
 # use -Werror
 if [[ $use_werror = "yes" ]]; then
-  WERROR="-Werror"
+  check_gcc_options -Werror && \
+    SET_WARNINGS="$SET_WARNINGS -Werror"
 fi
 
 # use extra warnings
 if [[ $use_extra_warnings = "yes" ]]; then
-  EXTRA_WARNINGS="-Wextra -Winline"
+  check_gcc_options -Wextra && \
+    SET_WARNINGS="$SET_WARNINGS -Wextra"
+  check_gcc_options -Winline && \
+    SET_WARNINGS="$SET_WARNINGS -Winline"
 fi
 
 # use optimizations
 if [[ $use_optimizations = "yes" ]]; then
-  OPTIMIZATIONS="-O3 -fomit-frame-pointer"
+  check_gcc_options -O3 && \
+    SET_OPTIMIZATIONS="$SET_OPTIMIZATIONS -O3"
+  check_gcc_options -fomit-frame-pointer && \
+    SET_OPTIMIZATIONS="$SET_OPTIMIZATIONS -fomit-frame-pointer"
 fi
 
 # generate output files
-AC_SUBST(WERROR)
-AC_SUBST(EXTRA_WARNINGS)
-AC_SUBST(OPTIMIZATIONS)
+AC_SUBST(SET_WARNINGS)
+AC_SUBST(SET_OPTIMIZATIONS)
 AC_CONFIG_FILES([Makefile src/Makefile src/libaacs.pc])
 AC_OUTPUT
