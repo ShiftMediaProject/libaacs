@@ -1,3 +1,10 @@
+# library version info
+# NOTE: this is not the same as the library's release number
+LIB_CURRENT=0
+LIB_REVISION=0
+LIB_AGE=0
+LIB_VERSION_INFO="$(LIB_CURRENT):$(LIB_REVISION):$(LIB_AGE)"
+
 SET_FEATURES = -D_ISOC99_SOURCE -D_POSIX_C_SOURCE=200112L -D_REENTRANT
 SET_WARNINGS = @SET_WARNINGS@
 SET_OPTIMIZATIONS = @SET_OPTIMIZATIONS@
@@ -26,5 +33,6 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	util/logging.h
 libaacs_ladir= $(includedir)/libaacs
 libaacs_la_HEADERS= libaacs/aacs.h
+libaacs_la_LDFLAGS= -version-info $(LIB_VERSION_INFO)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libaacs.pc
