@@ -55,7 +55,7 @@ AC_CHECK_LIB([crypto], [ECDSA_do_sign],,
   [AC_MSG_ERROR($library_not_found)])
 
 # function testing for supported compiler options
-check_gcc_options()
+check_cc_options()
 {
   local tmpfile=$(mktemp --suffix=.c)
   local retval=1
@@ -73,42 +73,42 @@ check_gcc_options()
 }
 
 # set default warnings if supported
-check_gcc_options -Wall && \
+check_cc_options -Wall && \
   SET_WARNINGS="$SET_WARNINGS -Wall"
-check_gcc_options -Wdisabled-optimization && \
+check_cc_options -Wdisabled-optimization && \
   SET_WARNINGS="$SET_WARNINGS -Wdisabled-optimization"
-check_gcc_options -Wpointer-arith && \
+check_cc_options -Wpointer-arith && \
   SET_WARNINGS="$SET_WARNINGS -Wpointer-arith"
-check_gcc_options -Wredundant-decls && \
+check_cc_options -Wredundant-decls && \
   SET_WARNINGS="$SET_WARNINGS -Wredundant-decls"
-check_gcc_options -Wcast-qual && \
+check_cc_options -Wcast-qual && \
   SET_WARNINGS="$SET_WARNINGS -Wcast-qual"
-check_gcc_options -Wwrite-strings && \
+check_cc_options -Wwrite-strings && \
   SET_WARNINGS="$SET_WARNINGS -Wwrite-strings"
-check_gcc_options -Wtype-limits && \
+check_cc_options -Wtype-limits && \
   SET_WARNINGS="$SET_WARNINGS -Wtype-limits"
-check_gcc_options -Wundef && \
+check_cc_options -Wundef && \
   SET_WARNINGS="$SET_WARNINGS -Wundef"
 
 # use -Werror
 if [[ $use_werror = "yes" ]]; then
-  check_gcc_options -Werror && \
+  check_cc_options -Werror && \
     SET_WARNINGS="$SET_WARNINGS -Werror"
 fi
 
 # use extra warnings
 if [[ $use_extra_warnings = "yes" ]]; then
-  check_gcc_options -Wextra && \
+  check_cc_options -Wextra && \
     SET_WARNINGS="$SET_WARNINGS -Wextra"
-  check_gcc_options -Winline && \
+  check_cc_options -Winline && \
     SET_WARNINGS="$SET_WARNINGS -Winline"
 fi
 
 # use optimizations
 if [[ $use_optimizations = "yes" ]]; then
-  check_gcc_options -O3 && \
+  check_cc_options -O3 && \
     SET_OPTIMIZATIONS="$SET_OPTIMIZATIONS -O3"
-  check_gcc_options -fomit-frame-pointer && \
+  check_cc_options -fomit-frame-pointer && \
     SET_OPTIMIZATIONS="$SET_OPTIMIZATIONS -fomit-frame-pointer"
 fi
 
