@@ -240,7 +240,7 @@ int _find_vuk(AACS *aacs, const char *path)
 {
     uint8_t *vuks, *key_pos, hash[20], *ukf_buf;
     FILE_H *fp = NULL;
-    uint64_t f_size;
+    int64_t f_size;
     uint16_t num_vuks;
     char f_name[100];
 
@@ -339,7 +339,7 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
         X_FREE(tmp_buf);
 
         return 1;
-    } else if (curr_uk < aacs->num_uks - 1) {
+    } else if (curr_uk < aacs->num_uks - (uint32_t)1) {
         return _decrypt_unit(aacs, buf, len, offset, curr_uk++);
     }
 
