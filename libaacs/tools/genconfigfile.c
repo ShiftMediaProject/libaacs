@@ -1,5 +1,5 @@
 /*
- * This file is part of libbluray
+ * This file is part of libaacs
  * Copyright (C) 2009-2010  cRTrn13
  *
  * This program is free software; you can redistribute it and/or
@@ -15,8 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * In addition, as a special exception, the copyright holders of libbluray
- * gives permission to link the code of its release of libbluray with the
+ * In addition, as a special exception, the copyright holders of libaacs
+ * gives permission to link the code of its release of libaacs with the
  * OpenSSL project's "OpenSSL" library (or with modified versions of it
  * that use the same license as the "OpenSSL" library), and distribute
  * the linked executables.  You must obey the GNU General Public License
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     unsigned int type, entries;
     int i, add_entry = 1;
 
-    printf("Generate libbluray config file builder tool\n\n");
+    printf("Generate libaacs config file builder tool\n\n");
 
     if (argc == 2) {
         FILE *fp = fopen(argv[1], "w");
