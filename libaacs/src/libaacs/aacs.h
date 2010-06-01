@@ -29,7 +29,7 @@
 #ifndef AACS_H_
 #define AACS_H_
 
-#include "file/configfile.h"
+#include "configfile.h"
 
 typedef struct aacs AACS;
 struct aacs {
