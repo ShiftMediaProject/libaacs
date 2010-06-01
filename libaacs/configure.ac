@@ -57,7 +57,7 @@ AC_CHECK_LIB([crypto], [ECDSA_do_sign],,
 # function testing for supported compiler options
 check_cc_options()
 {
-  local tmpfile=$(mktemp)
+  local tmpfile=$(mktemp XXXXXXXXXX)
   local tmpcfile="$tmpfile.c"
   mv $tmpfile $tmpcfile
   local retval=1
