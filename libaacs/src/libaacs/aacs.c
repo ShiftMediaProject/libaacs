@@ -367,11 +367,13 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
         X_FREE(tmp_buf);
 
         return 1;
-    } else if (curr_uk < aacs->num_uks - (uint32_t)1) {
-        return _decrypt_unit(aacs, buf, len, offset, curr_uk++);
     }
 
     X_FREE(tmp_buf);
+
+    if (curr_uk < aacs->num_uks - (uint32_t)1) {
+        return _decrypt_unit(aacs, buf, len, offset, curr_uk++);
+    }
 
     return 0;
 }
