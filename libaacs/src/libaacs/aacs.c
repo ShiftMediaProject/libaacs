@@ -432,6 +432,15 @@ void aacs_close(AACS *aacs)
 
 int aacs_decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset)
 {
+    if (len > 6144) {
+        DEBUG(DBG_AACS, "aacs_decrypt_unit(): len > 6144 ! (%p)\n", aacs);
+        return 0;
+    }
+    if (offset % 6144) {
+        DEBUG(DBG_AACS, "aacs_decrypt_unit(): offset inside block ! (%p)\n", aacs);
+        return 0;
+    }
+
     return _decrypt_unit(aacs, buf, len, offset, 0);
 }
 
