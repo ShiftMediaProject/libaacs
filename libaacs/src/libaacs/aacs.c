@@ -330,7 +330,7 @@ int _find_vuk(AACS *aacs, const char *path)
 int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
                   uint32_t curr_uk)
 {
-    uint8_t *tmp_buf = malloc(len);
+    uint8_t tmp_buf[6144];
 
     memcpy(tmp_buf, buf, len);
 
@@ -364,12 +364,8 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
 
         memcpy(buf, tmp_buf, len);
 
-        X_FREE(tmp_buf);
-
         return 1;
     }
-
-    X_FREE(tmp_buf);
 
     if (curr_uk < aacs->num_uks - (uint32_t)1) {
         return _decrypt_unit(aacs, buf, len, offset, curr_uk++);
