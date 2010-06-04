@@ -378,9 +378,38 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 {
     DEBUG(DBG_AACS, "libaacs [%ld]\n", sizeof(AACS));
 
+
+    char *cfgfile = NULL;
+    if (configfile_path) {
+        cfgfile = (char*)malloc(strlen(configfile_path) + 1);
+        strcpy(cfgfile, configfile_path);
+    } else {
+        /* If no configfile path given, check for configfiles in user's home or
+         * under /etc.
+         */
+        char *userhome = getenv("HOME");
+        cfgfile = (char*)malloc(strlen(userhome) +
+            sizeof("/.libaacs/KEYDB.cfg") + 1);
+        strcpy(cfgfile,userhome);
+        strcat(cfgfile,"/.libaacs/KEYDB.cfg");
+        FILE *fp = fopen(cfgfile, "r");
+        if (!fp) {
+            cfgfile = (char*)realloc(cfgfile, sizeof("/etc/libaacs/KEYDB.cfg"));
+            strcpy(cfgfile, "/etc/libaacs/KEYDB.cfg");
+            fp = fopen(cfgfile, "r");
+            if (!fp) {
+                DEBUG(DBG_AACS, "No configfile found!\n");
+                X_FREE(cfgfile);
+                return NULL;
+            }
+        }
+        fclose(fp);
+        fp = NULL;
+    }
+
     AACS *aacs = calloc(1, sizeof(AACS));
 
-    if ((aacs->kf = configfile_open(configfile_path))) {
+    if ((aacs->kf = configfile_open(cfgfile))) {
         DEBUG(DBG_AACS, "Searching for VUK...\n");
         if(_find_vuk(aacs, path)) {
             if (_calc_uks(aacs, path)) {
