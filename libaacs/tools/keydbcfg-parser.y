@@ -159,7 +159,8 @@ static int print_config_entries(config_entry_list *list);
 %type <string> discid disc_title
 %%
 config_file
-  : config_entry_list
+  : config_entry_list newline_list
+  | config_entry_list
   ;
 
 config_entry_list
