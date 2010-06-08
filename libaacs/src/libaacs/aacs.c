@@ -43,12 +43,13 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
 {
     int a, ret = 0;
     uint8_t dec_vd[16];
+    char str[40];
 
-    DEBUG(DBG_AACS, "Validate processing key %s...\n", print_hex(pk, 16));
+    DEBUG(DBG_AACS, "Validate processing key %s...\n", print_hex(str, pk, 16));
     DEBUG(DBG_AACS, " Using:\n");
-    DEBUG(DBG_AACS, "   UV: %s\n", print_hex(uv, 4));
-    DEBUG(DBG_AACS, "   cvalue: %s\n", print_hex(cvalue, 16));
-    DEBUG(DBG_AACS, "   Verification data: %s\n", print_hex(vd, 16));
+    DEBUG(DBG_AACS, "   UV: %s\n", print_hex(str, uv, 4));
+    DEBUG(DBG_AACS, "   cvalue: %s\n", print_hex(str, cvalue, 16));
+    DEBUG(DBG_AACS, "   Verification data: %s\n", print_hex(str, vd, 16));
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     EVP_CIPHER_CTX_set_key_length(ctx, 16);
@@ -108,7 +109,8 @@ int _calc_mk(AACS *aacs, const char *path)
                         mkb_close(mkb);
                         X_FREE(buf);
 
-                        DEBUG(DBG_AACS, "Media key: %s\n", print_hex(aacs->mk,
+                        char str[40];
+                        DEBUG(DBG_AACS, "Media key: %s\n", print_hex(str, aacs->mk,
                                                                      16));
                         return 1;
                     }
@@ -151,7 +153,8 @@ int _calc_vuk(AACS *aacs, const char *path)
 
             mmc_close(mmc);
 
-            DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(aacs->vuk,
+            char str[40];
+            DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(str, aacs->vuk,
                                                                  16));
 
             return 1;
@@ -214,8 +217,9 @@ int _calc_uks(AACS *aacs, const char *path)
                 EVP_DecryptFinal(ctx, aacs->uks, (int*)16);
                 EVP_CIPHER_CTX_cleanup(ctx);
 
+                char str[40];
                 DEBUG(DBG_AACS, "Unit key %d: %s\n", i,
-                      print_hex(aacs->uks + 16*i, 16));
+                      print_hex(str, aacs->uks + 16*i, 16));
             }
 
             file_close(fp);
@@ -271,6 +275,7 @@ int _find_vuk(AACS *aacs, const char *path)
     int64_t f_size;
     uint16_t num_vuks;
     char f_name[100];
+    char str[48];
 
     snprintf(f_name , 100, "/%s/AACS/Unit_Key_RO.inf", path);
 
@@ -299,7 +304,7 @@ int _find_vuk(AACS *aacs, const char *path)
     file_close(fp);
 
     crypto_aacs_title_hash(ukf_buf, f_size, hash);
-    DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(hash, 20));
+    DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(str, hash, 20));
 
     X_FREE(ukf_buf);
 
@@ -315,7 +320,7 @@ int _find_vuk(AACS *aacs, const char *path)
                 memcpy(aacs->vuk, key_pos + 30, 16);
 
                 DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n", desc,
-                      print_hex(aacs->vuk, 16));
+                      print_hex(str, aacs->vuk, 16));
 
                 return 1;
             }

@@ -76,12 +76,13 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
 
         int a = ioctl(mmc->fd, CDROM_SEND_PACKET, &cgc);
 
+        char str[512];
         DEBUG(DBG_MMC, "Send LINUX MMC cmd %s: (%p)\n",
-              print_hex(cmd, 16), mmc);
+              print_hex(str, cmd, 16), mmc);
         if (tx) {
-            DEBUG(DBG_MMC, "  Buffer: %s -> (%p)\n", print_hex(buf, tx), mmc);
+            DEBUG(DBG_MMC, "  Buffer: %s -> (%p)\n", print_hex(str, buf, tx), mmc);
         } else {
-            DEBUG(DBG_MMC, "  Buffer: %s <- (%p)\n", print_hex(buf, rx), mmc);
+            DEBUG(DBG_MMC, "  Buffer: %s <- (%p)\n", print_hex(str, buf, rx), mmc);
         }
 
         mmc->sk = sense.sense_key & 0x0f;
@@ -129,9 +130,10 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
                          uint16_t len)
 {
     uint8_t cmd[16];
+    char str[512];
     memset(cmd, 0, 16);
 
-    DEBUG(DBG_MMC, "MMC send key [%d] %s... (%p)\n", len, print_hex(buf, len),
+    DEBUG(DBG_MMC, "MMC send key [%d] %s... (%p)\n", len, print_hex(str, buf, len),
           mmc);
 
     cmd[0] = 0xa3;
@@ -140,7 +142,7 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
     cmd[9] = len & 0xff;
     cmd[10] = (agid << 6) | (format & 0x3f);
 
-    DEBUG(DBG_MMC, "cmd: %s (%p)\n", print_hex(cmd, 16), mmc);
+    DEBUG(DBG_MMC, "cmd: %s (%p)\n", print_hex(str, cmd, 16), mmc);
     return _mmc_send_cmd(mmc, cmd, buf, len, 0);
 }
 
@@ -324,6 +326,7 @@ void mmc_close(MMC *mmc)
 int mmc_read_vid(MMC *mmc, uint8_t *vid)
 {
     uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40], mac[16];
+    char str[512];
 
     memset(hks, 0, 40);
 
@@ -354,9 +357,9 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
                   "Drive doesn't give its certificate (%p)\n", mmc);
             break;
         }
-        //DEBUG(DBG_MMC, "Drive certificate   : %s (%p)\n", print_hex(dc, 92),
+        //DEBUG(DBG_MMC, "Drive certificate   : %s (%p)\n", print_hex(str, dc, 92),
         //      mmc);
-        //DEBUG(DBG_MMC, "Drive nonce         : %s (%p)\n", print_hex(dn, 20),
+        //DEBUG(DBG_MMC, "Drive nonce         : %s (%p)\n", print_hex(str, dn, 20),
         //      mmc);
 
         // receive mmc key
@@ -365,9 +368,9 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
                   mmc);
             break;
         }
-        //DEBUG(DBG_MMC, "Drive key point     : %s (%p)\n", print_hex(dkp, 40),
+        //DEBUG(DBG_MMC, "Drive key point     : %s (%p)\n", print_hex(str, dkp, 40),
         //      mmc);
-        //DEBUG(DBG_MMC, "Drive key signature : %s (%p)\n", print_hex(dks, 40),
+        //DEBUG(DBG_MMC, "Drive key signature : %s (%p)\n", print_hex(str, dks, 40),
         //      mmc);
 
         crypto_aacs_sign(mmc->host_cert, mmc->host_priv_key, hks, dn,
@@ -378,15 +381,15 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
             DEBUG(DBG_MMC | DBG_CRIT, "Error sending host signature (%p)\n",
                   mmc);
             DEBUG(DBG_MMC,  "Host key signature : %s (%p)\n",
-                  print_hex(hks, 40), mmc);
+                  print_hex(str, hks, 40), mmc);
             break;
         }
 
     } while (0);
 
     if (_mmc_read_vid(mmc, agid, vid, mac)) {
-        DEBUG(DBG_MMC, "VID: %s (%p)\n", print_hex(vid, 16), mmc);
-        DEBUG(DBG_MMC, "MAC: %s (%p)\n", print_hex(mac, 16), mmc);
+        DEBUG(DBG_MMC, "VID: %s (%p)\n", print_hex(str, vid, 16), mmc);
+        DEBUG(DBG_MMC, "MAC: %s (%p)\n", print_hex(str, mac, 16), mmc);
 
         _mmc_invalidate_agid(mmc, agid);
 
