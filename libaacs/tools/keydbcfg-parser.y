@@ -176,17 +176,13 @@ config_entry_list
   ;
 
 config_entry
-  : newline_list disc_info entry_list linebreak
+  : newline_list disc_info entry_list NEWLINE
+  | disc_info entry_list NEWLINE
   ;
 
 newline_list
-  : newline_list linebreak
-  | linebreak
-  ;
-
-linebreak
-  : NEWLINE
-  | /* null string */
+  : newline_list NEWLINE
+  | NEWLINE
   ;
 
 disc_info
