@@ -2,4 +2,4 @@ SUBDIRS=src
 
 ACLOCAL_AMFLAGS=-I m4
 
-EXTRA_DIST=bootstrap COPYING tools
+EXTRA_DIST=bootstrap COPYING KEYDB.cfg tools
