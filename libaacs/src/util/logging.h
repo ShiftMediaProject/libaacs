@@ -52,7 +52,6 @@ enum debug_mask_enum {
 };
 
 typedef enum debug_mask_enum debug_mask_t;
-extern debug_mask_t debug_mask;
 
 char *print_hex(const uint8_t *str, int count);
 void debug(const char *file, int line, uint32_t mask, const char *format, ...)
