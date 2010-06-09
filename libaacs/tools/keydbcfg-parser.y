@@ -140,7 +140,6 @@ static int print_config_entries(config_entry_list *list);
 %token <digit> DIGIT
 
 %token PUNCT_EQUALS_SIGN
-%token PUNCT_SEMICOLON
 %token PUNCT_VERTICAL_BAR
 %token PUNCT_HYPHEN
 

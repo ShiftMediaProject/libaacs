@@ -66,7 +66,6 @@ ENTRY_ID_TK             (\|[\t ]*[Tt][\t ]*\|)
 ENTRY_ID_UK             (\|[\t ]*[Uu][\t ]*\|)
 
 PUNCT_EQUALS_SIGN       ([=])
-PUNCT_SEMICOLON         ([;])
 PUNCT_VERTICAL_BAR      ([|])
 PUNCT_HYPHEN            ([-])
 
@@ -107,7 +106,6 @@ BAD_ENTRY               ([^\n])
 {ENTRY_ID_UK}             { return ENTRY_ID_UK; }
 
 {PUNCT_EQUALS_SIGN}       { BEGIN TITLE_STATE; return PUNCT_EQUALS_SIGN; }
-{PUNCT_SEMICOLON}         { return PUNCT_SEMICOLON; }
 {PUNCT_VERTICAL_BAR}      { return PUNCT_VERTICAL_BAR; }
 {PUNCT_HYPHEN}            { return PUNCT_HYPHEN; }
 
