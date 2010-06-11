@@ -1,0 +1,122 @@
+/*
+ * This file is part of libaacs
+ * Copyright (C) 2010  gates
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * In addition, as a special exception, the copyright holders of libaacs
+ * gives permission to link the code of its release of libaacs with the
+ * OpenSSL project's "OpenSSL" library (or with modified versions of it
+ * that use the same license as the "OpenSSL" library), and distribute
+ * the linked executables.  You must obey the GNU General Public License
+ * in all respects for all of the code used other than "OpenSSL".  If you
+ * modify this file, you may extend this exception to your version of the
+ * file, but you are not obligated to do so.  If you do not wish to do
+ * so, delete this exception statement from your version.
+ */
+
+#include "file/keydbcfg.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+
+static int print_digit_key_pair_enties(digit_key_pair_list *list);
+static int print_config_entries(config_entry_list *list);
+
+/* Function to print the entres in a digit key pair list */
+static int print_digit_key_pair_enties(digit_key_pair_list *list)
+{
+  if (!list)
+  {
+    printf("Error: No digit key pair list passed as parameter.\n");
+    return 0;
+  }
+
+  digit_key_pair_list *cursor = list;
+  while (cursor)
+  {
+    if (!cursor->key_pair.key)
+      break;
+
+    printf("    %u - %s\n", cursor->key_pair.digit, cursor->key_pair.key);
+
+    cursor = cursor->next;
+  }
+
+  return 1;
+}
+
+/* Function that prints all entries parsed from a config file */
+static int print_config_entries(config_entry_list *list)
+{
+  if (!list)
+  {
+    printf("Error: No config list passed as parameter.\n");
+    return 0;
+  }
+
+  config_entry_list *cursor = list;
+  while (cursor)
+  {
+    if (!cursor->entry.discid)
+      break;
+
+    printf("DISCID: %s\n", cursor->entry.discid);
+    printf("  Title: %s\n", cursor->entry.title);
+    printf("  Date: %u-%u-%u\n", cursor->entry.date.year,
+      cursor->entry.date.month, cursor->entry.date.day);
+    if (cursor->entry.mek)
+      printf("  MEK: %s\n", cursor->entry.mek);
+    if (cursor->entry.vid)
+      printf("  VID: %s\n", cursor->entry.vid);
+    if (cursor->entry.bn)
+    {
+      printf("  BN:\n");
+      print_digit_key_pair_enties(cursor->entry.bn);
+    }
+    if (cursor->entry.vuk)
+      printf("  VUK: %s\n", cursor->entry.vuk);
+    if (cursor->entry.pak)
+    {
+      printf("  PAK:\n");
+      print_digit_key_pair_enties(cursor->entry.pak);
+    }
+    if (cursor->entry.tk)
+    {
+      printf("  TK:\n");
+      print_digit_key_pair_enties(cursor->entry.tk);
+    }
+    if (cursor->entry.uk)
+    {
+      printf("  UK:\n");
+      print_digit_key_pair_enties(cursor->entry.uk);
+    }
+
+    cursor = cursor->next;
+  }
+
+  return 1;
+}
+
+/* main */
+int main (int argc, char **argv)
+{
+  config_entry_list *list = keydbcfg_new_config_entry_list();
+  int retval = keydbcfg_parse_config(list, argv[1]);
+
+  if (!retval || !print_config_entries(list))
+    return EXIT_FAILURE;
+
+  return EXIT_SUCCESS;
+}

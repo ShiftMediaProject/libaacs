@@ -133,5 +133,5 @@ fi
 AC_SUBST(SET_WARNINGS)
 AC_SUBST(SET_OPTIMIZATIONS)
 AC_SUBST(SET_DEBUG_OPTS)
-AC_CONFIG_FILES([Makefile src/Makefile src/libaacs.pc])
+AC_CONFIG_FILES([Makefile src/Makefile src/examples/Makefile src/libaacs.pc])
 AC_OUTPUT
