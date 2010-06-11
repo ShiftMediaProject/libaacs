@@ -12,4 +12,4 @@ AACS_LIB = $(top_builddir)/src/libaacs.la
 
 noinst_PROGRAMS=parser_test
 parser_test_SOURCE=parser_test.c
-parser_test_LDADD = $(AACS_LIB) -ly
+parser_test_LDADD = $(AACS_LIB)

@@ -64,6 +64,7 @@ static int add_digit_key_pair_entry(config_entry_list *list, int type,
                                     unsigned int digit, const char *entry);
 static int add_date_entry(config_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
+void yyerror (void *scanner, config_entry_list *list, const char *msg);
 
 /* uncomment the line below for debugging */
 // int yydebug = 1;
@@ -470,4 +471,10 @@ static int add_date_entry(config_entry_list *list, unsigned int year,
   cursor->entry.date.day = day;
 
   return 1;
+}
+
+/* Our definition of yyerror */
+void yyerror (void *scanner, config_entry_list *list, const char *msg)
+{
+  fprintf(stderr, "%s\n", msg);
 }
