@@ -129,10 +129,10 @@ enum
 
 static int add_entry(config_entry_list *list, int type, const char *entry);
 static digit_key_pair_list *new_digit_key_pair_list();
-static int add_digit_key_pair(digit_key_pair_list *list, int type, int digit,
-                              const char *key);
+static int add_digit_key_pair(digit_key_pair_list *list, int type,
+                              unsigned int digit, const char *key);
 static int add_digit_key_pair_entry(config_entry_list *list, int type,
-                                    int digit, const char *entry);
+                                    unsigned int digit, const char *entry);
 static int add_date_entry(config_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
 
@@ -1925,8 +1925,8 @@ static digit_key_pair_list *new_digit_key_pair_list()
 }
 
 /* Function used to add a digit/key pair to a list of digit key pair entries */
-static int add_digit_key_pair(digit_key_pair_list *list, int type, int digit,
-                              const char *key)
+static int add_digit_key_pair(digit_key_pair_list *list, int type,
+                              unsigned int digit, const char *key)
 {
   if (!list)
   {
@@ -1935,7 +1935,7 @@ static int add_digit_key_pair(digit_key_pair_list *list, int type, int digit,
   }
 
   digit_key_pair_list *cursor = list;
-  int count = 0;
+  unsigned int count = 0;
   if (type == ENTRY_ID_TK || type == ENTRY_ID_UK)
     count = 1;
   while (cursor->next)
@@ -1957,8 +1957,8 @@ static int add_digit_key_pair(digit_key_pair_list *list, int type, int digit,
 }
 
 /* Function to add a digit/key pair to a config entry */
-static int add_digit_key_pair_entry(config_entry_list *list, int type, int digit,
-                                    const char *entry)
+static int add_digit_key_pair_entry(config_entry_list *list, int type,
+                                    unsigned int digit, const char *entry)
 {
   if (!list)
   {
