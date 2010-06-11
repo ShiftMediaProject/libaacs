@@ -113,6 +113,11 @@ extern int yyget_lineno  (void *scanner);
 config_file
   : config_entry_list newline_list
   | config_entry_list
+  | config_entry_list error
+    {
+      if (yychar == YYEOF)
+        fprintf(stderr, "warning: last entry ended without newline\n");
+    }
   ;
 
 config_entry_list

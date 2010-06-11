@@ -456,7 +456,7 @@ union yyalloc
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  26
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  44
+#define YYNRULES  45
 /* YYNRULES -- Number of states.  */
 #define YYNSTATES  79
 
@@ -505,40 +505,40 @@ static const yytype_uint8 yytranslate[] =
    YYRHS.  */
 static const yytype_uint8 yyprhs[] =
 {
-       0,     0,     3,     6,     8,    12,    15,    19,    22,    26,
-      29,    32,    34,    38,    40,    42,    45,    47,    49,    51,
-      53,    55,    57,    59,    61,    63,    70,    73,    76,    79,
-      83,    85,    89,    92,    95,    99,   101,   105,   108,   112,
-     114,   118,   121,   125,   127
+       0,     0,     3,     6,     8,    11,    15,    18,    22,    25,
+      29,    32,    35,    37,    41,    43,    45,    48,    50,    52,
+      54,    56,    58,    60,    62,    64,    66,    73,    76,    79,
+      82,    86,    88,    92,    95,    98,   102,   104,   108,   111,
+     115,   117,   121,   124,   128,   130
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-      20,     0,    -1,    21,    23,    -1,    21,    -1,    21,    22,
-      17,    -1,    22,    17,    -1,    21,     1,    17,    -1,     1,
-      17,    -1,    23,    24,    27,    -1,    24,    27,    -1,    23,
-      17,    -1,    17,    -1,    25,     6,    26,    -1,     3,    -1,
-       4,    -1,    27,    28,    -1,    28,    -1,    29,    -1,    30,
-      -1,    31,    -1,    32,    -1,    35,    -1,    36,    -1,    39,
-      -1,    42,    -1,     9,     5,     8,     5,     8,     5,    -1,
-      10,     3,    -1,    11,     3,    -1,    12,    33,    -1,    33,
-       7,    34,    -1,    34,    -1,     5,     8,     3,    -1,    13,
-       3,    -1,    14,    37,    -1,    37,     7,    38,    -1,    38,
-      -1,     5,     8,     3,    -1,    15,    40,    -1,    40,     7,
-      41,    -1,    41,    -1,     5,     8,     3,    -1,    16,    43,
-      -1,    43,     7,    44,    -1,    44,    -1,     5,     8,     3,
-      -1
+      20,     0,    -1,    21,    23,    -1,    21,    -1,    21,     1,
+      -1,    21,    22,    17,    -1,    22,    17,    -1,    21,     1,
+      17,    -1,     1,    17,    -1,    23,    24,    27,    -1,    24,
+      27,    -1,    23,    17,    -1,    17,    -1,    25,     6,    26,
+      -1,     3,    -1,     4,    -1,    27,    28,    -1,    28,    -1,
+      29,    -1,    30,    -1,    31,    -1,    32,    -1,    35,    -1,
+      36,    -1,    39,    -1,    42,    -1,     9,     5,     8,     5,
+       8,     5,    -1,    10,     3,    -1,    11,     3,    -1,    12,
+      33,    -1,    33,     7,    34,    -1,    34,    -1,     5,     8,
+       3,    -1,    13,     3,    -1,    14,    37,    -1,    37,     7,
+      38,    -1,    38,    -1,     5,     8,     3,    -1,    15,    40,
+      -1,    40,     7,    41,    -1,    41,    -1,     5,     8,     3,
+      -1,    16,    43,    -1,    43,     7,    44,    -1,    44,    -1,
+       5,     8,     3,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   114,   114,   115,   119,   124,   129,   134,   142,   143,
-     147,   148,   152,   160,   164,   168,   169,   173,   174,   175,
-     176,   177,   178,   179,   180,   184,   191,   198,   205,   209,
-     210,   214,   221,   228,   232,   233,   237,   244,   248,   249,
-     253,   260,   264,   265,   269
+       0,   114,   114,   115,   116,   124,   129,   134,   139,   147,
+     148,   152,   153,   157,   165,   169,   173,   174,   178,   179,
+     180,   181,   182,   183,   184,   185,   189,   196,   203,   210,
+     214,   215,   219,   226,   233,   237,   238,   242,   249,   253,
+     254,   258,   265,   269,   270,   274
 };
 #endif
 
@@ -573,21 +573,21 @@ static const yytype_uint16 yytoknum[] =
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    19,    20,    20,    21,    21,    21,    21,    22,    22,
-      23,    23,    24,    25,    26,    27,    27,    28,    28,    28,
-      28,    28,    28,    28,    28,    29,    30,    31,    32,    33,
-      33,    34,    35,    36,    37,    37,    38,    39,    40,    40,
-      41,    42,    43,    43,    44
+       0,    19,    20,    20,    20,    21,    21,    21,    21,    22,
+      22,    23,    23,    24,    25,    26,    27,    27,    28,    28,
+      28,    28,    28,    28,    28,    28,    29,    30,    31,    32,
+      33,    33,    34,    35,    36,    37,    37,    38,    39,    40,
+      40,    41,    42,    43,    43,    44
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     2,     1,     3,     2,     3,     2,     3,     2,
-       2,     1,     3,     1,     1,     2,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     6,     2,     2,     2,     3,
-       1,     3,     2,     2,     3,     1,     3,     2,     3,     1,
-       3,     2,     3,     1,     3
+       0,     2,     2,     1,     2,     3,     2,     3,     2,     3,
+       2,     2,     1,     3,     1,     1,     2,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     6,     2,     2,     2,
+       3,     1,     3,     2,     2,     3,     1,     3,     2,     3,
+       1,     3,     2,     3,     1,     3
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -595,14 +595,14 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,    13,    11,     0,     0,     0,     0,     0,     0,
-       7,     1,     0,     0,     2,     5,    10,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     9,    16,    17,    18,
-      19,    20,    21,    22,    23,    24,     0,     6,     4,     8,
-       0,    26,    27,     0,    28,    30,    32,     0,    33,    35,
-       0,    37,    39,     0,    41,    43,    15,    14,    12,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,    31,
-      29,    36,    34,    40,    38,    44,    42,     0,    25
+       0,     0,    14,    12,     0,     0,     0,     0,     0,     0,
+       8,     1,     4,     0,     2,     6,    11,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,    10,    17,    18,    19,
+      20,    21,    22,    23,    24,    25,     0,     7,     5,     9,
+       0,    27,    28,     0,    29,    31,    33,     0,    34,    36,
+       0,    38,    40,     0,    42,    44,    16,    15,    13,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,    32,
+      30,    37,    35,    41,    39,    45,    43,     0,    26
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -1498,10 +1498,10 @@ yyreduce:
         case 4:
 
 /* Line 1455 of yacc.c  */
-#line 120 "keydbcfg-parser.y"
+#line 117 "keydbcfg-parser.y"
     {
-      list->next = keydbcfg_new_config_entry_list();
-      list = list->next;
+      if (yychar == YYEOF)
+        fprintf(stderr, "warning: last entry ended without newline\n");
     }
     break;
 
@@ -1520,8 +1520,8 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 130 "keydbcfg-parser.y"
     {
-      fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
-      yyerrok;
+      list->next = keydbcfg_new_config_entry_list();
+      list = list->next;
     }
     break;
 
@@ -1535,83 +1535,93 @@ yyreduce:
     }
     break;
 
-  case 12:
+  case 8:
 
 /* Line 1455 of yacc.c  */
-#line 153 "keydbcfg-parser.y"
+#line 140 "keydbcfg-parser.y"
+    {
+      fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
+      yyerrok;
+    }
+    break;
+
+  case 13:
+
+/* Line 1455 of yacc.c  */
+#line 158 "keydbcfg-parser.y"
     {
       add_entry(list, ENTRY_TYPE_DISCID, (yyvsp[(1) - (3)].string));
       add_entry(list, ENTRY_TYPE_TITLE, (yyvsp[(3) - (3)].string));
     }
     break;
 
-  case 25:
-
-/* Line 1455 of yacc.c  */
-#line 185 "keydbcfg-parser.y"
-    {
-      add_date_entry(list, (yyvsp[(2) - (6)].digit), (yyvsp[(4) - (6)].digit), (yyvsp[(6) - (6)].digit));
-    }
-    break;
-
   case 26:
 
 /* Line 1455 of yacc.c  */
-#line 192 "keydbcfg-parser.y"
+#line 190 "keydbcfg-parser.y"
     {
-      add_entry(list, ENTRY_TYPE_MEK, (yyvsp[(2) - (2)].string));
+      add_date_entry(list, (yyvsp[(2) - (6)].digit), (yyvsp[(4) - (6)].digit), (yyvsp[(6) - (6)].digit));
     }
     break;
 
   case 27:
 
 /* Line 1455 of yacc.c  */
-#line 199 "keydbcfg-parser.y"
+#line 197 "keydbcfg-parser.y"
     {
-      add_entry(list, ENTRY_TYPE_VID, (yyvsp[(2) - (2)].string));
+      add_entry(list, ENTRY_TYPE_MEK, (yyvsp[(2) - (2)].string));
     }
     break;
 
-  case 31:
+  case 28:
 
 /* Line 1455 of yacc.c  */
-#line 215 "keydbcfg-parser.y"
+#line 204 "keydbcfg-parser.y"
     {
-      add_digit_key_pair_entry(list, ENTRY_TYPE_BN, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+      add_entry(list, ENTRY_TYPE_VID, (yyvsp[(2) - (2)].string));
     }
     break;
 
   case 32:
 
 /* Line 1455 of yacc.c  */
-#line 222 "keydbcfg-parser.y"
+#line 220 "keydbcfg-parser.y"
+    {
+      add_digit_key_pair_entry(list, ENTRY_TYPE_BN, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+    }
+    break;
+
+  case 33:
+
+/* Line 1455 of yacc.c  */
+#line 227 "keydbcfg-parser.y"
     {
       add_entry(list, ENTRY_TYPE_VUK, (yyvsp[(2) - (2)].string));
     }
     break;
 
-  case 36:
+  case 37:
 
 /* Line 1455 of yacc.c  */
-#line 238 "keydbcfg-parser.y"
+#line 243 "keydbcfg-parser.y"
     {
       add_digit_key_pair_entry(list, ENTRY_TYPE_PAK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
     }
     break;
 
-  case 40:
+  case 41:
 
 /* Line 1455 of yacc.c  */
-#line 254 "keydbcfg-parser.y"
+#line 259 "keydbcfg-parser.y"
     {
       add_digit_key_pair_entry(list, ENTRY_TYPE_TK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
     }
     break;
 
-  case 44:
+  case 45:
 
 /* Line 1455 of yacc.c  */
-#line 270 "keydbcfg-parser.y"
+#line 275 "keydbcfg-parser.y"
     {
       add_digit_key_pair_entry(list, ENTRY_TYPE_UK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
     }
@@ -1620,7 +1630,7 @@ yyreduce:
 
 
 /* Line 1455 of yacc.c  */
-#line 1624 "keydbcfg-parser.c"
+#line 1634 "keydbcfg-parser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1832,7 +1842,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 274 "keydbcfg-parser.y"
+#line 279 "keydbcfg-parser.y"
 
 /* Function to parse a config file */
 int keydbcfg_parse_config(config_entry_list *list, const char *path)
