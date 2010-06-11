@@ -65,6 +65,7 @@ static int add_digit_key_pair_entry(config_entry_list *list, int type,
 static int add_date_entry(config_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
 void yyerror (void *scanner, config_entry_list *list, const char *msg);
+extern int yyget_lineno  (void *scanner);
 
 /* uncomment the line below for debugging */
 // int yydebug = 1;
@@ -476,5 +477,5 @@ static int add_date_entry(config_entry_list *list, unsigned int year,
 /* Our definition of yyerror */
 void yyerror (void *scanner, config_entry_list *list, const char *msg)
 {
-  fprintf(stderr, "%s\n", msg);
+  fprintf(stderr, "%s: line %d\n", msg, yyget_lineno(scanner));
 }

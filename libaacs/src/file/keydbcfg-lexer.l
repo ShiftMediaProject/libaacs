@@ -112,10 +112,7 @@ BAD_ENTRY               ([^\n])
 {NEWLINE}                 { return NEWLINE; }
 
 {COMMENT}                 {}
-{BAD_ENTRY}               {
-                            printf("Bad entry at line %u!\n", yylineno);
-                            return BAD_ENTRY;
-                          }
+{BAD_ENTRY}               { return BAD_ENTRY; }
 %%
 /* Function used to trim leading and trailing space from a string */
 static char *trim_string(const char *string)

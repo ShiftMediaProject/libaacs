@@ -1083,17 +1083,14 @@ YY_RULE_SETUP
 case 19:
 YY_RULE_SETUP
 #line 115 "keydbcfg-lexer.l"
-{
-                            printf("Bad entry at line %u!\n", yylineno);
-                            return BAD_ENTRY;
-                          }
+{ return BAD_ENTRY; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 119 "keydbcfg-lexer.l"
+#line 116 "keydbcfg-lexer.l"
 ECHO;
 	YY_BREAK
-#line 1097 "keydbcfg-lexer.c"
+#line 1094 "keydbcfg-lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(TITLE_STATE):
 	yyterminate();
@@ -2230,7 +2227,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 119 "keydbcfg-lexer.l"
+#line 116 "keydbcfg-lexer.l"
 
 
 /* Function used to trim leading and trailing space from a string */
