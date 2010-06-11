@@ -13,4 +13,4 @@ clean:
 	@rm -f $(TOOLS) *.o
 
 genconfigfile: genconfigfile.c
-	gcc -o $@ $?
+	$(CC) $(CFLAGS) -o $@ $?
