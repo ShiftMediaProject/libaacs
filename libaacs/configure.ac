@@ -4,6 +4,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
 AM_CONFIG_HEADER(config.h)
+AM_MAINTAINER_MODE
 
 # messages
 library_not_found="Could not find required library!"
@@ -37,6 +38,8 @@ AC_ARG_ENABLE([debug],
 # required programs
 AC_PROG_CC
 AC_PROG_LIBTOOL
+AM_PROG_LEX
+AC_PROG_YACC
 
 # required types
 AC_TYPE_SIGNAL

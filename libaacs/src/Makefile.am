@@ -13,6 +13,7 @@ SET_INCLUDES = -I$(top_srcdir) -Ifile
 
 AM_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_WARNINGS) $(SET_OPTIMIZATIONS) \
 	$(SET_DEBUG_OPTS) $(SET_INCLUDES)
+AM_YFLAGS = -d
 CFLAGS=$(shell test -z "$$CFLAGS" || echo "$$CFLAGS")
 
 lib_LTLIBRARIES = libaacs.la
@@ -28,6 +29,9 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	file/configfile.h \
 	file/file.h \
 	file/file_posix.c \
+	file/keydbcfg.h \
+	file/keydbcfg-parser.y \
+	file/keydbcfg-lexer.l \
 	util/attributes.h \
 	util/macro.h \
 	util/logging.c \
@@ -37,3 +41,5 @@ libaacs_la_HEADERS= libaacs/aacs.h file/configfile.h
 libaacs_la_LDFLAGS= -version-info $(LIB_VERSION_INFO)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libaacs.pc
+
+BUILT_SOURCES = keydbcfg-parser.h keydbcfg-parser.c keydbcfg-lexer.c
