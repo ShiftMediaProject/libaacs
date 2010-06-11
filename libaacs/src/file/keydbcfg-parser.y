@@ -116,21 +116,31 @@ config_file
   ;
 
 config_entry_list
-  : config_entry_list config_entry
+  : config_entry_list config_entry NEWLINE
     {
       list->next = keydbcfg_new_config_entry_list();
       list = list->next;
     }
-  | config_entry
+  | config_entry NEWLINE
     {
       list->next = keydbcfg_new_config_entry_list();
       list = list->next;
+    }
+  | config_entry_list error NEWLINE
+    {
+      fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
+      yyerrok;
+    }
+  | error NEWLINE
+    {
+      fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
+      yyerrok;
     }
   ;
 
 config_entry
-  : newline_list disc_info entry_list NEWLINE
-  | disc_info entry_list NEWLINE
+  : newline_list disc_info entry_list
+  | disc_info entry_list
   ;
 
 newline_list
