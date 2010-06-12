@@ -364,7 +364,7 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
     EVP_CIPHER_CTX_cleanup(ctx);
 
     if (_verify_ts(tmp_buf,len)) {
-        DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %ld (%p)\n",
+        DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %"PRIu64" (%p)\n",
               len % 6144 ? "PARTIAL" : "FULL", len, offset, aacs);
 
         memcpy(buf, tmp_buf, len);
@@ -381,7 +381,7 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
 
 AACS *aacs_open(const char *path, const char *configfile_path)
 {
-    DEBUG(DBG_AACS, "libaacs [%ld]\n", sizeof(AACS));
+    DEBUG(DBG_AACS, "libaacs [%zd]\n", sizeof(AACS));
 
 
     char *cfgfile = NULL;
