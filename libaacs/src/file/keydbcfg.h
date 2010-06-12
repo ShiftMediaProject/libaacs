@@ -32,7 +32,7 @@
 /* struct holding a digit and key pair for <ENTRY NUMBER> - <ENTRY> entries */
 typedef struct
 {
-  int digit;
+  unsigned int digit;
   char *key;
 } digit_key_pair;
 
