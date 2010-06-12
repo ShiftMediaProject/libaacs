@@ -127,6 +127,10 @@ enum
   ENTRY_TYPE_UK
 };
 
+static pk_list *new_pk_list();
+static int add_pk_list(pk_list *list, const char *key);
+static int add_pk_list_entry(config_file *cfgfile, const char *entry);
+static config_entry_list *new_config_entry_list();
 static int add_entry(config_entry_list *list, int type, const char *entry);
 static digit_key_pair_list *new_digit_key_pair_list();
 static int add_digit_key_pair(digit_key_pair_list *list, int type,
@@ -135,7 +139,7 @@ static int add_digit_key_pair_entry(config_entry_list *list, int type,
                                     unsigned int digit, const char *entry);
 static int add_date_entry(config_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
-void yyerror (void *scanner, config_entry_list *list, const char *msg);
+void yyerror (void *scanner, config_file *cfgfile, const char *msg);
 extern int yyget_lineno  (void *scanner);
 
 /* uncomment the line below for debugging */
@@ -143,11 +147,11 @@ extern int yyget_lineno  (void *scanner);
 
 
 /* Line 189 of yacc.c  */
-#line 147 "keydbcfg-parser.c"
+#line 151 "keydbcfg-parser.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 
 /* Enabling verbose error messages.  */
@@ -173,38 +177,44 @@ extern int yyget_lineno  (void *scanner);
      HEXSTRING = 258,
      DISC_TITLE = 259,
      DIGIT = 260,
-     PUNCT_EQUALS_SIGN = 261,
-     PUNCT_VERTICAL_BAR = 262,
-     PUNCT_HYPHEN = 263,
-     ENTRY_ID_DATE = 264,
-     ENTRY_ID_MEK = 265,
-     ENTRY_ID_VID = 266,
-     ENTRY_ID_BN = 267,
-     ENTRY_ID_VUK = 268,
-     ENTRY_ID_PAK = 269,
-     ENTRY_ID_TK = 270,
-     ENTRY_ID_UK = 271,
-     NEWLINE = 272,
-     BAD_ENTRY = 273
+     KEYWORD_BEGIN = 261,
+     KEYWORD_END = 262,
+     KEYWORD_PK_LIST = 263,
+     PUNCT_EQUALS_SIGN = 264,
+     PUNCT_VERTICAL_BAR = 265,
+     PUNCT_HYPHEN = 266,
+     ENTRY_ID_DATE = 267,
+     ENTRY_ID_MEK = 268,
+     ENTRY_ID_VID = 269,
+     ENTRY_ID_BN = 270,
+     ENTRY_ID_VUK = 271,
+     ENTRY_ID_PAK = 272,
+     ENTRY_ID_TK = 273,
+     ENTRY_ID_UK = 274,
+     NEWLINE = 275,
+     BAD_ENTRY = 276
    };
 #endif
 /* Tokens.  */
 #define HEXSTRING 258
 #define DISC_TITLE 259
 #define DIGIT 260
-#define PUNCT_EQUALS_SIGN 261
-#define PUNCT_VERTICAL_BAR 262
-#define PUNCT_HYPHEN 263
-#define ENTRY_ID_DATE 264
-#define ENTRY_ID_MEK 265
-#define ENTRY_ID_VID 266
-#define ENTRY_ID_BN 267
-#define ENTRY_ID_VUK 268
-#define ENTRY_ID_PAK 269
-#define ENTRY_ID_TK 270
-#define ENTRY_ID_UK 271
-#define NEWLINE 272
-#define BAD_ENTRY 273
+#define KEYWORD_BEGIN 261
+#define KEYWORD_END 262
+#define KEYWORD_PK_LIST 263
+#define PUNCT_EQUALS_SIGN 264
+#define PUNCT_VERTICAL_BAR 265
+#define PUNCT_HYPHEN 266
+#define ENTRY_ID_DATE 267
+#define ENTRY_ID_MEK 268
+#define ENTRY_ID_VID 269
+#define ENTRY_ID_BN 270
+#define ENTRY_ID_VUK 271
+#define ENTRY_ID_PAK 272
+#define ENTRY_ID_TK 273
+#define ENTRY_ID_UK 274
+#define NEWLINE 275
+#define BAD_ENTRY 276
 
 
 
@@ -214,7 +224,7 @@ typedef union YYSTYPE
 {
 
 /* Line 214 of yacc.c  */
-#line 86 "keydbcfg-parser.y"
+#line 90 "keydbcfg-parser.y"
 
   char *string;
   unsigned int digit;
@@ -222,7 +232,7 @@ typedef union YYSTYPE
 
 
 /* Line 214 of yacc.c  */
-#line 226 "keydbcfg-parser.c"
+#line 236 "keydbcfg-parser.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -234,7 +244,7 @@ typedef union YYSTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 238 "keydbcfg-parser.c"
+#line 248 "keydbcfg-parser.c"
 
 #ifdef short
 # undef short
@@ -447,22 +457,22 @@ union yyalloc
 #endif
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  11
+#define YYFINAL  8
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   59
+#define YYLAST   90
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  19
+#define YYNTOKENS  22
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  26
+#define YYNNTS  32
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  45
+#define YYNRULES  55
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  79
+#define YYNSTATES  105
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   273
+#define YYMAXUTOK   276
 
 #define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -497,7 +507,7 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18
+      15,    16,    17,    18,    19,    20,    21
 };
 
 #if YYDEBUG
@@ -505,40 +515,46 @@ static const yytype_uint8 yytranslate[] =
    YYRHS.  */
 static const yytype_uint8 yyprhs[] =
 {
-       0,     0,     3,     6,     8,    11,    15,    18,    22,    25,
-      29,    32,    35,    37,    41,    43,    45,    48,    50,    52,
-      54,    56,    58,    60,    62,    64,    66,    73,    76,    79,
-      82,    86,    88,    92,    95,    98,   102,   104,   108,   111,
-     115,   117,   121,   124,   128,   130
+       0,     0,     3,     6,    10,    15,    19,    24,    28,    32,
+      35,    38,    40,    43,    45,    48,    52,    55,    59,    62,
+      66,    69,    72,    74,    78,    80,    82,    85,    87,    89,
+      91,    93,    95,    97,    99,   101,   103,   110,   113,   116,
+     119,   123,   125,   129,   132,   135,   139,   141,   145,   148,
+     152,   154,   158,   161,   165,   167
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-      20,     0,    -1,    21,    23,    -1,    21,    -1,    21,     1,
-      -1,    21,    22,    17,    -1,    22,    17,    -1,    21,     1,
-      17,    -1,     1,    17,    -1,    23,    24,    27,    -1,    24,
-      27,    -1,    23,    17,    -1,    17,    -1,    25,     6,    26,
-      -1,     3,    -1,     4,    -1,    27,    28,    -1,    28,    -1,
-      29,    -1,    30,    -1,    31,    -1,    32,    -1,    35,    -1,
-      36,    -1,    39,    -1,    42,    -1,     9,     5,     8,     5,
-       8,     5,    -1,    10,     3,    -1,    11,     3,    -1,    12,
-      33,    -1,    33,     7,    34,    -1,    34,    -1,     5,     8,
-       3,    -1,    13,     3,    -1,    14,    37,    -1,    37,     7,
-      38,    -1,    38,    -1,     5,     8,     3,    -1,    15,    40,
-      -1,    40,     7,    41,    -1,    41,    -1,     5,     8,     3,
-      -1,    16,    43,    -1,    43,     7,    44,    -1,    44,    -1,
-       5,     8,     3,    -1
+      23,     0,    -1,    24,    29,    -1,    25,    27,    26,    -1,
+      32,     6,     8,    20,    -1,     6,     8,    20,    -1,    32,
+       7,     8,    20,    -1,     7,     8,    20,    -1,    27,    28,
+      20,    -1,    28,    20,    -1,    32,     3,    -1,     3,    -1,
+      30,    32,    -1,    30,    -1,    30,     1,    -1,    30,    31,
+      20,    -1,    31,    20,    -1,    30,     1,    20,    -1,     1,
+      20,    -1,    32,    33,    36,    -1,    33,    36,    -1,    32,
+      20,    -1,    20,    -1,    34,     9,    35,    -1,     3,    -1,
+       4,    -1,    36,    37,    -1,    37,    -1,    38,    -1,    39,
+      -1,    40,    -1,    41,    -1,    44,    -1,    45,    -1,    48,
+      -1,    51,    -1,    12,     5,    11,     5,    11,     5,    -1,
+      13,     3,    -1,    14,     3,    -1,    15,    42,    -1,    42,
+      10,    43,    -1,    43,    -1,     5,    11,     3,    -1,    16,
+       3,    -1,    17,    46,    -1,    46,    10,    47,    -1,    47,
+      -1,     5,    11,     3,    -1,    18,    49,    -1,    49,    10,
+      50,    -1,    50,    -1,     5,    11,     3,    -1,    19,    52,
+      -1,    52,    10,    53,    -1,    53,    -1,     5,    11,     3,
+      -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   114,   114,   115,   116,   124,   129,   134,   139,   147,
-     148,   152,   153,   157,   165,   169,   173,   174,   178,   179,
-     180,   181,   182,   183,   184,   185,   189,   196,   203,   210,
-     214,   215,   219,   226,   233,   237,   238,   242,   249,   253,
-     254,   258,   265,   269,   270,   274
+       0,   122,   122,   126,   130,   131,   135,   136,   140,   141,
+     145,   149,   156,   157,   158,   166,   173,   180,   185,   193,
+     194,   198,   199,   203,   211,   215,   219,   220,   224,   225,
+     226,   227,   228,   229,   230,   231,   235,   242,   249,   256,
+     260,   261,   265,   272,   279,   283,   284,   288,   295,   299,
+     300,   304,   311,   315,   316,   320
 };
 #endif
 
@@ -548,15 +564,17 @@ static const yytype_uint16 yyrline[] =
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "HEXSTRING", "DISC_TITLE", "DIGIT",
-  "PUNCT_EQUALS_SIGN", "PUNCT_VERTICAL_BAR", "PUNCT_HYPHEN",
-  "ENTRY_ID_DATE", "ENTRY_ID_MEK", "ENTRY_ID_VID", "ENTRY_ID_BN",
-  "ENTRY_ID_VUK", "ENTRY_ID_PAK", "ENTRY_ID_TK", "ENTRY_ID_UK", "NEWLINE",
-  "BAD_ENTRY", "$accept", "config_file", "config_entry_list",
-  "config_entry", "newline_list", "disc_info", "discid", "disc_title",
-  "entry_list", "entry", "date_entry", "mek_entry", "vid_entry",
-  "bn_entry", "bn_data_list", "bn_data", "vuk_entry", "pak_entry",
-  "pak_data_list", "pak_data", "tk_entry", "tk_data_list", "tk_data",
-  "uk_entry", "uk_data_list", "uk_data", 0
+  "KEYWORD_BEGIN", "KEYWORD_END", "KEYWORD_PK_LIST", "PUNCT_EQUALS_SIGN",
+  "PUNCT_VERTICAL_BAR", "PUNCT_HYPHEN", "ENTRY_ID_DATE", "ENTRY_ID_MEK",
+  "ENTRY_ID_VID", "ENTRY_ID_BN", "ENTRY_ID_VUK", "ENTRY_ID_PAK",
+  "ENTRY_ID_TK", "ENTRY_ID_UK", "NEWLINE", "BAD_ENTRY", "$accept",
+  "config_file", "pk_block", "pk_list_start", "pk_list_end", "pk_list",
+  "pk_entry", "config_entries", "config_entry_list", "config_entry",
+  "newline_list", "disc_info", "discid", "disc_title", "entry_list",
+  "entry", "date_entry", "mek_entry", "vid_entry", "bn_entry",
+  "bn_data_list", "bn_data", "vuk_entry", "pak_entry", "pak_data_list",
+  "pak_data", "tk_entry", "tk_data_list", "tk_data", "uk_entry",
+  "uk_data_list", "uk_data", 0
 };
 #endif
 
@@ -566,24 +584,27 @@ static const char *const yytname[] =
 static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271,   272,   273
+     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
+     275,   276
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    19,    20,    20,    20,    21,    21,    21,    21,    22,
-      22,    23,    23,    24,    25,    26,    27,    27,    28,    28,
-      28,    28,    28,    28,    28,    28,    29,    30,    31,    32,
-      33,    33,    34,    35,    36,    37,    37,    38,    39,    40,
-      40,    41,    42,    43,    43,    44
+       0,    22,    23,    24,    25,    25,    26,    26,    27,    27,
+      28,    28,    29,    29,    29,    30,    30,    30,    30,    31,
+      31,    32,    32,    33,    34,    35,    36,    36,    37,    37,
+      37,    37,    37,    37,    37,    37,    38,    39,    40,    41,
+      42,    42,    43,    44,    45,    46,    46,    47,    48,    49,
+      49,    50,    51,    52,    52,    53
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     2,     1,     2,     3,     2,     3,     2,     3,
+       0,     2,     2,     3,     4,     3,     4,     3,     3,     2,
+       2,     1,     2,     1,     2,     3,     2,     3,     2,     3,
        2,     2,     1,     3,     1,     1,     2,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     6,     2,     2,     2,
        3,     1,     3,     2,     2,     3,     1,     3,     2,     3,
@@ -595,84 +616,103 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,    14,    12,     0,     0,     0,     0,     0,     0,
-       8,     1,     4,     0,     2,     6,    11,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,    10,    17,    18,    19,
-      20,    21,    22,    23,    24,    25,     0,     7,     5,     9,
-       0,    27,    28,     0,    29,    31,    33,     0,    34,    36,
-       0,    38,    40,     0,    42,    44,    16,    15,    13,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,    32,
-      30,    37,    35,    41,    39,    45,    43,     0,    26
+       0,     0,    22,     0,     0,     0,     0,     0,     1,     0,
+      24,     2,     0,     0,     0,     0,     0,    11,     0,     0,
+       0,     0,    21,     5,    18,    14,     0,    12,    16,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,    20,    27,
+      28,    29,    30,    31,    32,    33,    34,    35,     0,     0,
+       3,     0,     0,     9,    10,     0,    17,    15,    19,     0,
+      37,    38,     0,    39,    41,    43,     0,    44,    46,     0,
+      48,    50,     0,    52,    54,    26,    25,    23,     0,     8,
+       0,     4,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     7,     0,     0,    42,    40,    47,    45,    51,    49,
+      55,    53,     6,     0,    36
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     4,     5,     6,     7,     8,     9,    58,    26,    27,
-      28,    29,    30,    31,    44,    45,    32,    33,    48,    49,
-      34,    51,    52,    35,    54,    55
+      -1,     3,     4,     5,    50,    18,    19,    11,    12,    13,
+       6,    15,    16,    77,    38,    39,    40,    41,    42,    43,
+      63,    64,    44,    45,    67,    68,    46,    70,    71,    47,
+      73,    74
 };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -26
+#define YYPACT_NINF -37
 static const yytype_int8 yypact[] =
 {
-       1,   -11,   -26,   -26,    21,     0,     5,     2,    -1,    18,
-     -26,   -26,     8,    10,     2,   -26,   -26,    -1,    23,    26,
-      27,    28,    29,    30,    31,    32,    -1,   -26,   -26,   -26,
-     -26,   -26,   -26,   -26,   -26,   -26,    22,   -26,   -26,    -1,
-      33,   -26,   -26,    34,    24,   -26,   -26,    35,    37,   -26,
-      38,    40,   -26,    41,    43,   -26,   -26,   -26,   -26,    46,
-      36,    28,    42,    30,    45,    31,    49,    32,    47,   -26,
-     -26,   -26,   -26,   -26,   -26,   -26,   -26,    48,   -26
+      -1,     8,   -37,    14,     3,     6,    11,    -5,   -37,    -2,
+     -37,   -37,     0,     1,     7,    34,    25,   -37,     4,    13,
+      10,    27,   -37,   -37,   -37,    17,    19,     7,   -37,    34,
+      33,    37,    38,    39,    40,    49,    50,    51,    34,   -37,
+     -37,   -37,   -37,   -37,   -37,   -37,   -37,   -37,    53,    52,
+     -37,    41,     5,   -37,   -37,    42,   -37,   -37,    34,    47,
+     -37,   -37,    48,    54,   -37,   -37,    55,    57,   -37,    58,
+      60,   -37,    61,    63,   -37,   -37,   -37,   -37,    43,   -37,
+      66,   -37,    70,    62,    39,    65,    49,    68,    50,    73,
+      51,   -37,    59,    67,   -37,   -37,   -37,   -37,   -37,   -37,
+     -37,   -37,   -37,    72,   -37
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -26,   -26,   -26,    51,    52,     9,   -26,   -26,    17,   -19,
-     -26,   -26,   -26,   -26,   -26,   -23,   -26,   -26,   -26,    -9,
-     -26,   -26,   -25,   -26,   -26,    -8
+     -37,   -37,   -37,   -37,   -37,   -37,    64,   -37,   -37,    69,
+      24,    18,   -37,   -37,    56,   -36,   -37,   -37,   -37,   -37,
+     -37,    -4,   -37,   -37,   -37,    -3,   -37,   -37,     2,   -37,
+     -37,    -6
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
    positive, shift that token.  If negative, reduce the rule which
    number is the opposite.  If zero, do what YYDEFACT says.
    If YYTABLE_NINF, syntax error.  */
-#define YYTABLE_NINF -4
+#define YYTABLE_NINF -14
 static const yytype_int8 yytable[] =
 {
-      -3,    12,     1,     2,     2,     2,    10,    56,    18,    19,
-      20,    21,    22,    23,    24,    25,    17,     3,     3,    16,
-      56,    11,    15,    17,    36,    37,    57,    38,    40,    41,
-      42,    61,    46,    43,    39,    47,    50,    53,    70,    69,
-      74,    59,    60,    62,    63,    71,    64,    65,    73,    66,
-      67,    68,    75,    78,    72,    77,    13,    14,     0,    76
+     -13,    25,    75,    10,     9,     1,    10,    17,    54,    17,
+      10,    49,    80,    54,     8,    23,     7,    21,    24,     2,
+       2,    28,    75,     2,     2,    22,     2,    22,    14,    20,
+      22,    22,    29,    53,    48,    55,    27,    56,    59,    57,
+      60,    61,    52,    65,    62,    29,    30,    31,    32,    33,
+      34,    35,    36,    37,    66,    69,    72,    76,    82,    83,
+      78,    79,    81,    91,    84,    94,    85,    86,    96,    87,
+      88,    98,    89,    90,    92,    93,   100,   104,   103,   102,
+      95,    26,    51,    97,   101,    58,     0,     0,     0,     0,
+      99
 };
 
 static const yytype_int8 yycheck[] =
 {
-       0,     1,     1,     3,     3,     3,    17,    26,     9,    10,
-      11,    12,    13,    14,    15,    16,     7,    17,    17,    17,
-      39,     0,    17,    14,     6,    17,     4,    17,     5,     3,
-       3,     7,     3,     5,    17,     5,     5,     5,    61,     3,
-      65,     8,     8,     8,     7,     3,     8,     7,     3,     8,
-       7,     5,     3,     5,    63,     8,     5,     5,    -1,    67
+       0,     1,    38,     3,     1,     6,     3,     3,     3,     3,
+       3,     7,     7,     3,     0,    20,     8,     6,    20,    20,
+      20,    20,    58,    20,    20,    20,    20,    20,     4,     5,
+      20,    20,    14,    20,     9,     8,    12,    20,     5,    20,
+       3,     3,    18,     3,     5,    27,    12,    13,    14,    15,
+      16,    17,    18,    19,     5,     5,     5,     4,    11,    11,
+       8,    20,    20,    20,    10,     3,    11,    10,     3,    11,
+      10,     3,    11,    10,     8,     5,     3,     5,    11,    20,
+      84,    12,    18,    86,    90,    29,    -1,    -1,    -1,    -1,
+      88
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     1,     3,    17,    20,    21,    22,    23,    24,    25,
-      17,     0,     1,    22,    23,    17,    17,    24,     9,    10,
-      11,    12,    13,    14,    15,    16,    27,    28,    29,    30,
-      31,    32,    35,    36,    39,    42,     6,    17,    17,    27,
-       5,     3,     3,     5,    33,    34,     3,     5,    37,    38,
-       5,    40,    41,     5,    43,    44,    28,     4,    26,     8,
-       8,     7,     8,     7,     8,     7,     8,     7,     5,     3,
-      34,     3,    38,     3,    41,     3,    44,     8,     5
+       0,     6,    20,    23,    24,    25,    32,     8,     0,     1,
+       3,    29,    30,    31,    32,    33,    34,     3,    27,    28,
+      32,     6,    20,    20,    20,     1,    31,    32,    20,    33,
+      12,    13,    14,    15,    16,    17,    18,    19,    36,    37,
+      38,    39,    40,    41,    44,    45,    48,    51,     9,     7,
+      26,    28,    32,    20,     3,     8,    20,    20,    36,     5,
+       3,     3,     5,    42,    43,     3,     5,    46,    47,     5,
+      49,    50,     5,    52,    53,    37,     4,    35,     8,    20,
+       7,    20,    11,    11,    10,    11,    10,    11,    10,    11,
+      10,    20,     8,     5,     3,    43,     3,    47,     3,    50,
+       3,    53,    20,    11,     5
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -705,7 +745,7 @@ do								\
     }								\
   else								\
     {								\
-      yyerror (scanner, list, YY_("syntax error: cannot back up")); \
+      yyerror (scanner, cfgfile, YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
 while (YYID (0))
@@ -785,7 +825,7 @@ do {									  \
     {									  \
       YYFPRINTF (stderr, "%s ", Title);					  \
       yy_symbol_print (stderr,						  \
-		  Type, Value, scanner, list); \
+		  Type, Value, scanner, cfgfile); \
       YYFPRINTF (stderr, "\n");						  \
     }									  \
 } while (YYID (0))
@@ -799,21 +839,21 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, config_entry_list *list)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, config_file *cfgfile)
 #else
 static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, list)
+yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, cfgfile)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
     void *scanner;
-    config_entry_list *list;
+    config_file *cfgfile;
 #endif
 {
   if (!yyvaluep)
     return;
   YYUSE (scanner);
-  YYUSE (list);
+  YYUSE (cfgfile);
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
     YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
@@ -835,15 +875,15 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, list)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, config_entry_list *list)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, config_file *cfgfile)
 #else
 static void
-yy_symbol_print (yyoutput, yytype, yyvaluep, scanner, list)
+yy_symbol_print (yyoutput, yytype, yyvaluep, scanner, cfgfile)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
     void *scanner;
-    config_entry_list *list;
+    config_file *cfgfile;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -851,7 +891,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, scanner, list)
   else
     YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, list);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, cfgfile);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -894,14 +934,14 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *scanner, config_entry_list *list)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *scanner, config_file *cfgfile)
 #else
 static void
-yy_reduce_print (yyvsp, yyrule, scanner, list)
+yy_reduce_print (yyvsp, yyrule, scanner, cfgfile)
     YYSTYPE *yyvsp;
     int yyrule;
     void *scanner;
-    config_entry_list *list;
+    config_file *cfgfile;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -915,7 +955,7 @@ yy_reduce_print (yyvsp, yyrule, scanner, list)
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       		       , scanner, list);
+		       		       , scanner, cfgfile);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -923,7 +963,7 @@ yy_reduce_print (yyvsp, yyrule, scanner, list)
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (yyvsp, Rule, scanner, list); \
+    yy_reduce_print (yyvsp, Rule, scanner, cfgfile); \
 } while (YYID (0))
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1174,20 +1214,20 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *scanner, config_entry_list *list)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *scanner, config_file *cfgfile)
 #else
 static void
-yydestruct (yymsg, yytype, yyvaluep, scanner, list)
+yydestruct (yymsg, yytype, yyvaluep, scanner, cfgfile)
     const char *yymsg;
     int yytype;
     YYSTYPE *yyvaluep;
     void *scanner;
-    config_entry_list *list;
+    config_file *cfgfile;
 #endif
 {
   YYUSE (yyvaluep);
   YYUSE (scanner);
-  YYUSE (list);
+  YYUSE (cfgfile);
 
   if (!yymsg)
     yymsg = "Deleting";
@@ -1210,7 +1250,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (void *scanner, config_entry_list *list);
+int yyparse (void *scanner, config_file *cfgfile);
 #else
 int yyparse ();
 #endif
@@ -1238,12 +1278,12 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (void *scanner, config_entry_list *list)
+yyparse (void *scanner, config_file *cfgfile)
 #else
 int
-yyparse (scanner, list)
+yyparse (scanner, cfgfile)
     void *scanner;
-    config_entry_list *list;
+    config_file *cfgfile;
 #endif
 #endif
 {
@@ -1495,108 +1535,94 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 4:
+        case 10:
 
 /* Line 1455 of yacc.c  */
-#line 117 "keydbcfg-parser.y"
+#line 146 "keydbcfg-parser.y"
+    {
+      add_pk_list_entry(cfgfile, (yyvsp[(2) - (2)].string));
+    }
+    break;
+
+  case 11:
+
+/* Line 1455 of yacc.c  */
+#line 150 "keydbcfg-parser.y"
+    {
+      add_pk_list_entry(cfgfile, (yyvsp[(1) - (1)].string));
+    }
+    break;
+
+  case 14:
+
+/* Line 1455 of yacc.c  */
+#line 159 "keydbcfg-parser.y"
     {
       if (yychar == YYEOF)
         fprintf(stderr, "warning: last entry ended without newline\n");
     }
     break;
 
-  case 5:
+  case 15:
 
 /* Line 1455 of yacc.c  */
-#line 125 "keydbcfg-parser.y"
+#line 167 "keydbcfg-parser.y"
     {
-      list->next = keydbcfg_new_config_entry_list();
-      list = list->next;
+      config_entry_list *cursor = cfgfile->list;
+      while (cursor->next)
+        cursor = cursor->next;
+      cursor->next = new_config_entry_list();
     }
     break;
 
-  case 6:
+  case 16:
 
 /* Line 1455 of yacc.c  */
-#line 130 "keydbcfg-parser.y"
+#line 174 "keydbcfg-parser.y"
     {
-      list->next = keydbcfg_new_config_entry_list();
-      list = list->next;
+      config_entry_list *cursor = cfgfile->list;
+      while (cursor->next)
+        cursor = cursor->next;
+      cursor->next = new_config_entry_list();
     }
     break;
 
-  case 7:
+  case 17:
 
 /* Line 1455 of yacc.c  */
-#line 135 "keydbcfg-parser.y"
-    {
-      fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
-      yyerrok;
-    }
-    break;
-
-  case 8:
-
-/* Line 1455 of yacc.c  */
-#line 140 "keydbcfg-parser.y"
+#line 181 "keydbcfg-parser.y"
     {
       fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
       yyerrok;
     }
     break;
 
-  case 13:
+  case 18:
 
 /* Line 1455 of yacc.c  */
-#line 158 "keydbcfg-parser.y"
+#line 186 "keydbcfg-parser.y"
     {
-      add_entry(list, ENTRY_TYPE_DISCID, (yyvsp[(1) - (3)].string));
-      add_entry(list, ENTRY_TYPE_TITLE, (yyvsp[(3) - (3)].string));
+      fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
+      yyerrok;
     }
     break;
 
-  case 26:
-
-/* Line 1455 of yacc.c  */
-#line 190 "keydbcfg-parser.y"
-    {
-      add_date_entry(list, (yyvsp[(2) - (6)].digit), (yyvsp[(4) - (6)].digit), (yyvsp[(6) - (6)].digit));
-    }
-    break;
-
-  case 27:
-
-/* Line 1455 of yacc.c  */
-#line 197 "keydbcfg-parser.y"
-    {
-      add_entry(list, ENTRY_TYPE_MEK, (yyvsp[(2) - (2)].string));
-    }
-    break;
-
-  case 28:
+  case 23:
 
 /* Line 1455 of yacc.c  */
 #line 204 "keydbcfg-parser.y"
     {
-      add_entry(list, ENTRY_TYPE_VID, (yyvsp[(2) - (2)].string));
+      add_entry(cfgfile->list, ENTRY_TYPE_DISCID, (yyvsp[(1) - (3)].string));
+      add_entry(cfgfile->list, ENTRY_TYPE_TITLE, (yyvsp[(3) - (3)].string));
     }
     break;
 
-  case 32:
+  case 36:
 
 /* Line 1455 of yacc.c  */
-#line 220 "keydbcfg-parser.y"
+#line 236 "keydbcfg-parser.y"
     {
-      add_digit_key_pair_entry(list, ENTRY_TYPE_BN, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
-    }
-    break;
-
-  case 33:
-
-/* Line 1455 of yacc.c  */
-#line 227 "keydbcfg-parser.y"
-    {
-      add_entry(list, ENTRY_TYPE_VUK, (yyvsp[(2) - (2)].string));
+      add_date_entry(cfgfile->list, (yyvsp[(2) - (6)].digit), (yyvsp[(4) - (6)].digit), (yyvsp[(6) - (6)].digit));
     }
     break;
 
@@ -1605,32 +1631,68 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 243 "keydbcfg-parser.y"
     {
-      add_digit_key_pair_entry(list, ENTRY_TYPE_PAK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+      add_entry(cfgfile->list, ENTRY_TYPE_MEK, (yyvsp[(2) - (2)].string));
     }
     break;
 
-  case 41:
+  case 38:
 
 /* Line 1455 of yacc.c  */
-#line 259 "keydbcfg-parser.y"
+#line 250 "keydbcfg-parser.y"
     {
-      add_digit_key_pair_entry(list, ENTRY_TYPE_TK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+      add_entry(cfgfile->list, ENTRY_TYPE_VID, (yyvsp[(2) - (2)].string));
     }
     break;
 
-  case 45:
+  case 42:
 
 /* Line 1455 of yacc.c  */
-#line 275 "keydbcfg-parser.y"
+#line 266 "keydbcfg-parser.y"
     {
-      add_digit_key_pair_entry(list, ENTRY_TYPE_UK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_BN, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+    }
+    break;
+
+  case 43:
+
+/* Line 1455 of yacc.c  */
+#line 273 "keydbcfg-parser.y"
+    {
+      add_entry(cfgfile->list, ENTRY_TYPE_VUK, (yyvsp[(2) - (2)].string));
+    }
+    break;
+
+  case 47:
+
+/* Line 1455 of yacc.c  */
+#line 289 "keydbcfg-parser.y"
+    {
+      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_PAK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+    }
+    break;
+
+  case 51:
+
+/* Line 1455 of yacc.c  */
+#line 305 "keydbcfg-parser.y"
+    {
+      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_TK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+    }
+    break;
+
+  case 55:
+
+/* Line 1455 of yacc.c  */
+#line 321 "keydbcfg-parser.y"
+    {
+      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_UK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
     }
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 1634 "keydbcfg-parser.c"
+#line 1696 "keydbcfg-parser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1665,7 +1727,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (scanner, list, YY_("syntax error"));
+      yyerror (scanner, cfgfile, YY_("syntax error"));
 #else
       {
 	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
@@ -1689,11 +1751,11 @@ yyerrlab:
 	if (0 < yysize && yysize <= yymsg_alloc)
 	  {
 	    (void) yysyntax_error (yymsg, yystate, yychar);
-	    yyerror (scanner, list, yymsg);
+	    yyerror (scanner, cfgfile, yymsg);
 	  }
 	else
 	  {
-	    yyerror (scanner, list, YY_("syntax error"));
+	    yyerror (scanner, cfgfile, YY_("syntax error"));
 	    if (yysize != 0)
 	      goto yyexhaustedlab;
 	  }
@@ -1717,7 +1779,7 @@ yyerrlab:
       else
 	{
 	  yydestruct ("Error: discarding",
-		      yytoken, &yylval, scanner, list);
+		      yytoken, &yylval, scanner, cfgfile);
 	  yychar = YYEMPTY;
 	}
     }
@@ -1773,7 +1835,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp, scanner, list);
+		  yystos[yystate], yyvsp, scanner, cfgfile);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1808,7 +1870,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (scanner, list, YY_("memory exhausted"));
+  yyerror (scanner, cfgfile, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -1816,7 +1878,7 @@ yyexhaustedlab:
 yyreturn:
   if (yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
-		 yytoken, &yylval, scanner, list);
+		 yytoken, &yylval, scanner, cfgfile);
   /* Do not reclaim the symbols of the rule which action triggered
      this YYABORT or YYACCEPT.  */
   YYPOPSTACK (yylen);
@@ -1824,7 +1886,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp, scanner, list);
+		  yystos[*yyssp], yyvsp, scanner, cfgfile);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -1842,19 +1904,22 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 279 "keydbcfg-parser.y"
+#line 325 "keydbcfg-parser.y"
 
 /* Function to parse a config file */
-int keydbcfg_parse_config(config_entry_list *list, const char *path)
+int keydbcfg_parse_config(config_file *cfgfile, const char *path)
 {
   FILE * fp = fopen(path, "r");
   if (!fp)
     return 0;
 
+  cfgfile->pkl = new_pk_list();
+  cfgfile->list = new_config_entry_list();
+
   void *scanner;
   yylex_init(&scanner);
   yyset_in(fp, scanner);
-  int retval = yyparse(scanner, list);
+  int retval = yyparse(scanner, cfgfile);
   yylex_destroy(scanner);
 
   if (retval)
@@ -1863,8 +1928,60 @@ int keydbcfg_parse_config(config_entry_list *list, const char *path)
   return 1;
 }
 
+/* Function that returns pointer to new config file object */
+config_file *keydbcfg_new_config_file()
+{
+  config_file *cfgfile = (config_file *)malloc(sizeof(*cfgfile));
+  cfgfile->pkl = NULL;
+  cfgfile->list = NULL;
+  return cfgfile;
+}
+
+/* Function to return new pk_list object */
+static pk_list *new_pk_list()
+{
+  pk_list *pkl = (pk_list *)malloc(sizeof(*pkl));
+  pkl->key = NULL;
+  pkl->next = NULL;
+  return pkl;
+}
+
+/* Function to add pk to config entry list */
+static int add_pk_list(pk_list *list, const char *key)
+{
+  if (!list)
+  {
+    printf("Error: No pk list passed as parameter.\n");
+    return 0;
+  }
+
+  pk_list *cursor = list;
+  while (cursor->next)
+    cursor = cursor->next;
+
+  cursor->key = (char*)malloc(strlen(key) + 1);
+  strcpy(cursor->key, key);
+
+  cursor->next = new_pk_list();
+
+  return 1;
+}
+
+static int add_pk_list_entry(config_file *cfgfile, const char *entry)
+{
+  if (!cfgfile)
+  {
+    printf("Error: No config file object passed as parameter.\n");
+    return 0;
+  }
+
+  add_pk_list(cfgfile->pkl, entry);
+
+  return 1;
+}
+
 /* Function that returns pointer to new config entry list */
-config_entry_list *keydbcfg_new_config_entry_list()
+config_entry_list *new_config_entry_list()
 {
   config_entry_list *list = (config_entry_list *)malloc(sizeof(*list));
   if (!list)
@@ -2057,7 +2174,7 @@ static int add_date_entry(config_entry_list *list, unsigned int year,
 }
 
 /* Our definition of yyerror */
-void yyerror (void *scanner, config_entry_list *list, const char *msg)
+void yyerror (void *scanner, config_file *cfgfile, const char *msg)
 {
   fprintf(stderr, "%s: line %d\n", msg, yyget_lineno(scanner));
 }

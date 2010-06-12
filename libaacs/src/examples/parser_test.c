@@ -109,13 +109,34 @@ static int print_config_entries(config_entry_list *list)
   return 1;
 }
 
+/* Function to print config file */
+static int print_config_file(config_file *cfgfile)
+{
+  printf("Available processing keys:\n");
+
+  pk_list *cursor = cfgfile->pkl;
+  while (cursor)
+  {
+    if (!cursor->key)
+      break;
+
+    printf("  %s\n", cursor->key);
+
+    cursor = cursor->next;
+  }
+
+  printf("\n");
+
+  return print_config_entries(cfgfile->list);
+}
+
 /* main */
 int main (int argc, char **argv)
 {
-  config_entry_list *list = keydbcfg_new_config_entry_list();
-  int retval = keydbcfg_parse_config(list, argv[1]);
+  config_file *cfgfile = keydbcfg_new_config_file();
+  int retval = keydbcfg_parse_config(cfgfile, argv[1]);
 
-  if (!retval || !print_config_entries(list))
+  if (!retval || !print_config_file(cfgfile))
     return EXIT_FAILURE;
 
   return EXIT_SUCCESS;

@@ -56,6 +56,10 @@ HEXSTRING               ([0-9a-fA-F]{32,})
 DISC_TITLE              ([^\n|]*)
 DIGIT                   ([0-9]+)
 
+KEYWORD_BEGIN           (BEGIN)
+KEYWORD_END             (END)
+KEYWORD_PK_LIST         (PK_LIST)
+
 ENTRY_ID_DATE           (\|[\t ]*[Dd][\t ]*\|)
 ENTRY_ID_MEK            (\|[\t ]*[Mm][\t ]*\|)
 ENTRY_ID_VID            (\|[\t ]*[Ii][\t ]*\|)
@@ -95,6 +99,10 @@ BAD_ENTRY               ([^\n])
                             yylval->digit = (unsigned int)atoi(yytext);
                             return DIGIT;
                           }
+
+{KEYWORD_BEGIN}           { return KEYWORD_BEGIN; }
+{KEYWORD_END}             { return KEYWORD_END; }
+{KEYWORD_PK_LIST}         { return KEYWORD_PK_LIST; }
 
 {ENTRY_ID_DATE}           { return ENTRY_ID_DATE; }
 {ENTRY_ID_MEK}            { return ENTRY_ID_MEK; }

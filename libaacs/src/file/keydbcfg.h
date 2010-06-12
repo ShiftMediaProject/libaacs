@@ -52,6 +52,14 @@ typedef struct
   unsigned int day;
 } date_entry;
 
+/* pk entry */
+typedef struct pk_entry pk_list;
+struct pk_entry
+{
+  char *key;
+  pk_list *next;
+};
+
 /* main config entry struct */
 typedef struct
 {
@@ -75,8 +83,16 @@ struct config_entry_list_t
   config_entry_list *next;
 };
 
+/* struct representing the contents of a config file */
+typedef struct config_file_t config_file;
+struct config_file_t
+{
+  pk_list *pkl;
+  config_entry_list *list;
+};
+
 /* Functions used throughout the parser */
-int keydbcfg_parse_config(config_entry_list *list, const char *path);
-config_entry_list *keydbcfg_new_config_entry_list();
+int keydbcfg_parse_config(config_file *cfgfile, const char *path);
+config_file *keydbcfg_new_config_file();
 
 #endif

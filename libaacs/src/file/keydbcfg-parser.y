@@ -56,6 +56,10 @@ enum
   ENTRY_TYPE_UK
 };
 
+static pk_list *new_pk_list();
+static int add_pk_list(pk_list *list, const char *key);
+static int add_pk_list_entry(config_file *cfgfile, const char *entry);
+static config_entry_list *new_config_entry_list();
 static int add_entry(config_entry_list *list, int type, const char *entry);
 static digit_key_pair_list *new_digit_key_pair_list();
 static int add_digit_key_pair(digit_key_pair_list *list, int type,
@@ -64,7 +68,7 @@ static int add_digit_key_pair_entry(config_entry_list *list, int type,
                                     unsigned int digit, const char *entry);
 static int add_date_entry(config_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
-void yyerror (void *scanner, config_entry_list *list, const char *msg);
+void yyerror (void *scanner, config_file *cfgfile, const char *msg);
 extern int yyget_lineno  (void *scanner);
 
 /* uncomment the line below for debugging */
@@ -80,7 +84,7 @@ extern int yyget_lineno  (void *scanner);
 %yacc
 %lex-param{void *scanner}
 %parse-param{void *scanner}
-%parse-param{config_entry_list *list}
+%parse-param{config_file *cfgfile}
 
 %union
 {
@@ -91,6 +95,10 @@ extern int yyget_lineno  (void *scanner);
 %token <string> HEXSTRING
 %token <string> DISC_TITLE
 %token <digit> DIGIT
+
+%token KEYWORD_BEGIN
+%token KEYWORD_END
+%token KEYWORD_PK_LIST
 
 %token PUNCT_EQUALS_SIGN
 %token PUNCT_VERTICAL_BAR
@@ -111,6 +119,40 @@ extern int yyget_lineno  (void *scanner);
 %type <string> discid disc_title
 %%
 config_file
+  : pk_block config_entries
+  ;
+
+pk_block
+  : pk_list_start pk_list pk_list_end
+  ;
+
+pk_list_start
+  : newline_list KEYWORD_BEGIN KEYWORD_PK_LIST NEWLINE
+  | KEYWORD_BEGIN KEYWORD_PK_LIST NEWLINE
+  ;
+
+pk_list_end
+  : newline_list KEYWORD_END KEYWORD_PK_LIST NEWLINE
+  | KEYWORD_END KEYWORD_PK_LIST NEWLINE
+  ;
+
+pk_list
+  : pk_list pk_entry NEWLINE
+  | pk_entry NEWLINE
+  ;
+
+pk_entry
+  : newline_list HEXSTRING
+    {
+      add_pk_list_entry(cfgfile, $2);
+    }
+  | HEXSTRING
+    {
+      add_pk_list_entry(cfgfile, $1);
+    }
+  ;
+
+config_entries
   : config_entry_list newline_list
   | config_entry_list
   | config_entry_list error
@@ -123,13 +165,17 @@ config_file
 config_entry_list
   : config_entry_list config_entry NEWLINE
     {
-      list->next = keydbcfg_new_config_entry_list();
-      list = list->next;
+      config_entry_list *cursor = cfgfile->list;
+      while (cursor->next)
+        cursor = cursor->next;
+      cursor->next = new_config_entry_list();
     }
   | config_entry NEWLINE
     {
-      list->next = keydbcfg_new_config_entry_list();
-      list = list->next;
+      config_entry_list *cursor = cfgfile->list;
+      while (cursor->next)
+        cursor = cursor->next;
+      cursor->next = new_config_entry_list();
     }
   | config_entry_list error NEWLINE
     {
@@ -156,8 +202,8 @@ newline_list
 disc_info
   : discid PUNCT_EQUALS_SIGN disc_title
     {
-      add_entry(list, ENTRY_TYPE_DISCID, $1);
-      add_entry(list, ENTRY_TYPE_TITLE, $3);
+      add_entry(cfgfile->list, ENTRY_TYPE_DISCID, $1);
+      add_entry(cfgfile->list, ENTRY_TYPE_TITLE, $3);
     }
   ;
 
@@ -188,21 +234,21 @@ entry
 date_entry
   : ENTRY_ID_DATE DIGIT PUNCT_HYPHEN DIGIT PUNCT_HYPHEN DIGIT
     {
-      add_date_entry(list, $2, $4, $6);
+      add_date_entry(cfgfile->list, $2, $4, $6);
     }
   ;
 
 mek_entry
   : ENTRY_ID_MEK HEXSTRING
     {
-      add_entry(list, ENTRY_TYPE_MEK, $2);
+      add_entry(cfgfile->list, ENTRY_TYPE_MEK, $2);
     }
   ;
 
 vid_entry
   : ENTRY_ID_VID HEXSTRING
     {
-      add_entry(list, ENTRY_TYPE_VID, $2);
+      add_entry(cfgfile->list, ENTRY_TYPE_VID, $2);
     }
   ;
 
@@ -218,14 +264,14 @@ bn_data_list
 bn_data
   : DIGIT PUNCT_HYPHEN HEXSTRING
     {
-      add_digit_key_pair_entry(list, ENTRY_TYPE_BN, $1, $3);
+      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_BN, $1, $3);
     }
   ;
 
 vuk_entry
   : ENTRY_ID_VUK HEXSTRING
     {
-      add_entry(list, ENTRY_TYPE_VUK, $2);
+      add_entry(cfgfile->list, ENTRY_TYPE_VUK, $2);
     }
   ;
 
@@ -241,7 +287,7 @@ pak_data_list
 pak_data
   : DIGIT PUNCT_HYPHEN HEXSTRING
     {
-      add_digit_key_pair_entry(list, ENTRY_TYPE_PAK, $1, $3);
+      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_PAK, $1, $3);
     }
   ;
 
@@ -257,7 +303,7 @@ tk_data_list
 tk_data
   : DIGIT PUNCT_HYPHEN HEXSTRING
     {
-      add_digit_key_pair_entry(list, ENTRY_TYPE_TK, $1, $3);
+      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_TK, $1, $3);
     }
   ;
 
@@ -273,21 +319,24 @@ uk_data_list
 uk_data
   : DIGIT PUNCT_HYPHEN HEXSTRING
     {
-      add_digit_key_pair_entry(list, ENTRY_TYPE_UK, $1, $3);
+      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_UK, $1, $3);
     }
   ;
 %%
 /* Function to parse a config file */
-int keydbcfg_parse_config(config_entry_list *list, const char *path)
+int keydbcfg_parse_config(config_file *cfgfile, const char *path)
 {
   FILE * fp = fopen(path, "r");
   if (!fp)
     return 0;
 
+  cfgfile->pkl = new_pk_list();
+  cfgfile->list = new_config_entry_list();
+
   void *scanner;
   yylex_init(&scanner);
   yyset_in(fp, scanner);
-  int retval = yyparse(scanner, list);
+  int retval = yyparse(scanner, cfgfile);
   yylex_destroy(scanner);
 
   if (retval)
@@ -296,8 +345,60 @@ int keydbcfg_parse_config(config_entry_list *list, const char *path)
   return 1;
 }
 
+/* Function that returns pointer to new config file object */
+config_file *keydbcfg_new_config_file()
+{
+  config_file *cfgfile = (config_file *)malloc(sizeof(*cfgfile));
+  cfgfile->pkl = NULL;
+  cfgfile->list = NULL;
+  return cfgfile;
+}
+
+/* Function to return new pk_list object */
+static pk_list *new_pk_list()
+{
+  pk_list *pkl = (pk_list *)malloc(sizeof(*pkl));
+  pkl->key = NULL;
+  pkl->next = NULL;
+  return pkl;
+}
+
+/* Function to add pk to config entry list */
+static int add_pk_list(pk_list *list, const char *key)
+{
+  if (!list)
+  {
+    printf("Error: No pk list passed as parameter.\n");
+    return 0;
+  }
+
+  pk_list *cursor = list;
+  while (cursor->next)
+    cursor = cursor->next;
+
+  cursor->key = (char*)malloc(strlen(key) + 1);
+  strcpy(cursor->key, key);
+
+  cursor->next = new_pk_list();
+
+  return 1;
+}
+
+static int add_pk_list_entry(config_file *cfgfile, const char *entry)
+{
+  if (!cfgfile)
+  {
+    printf("Error: No config file object passed as parameter.\n");
+    return 0;
+  }
+
+  add_pk_list(cfgfile->pkl, entry);
+
+  return 1;
+}
+
 /* Function that returns pointer to new config entry list */
-config_entry_list *keydbcfg_new_config_entry_list()
+config_entry_list *new_config_entry_list()
 {
   config_entry_list *list = (config_entry_list *)malloc(sizeof(*list));
   if (!list)
@@ -490,7 +591,7 @@ static int add_date_entry(config_entry_list *list, unsigned int year,
 }
 
 /* Our definition of yyerror */
-void yyerror (void *scanner, config_entry_list *list, const char *msg)
+void yyerror (void *scanner, config_file *cfgfile, const char *msg)
 {
   fprintf(stderr, "%s: line %d\n", msg, yyget_lineno(scanner));
 }
