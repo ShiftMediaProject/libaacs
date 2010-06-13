@@ -179,7 +179,7 @@ host_cert_entries
   ;
 
 host_cert_entry_block
-  : host_cert_entry_start host_cert_entry host_cert_entry_end
+  : host_cert_entry_start host_cert_entry_trailer
   ;
 
 host_cert_entry_start
@@ -187,16 +187,20 @@ host_cert_entry_start
   | KEYWORD_BEGIN KEYWORD_HOST_CERT_ENTRY NEWLINE
   ;
 
-host_cert_entry_end
-  : newline_list KEYWORD_END KEYWORD_HOST_CERT_ENTRY NEWLINE
-  | KEYWORD_END KEYWORD_HOST_CERT_ENTRY NEWLINE
-  ;
-
-host_cert_entry
-  : host_priv_key host_cert host_nonce host_key_point
+host_cert_entry_trailer
+  : host_priv_key host_cert host_nonce host_key_point host_cert_entry_end
     {
       add_cert_list(cfgfile->host_cert_list, $1, $2, $3, $4);
     }
+  | host_priv_key host_cert host_cert_entry_end
+    {
+      add_cert_list(cfgfile->host_cert_list, $1, $2, NULL, NULL);
+    }
+  ;
+
+host_cert_entry_end
+  : newline_list KEYWORD_END KEYWORD_HOST_CERT_ENTRY NEWLINE
+  | KEYWORD_END KEYWORD_HOST_CERT_ENTRY NEWLINE
   ;
 
 host_priv_key
@@ -511,10 +515,17 @@ static int add_cert_list(cert_list *list, const char *host_priv_key,
   strcpy(cursor->host_priv_key, host_priv_key);
   cursor->host_cert = (char*)malloc(strlen(host_cert) + 1);
   strcpy(cursor->host_cert, host_cert);
-  cursor->host_nonce = (char*)malloc(strlen(host_nonce) + 1);
-  strcpy(cursor->host_nonce, host_nonce);
-  cursor->host_key_point = (char*)malloc(strlen(host_key_point) + 1);
-  strcpy(cursor->host_key_point, host_key_point);
+
+  if (host_nonce)
+  {
+    cursor->host_nonce = (char*)malloc(strlen(host_nonce) + 1);
+    strcpy(cursor->host_nonce, host_nonce);
+  }
+  if (host_key_point)
+  {
+    cursor->host_key_point = (char*)malloc(strlen(host_key_point) + 1);
+    strcpy(cursor->host_key_point, host_key_point);
+  }
 
   cursor->next = new_cert_list();
 

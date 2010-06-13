@@ -127,8 +127,10 @@ static int print_cert_list(cert_list *list)
 
     printf("  Host private key: %s\n", cursor->host_priv_key);
     printf("  Host certificate: %s\n", cursor->host_cert);
-    printf("  Host nonce: %s\n", cursor->host_nonce);
-    printf("  Host key point: %s\n", cursor->host_key_point);
+    if (cursor->host_nonce)
+      printf("  Host nonce: %s\n", cursor->host_nonce);
+    if (cursor->host_key_point)
+      printf("  Host key point: %s\n", cursor->host_key_point);
     printf("\n");
 
     cursor = cursor->next;
