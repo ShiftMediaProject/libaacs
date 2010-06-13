@@ -59,6 +59,8 @@ DIGIT                   ([0-9]+)
 KEYWORD_BEGIN           (BEGIN)
 KEYWORD_END             (END)
 KEYWORD_PK_LIST         (PK_LIST)
+KEYWORD_HOST_CERT_LIST  (HOST_CERT_LIST)
+KEYWORD_HOST_CERT_ENTRY (HOST_CERT_ENTRY)
 
 ENTRY_ID_DATE           (\|[\t ]*[Dd][\t ]*\|)
 ENTRY_ID_MEK            (\|[\t ]*[Mm][\t ]*\|)
@@ -103,6 +105,8 @@ BAD_ENTRY               ([^\n])
 {KEYWORD_BEGIN}           { return KEYWORD_BEGIN; }
 {KEYWORD_END}             { return KEYWORD_END; }
 {KEYWORD_PK_LIST}         { return KEYWORD_PK_LIST; }
+{KEYWORD_HOST_CERT_LIST}  { return KEYWORD_HOST_CERT_LIST; }
+{KEYWORD_HOST_CERT_ENTRY} { return KEYWORD_HOST_CERT_ENTRY; }
 
 {ENTRY_ID_DATE}           { return ENTRY_ID_DATE; }
 {ENTRY_ID_MEK}            { return ENTRY_ID_MEK; }

@@ -109,6 +109,36 @@ static int print_config_entries(config_entry_list *list)
   return 1;
 }
 
+/* Function to print certificate list from config file */
+static int print_cert_list(cert_list *list)
+{
+  if (!list)
+  {
+    printf("Error: no certificate list object passed in as parameter\n");
+    return 0;
+  }
+
+  printf("Available certificates:\n");
+  cert_list *cursor = list;
+  while (cursor)
+  {
+    if (!cursor->host_priv_key)
+      break;
+
+    printf("  Host private key: %s\n", cursor->host_priv_key);
+    printf("  Host certificate: %s\n", cursor->host_cert);
+    printf("  Host nonce: %s\n", cursor->host_nonce);
+    printf("  Host key point: %s\n", cursor->host_key_point);
+    printf("\n");
+
+    cursor = cursor->next;
+  }
+
+  printf("\n");
+
+  return 1;
+}
+
 /* Function to print config file */
 static int print_config_file(config_file *cfgfile)
 {
@@ -127,7 +157,10 @@ static int print_config_file(config_file *cfgfile)
 
   printf("\n");
 
-  return print_config_entries(cfgfile->list);
+  int status1 = print_cert_list(cfgfile->host_cert_list);
+  int status2 = print_config_entries(cfgfile->list);
+
+  return status1 & status2;
 }
 
 /* main */

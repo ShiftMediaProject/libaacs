@@ -60,6 +60,17 @@ struct pk_entry
   pk_list *next;
 };
 
+/* certificate entry */
+typedef struct cert_entry cert_list;
+struct cert_entry
+{
+  char *host_priv_key;
+  char *host_cert;
+  char *host_nonce;
+  char *host_key_point;
+  cert_list *next;
+};
+
 /* main config entry struct */
 typedef struct
 {
@@ -88,6 +99,7 @@ typedef struct config_file_t config_file;
 struct config_file_t
 {
   pk_list *pkl;
+  cert_list *host_cert_list;
   config_entry_list *list;
 };
 

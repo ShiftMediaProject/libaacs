@@ -59,6 +59,10 @@ enum
 static pk_list *new_pk_list();
 static int add_pk_list(pk_list *list, const char *key);
 static int add_pk_list_entry(config_file *cfgfile, const char *entry);
+static cert_list *new_cert_list();
+static int add_cert_list(cert_list *list, const char *host_priv_key,
+                         const char *host_cert, const char *host_nonce,
+                         const char *host_key_point);
 static config_entry_list *new_config_entry_list();
 static int add_entry(config_entry_list *list, int type, const char *entry);
 static digit_key_pair_list *new_digit_key_pair_list();
@@ -99,6 +103,8 @@ extern int yyget_lineno  (void *scanner);
 %token KEYWORD_BEGIN
 %token KEYWORD_END
 %token KEYWORD_PK_LIST
+%token KEYWORD_HOST_CERT_LIST
+%token KEYWORD_HOST_CERT_ENTRY
 
 %token PUNCT_EQUALS_SIGN
 %token PUNCT_VERTICAL_BAR
@@ -117,9 +123,10 @@ extern int yyget_lineno  (void *scanner);
 %token BAD_ENTRY
 
 %type <string> discid disc_title
+%type <string> host_priv_key host_cert host_nonce host_key_point
 %%
 config_file
-  : pk_block config_entries
+  : pk_block host_cert_list_block config_entries
   ;
 
 pk_block
@@ -150,6 +157,74 @@ pk_entry
     {
       add_pk_list_entry(cfgfile, $1);
     }
+  ;
+
+host_cert_list_block
+  : host_cert_list_start host_cert_entries host_cert_list_end
+  ;
+
+host_cert_list_start
+  : newline_list KEYWORD_BEGIN KEYWORD_HOST_CERT_LIST NEWLINE
+  | KEYWORD_BEGIN KEYWORD_HOST_CERT_LIST NEWLINE
+  ;
+
+host_cert_list_end
+  : newline_list KEYWORD_END KEYWORD_HOST_CERT_LIST NEWLINE
+  | KEYWORD_END KEYWORD_HOST_CERT_LIST NEWLINE
+  ;
+
+host_cert_entries
+  : host_cert_entries host_cert_entry_block
+  | host_cert_entry_block
+  ;
+
+host_cert_entry_block
+  : host_cert_entry_start host_cert_entry host_cert_entry_end
+  ;
+
+host_cert_entry_start
+  : newline_list KEYWORD_BEGIN KEYWORD_HOST_CERT_ENTRY NEWLINE
+  | KEYWORD_BEGIN KEYWORD_HOST_CERT_ENTRY NEWLINE
+  ;
+
+host_cert_entry_end
+  : newline_list KEYWORD_END KEYWORD_HOST_CERT_ENTRY NEWLINE
+  | KEYWORD_END KEYWORD_HOST_CERT_ENTRY NEWLINE
+  ;
+
+host_cert_entry
+  : host_priv_key host_cert host_nonce host_key_point
+    {
+      add_cert_list(cfgfile->host_cert_list, $1, $2, $3, $4);
+    }
+  ;
+
+host_priv_key
+  : newline_list HEXSTRING NEWLINE
+    { $$ = $2; }
+  | HEXSTRING NEWLINE
+    { $$ = $1; }
+  ;
+
+host_cert
+  : newline_list HEXSTRING NEWLINE
+    { $$ = $2; }
+  | HEXSTRING NEWLINE
+    { $$ = $1; }
+  ;
+
+host_nonce
+  : newline_list HEXSTRING NEWLINE
+    { $$ = $2; }
+  | HEXSTRING NEWLINE
+    { $$ = $1; }
+  ;
+
+host_key_point
+  : newline_list HEXSTRING NEWLINE
+    { $$ = $2; }
+  | HEXSTRING NEWLINE
+    { $$ = $1; }
   ;
 
 config_entries
@@ -331,6 +406,7 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
     return 0;
 
   cfgfile->pkl = new_pk_list();
+  cfgfile->host_cert_list = new_cert_list();
   cfgfile->list = new_config_entry_list();
 
   void *scanner;
@@ -393,6 +469,54 @@ static int add_pk_list_entry(config_file *cfgfile, const char *entry)
   }
 
   add_pk_list(cfgfile->pkl, entry);
+
+  return 1;
+}
+
+/* Function to create new certificate list */
+static cert_list *new_cert_list()
+{
+  cert_list *list = (cert_list *)malloc(sizeof(*list));
+  if (!list)
+  {
+    printf("Error allocating memory for new certificate list!\n");
+    return NULL;
+  }
+
+  list->host_priv_key = NULL;
+  list->host_cert = NULL;
+  list->host_nonce = NULL;
+  list->host_key_point = NULL;
+  list->next = NULL;
+
+  return list;
+}
+
+/* Function to add certificate list entry into config file object */
+static int add_cert_list(cert_list *list, const char *host_priv_key,
+                         const char *host_cert, const char *host_nonce,
+                         const char *host_key_point)
+{
+  if (!list)
+  {
+    printf("Error: no certificate list object passed as parameter.\n");
+    return 0;
+  }
+
+  cert_list *cursor = list;
+  while (cursor->next)
+    cursor = cursor->next;
+
+  cursor->host_priv_key = (char*)malloc(strlen(host_priv_key) + 1);
+  strcpy(cursor->host_priv_key, host_priv_key);
+  cursor->host_cert = (char*)malloc(strlen(host_cert) + 1);
+  strcpy(cursor->host_cert, host_cert);
+  cursor->host_nonce = (char*)malloc(strlen(host_nonce) + 1);
+  strcpy(cursor->host_nonce, host_nonce);
+  cursor->host_key_point = (char*)malloc(strlen(host_key_point) + 1);
+  strcpy(cursor->host_key_point, host_key_point);
+
+  cursor->next = new_cert_list();
 
   return 1;
 }

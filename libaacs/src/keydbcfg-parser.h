@@ -45,19 +45,21 @@
      KEYWORD_BEGIN = 261,
      KEYWORD_END = 262,
      KEYWORD_PK_LIST = 263,
-     PUNCT_EQUALS_SIGN = 264,
-     PUNCT_VERTICAL_BAR = 265,
-     PUNCT_HYPHEN = 266,
-     ENTRY_ID_DATE = 267,
-     ENTRY_ID_MEK = 268,
-     ENTRY_ID_VID = 269,
-     ENTRY_ID_BN = 270,
-     ENTRY_ID_VUK = 271,
-     ENTRY_ID_PAK = 272,
-     ENTRY_ID_TK = 273,
-     ENTRY_ID_UK = 274,
-     NEWLINE = 275,
-     BAD_ENTRY = 276
+     KEYWORD_HOST_CERT_LIST = 264,
+     KEYWORD_HOST_CERT_ENTRY = 265,
+     PUNCT_EQUALS_SIGN = 266,
+     PUNCT_VERTICAL_BAR = 267,
+     PUNCT_HYPHEN = 268,
+     ENTRY_ID_DATE = 269,
+     ENTRY_ID_MEK = 270,
+     ENTRY_ID_VID = 271,
+     ENTRY_ID_BN = 272,
+     ENTRY_ID_VUK = 273,
+     ENTRY_ID_PAK = 274,
+     ENTRY_ID_TK = 275,
+     ENTRY_ID_UK = 276,
+     NEWLINE = 277,
+     BAD_ENTRY = 278
    };
 #endif
 /* Tokens.  */
@@ -67,19 +69,21 @@
 #define KEYWORD_BEGIN 261
 #define KEYWORD_END 262
 #define KEYWORD_PK_LIST 263
-#define PUNCT_EQUALS_SIGN 264
-#define PUNCT_VERTICAL_BAR 265
-#define PUNCT_HYPHEN 266
-#define ENTRY_ID_DATE 267
-#define ENTRY_ID_MEK 268
-#define ENTRY_ID_VID 269
-#define ENTRY_ID_BN 270
-#define ENTRY_ID_VUK 271
-#define ENTRY_ID_PAK 272
-#define ENTRY_ID_TK 273
-#define ENTRY_ID_UK 274
-#define NEWLINE 275
-#define BAD_ENTRY 276
+#define KEYWORD_HOST_CERT_LIST 264
+#define KEYWORD_HOST_CERT_ENTRY 265
+#define PUNCT_EQUALS_SIGN 266
+#define PUNCT_VERTICAL_BAR 267
+#define PUNCT_HYPHEN 268
+#define ENTRY_ID_DATE 269
+#define ENTRY_ID_MEK 270
+#define ENTRY_ID_VID 271
+#define ENTRY_ID_BN 272
+#define ENTRY_ID_VUK 273
+#define ENTRY_ID_PAK 274
+#define ENTRY_ID_TK 275
+#define ENTRY_ID_UK 276
+#define NEWLINE 277
+#define BAD_ENTRY 278
 
 
 
@@ -89,7 +93,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 90 "keydbcfg-parser.y"
+#line 94 "keydbcfg-parser.y"
 
   char *string;
   unsigned int digit;
@@ -97,7 +101,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 101 "keydbcfg-parser.h"
+#line 105 "keydbcfg-parser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
