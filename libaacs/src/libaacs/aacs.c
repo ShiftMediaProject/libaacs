@@ -335,13 +335,9 @@ int _find_vuk(AACS *aacs, const char *path)
     return 0;
 }
 
-int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
+int _decrypt_unit(AACS *aacs, uint8_t *out, const uint8_t *buf, uint32_t len, uint64_t offset,
                   uint32_t curr_uk)
 {
-    uint8_t tmp_buf[6144];
-
-    memcpy(tmp_buf, buf, len);
-
     int a, outlen;
     uint8_t key[32], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
                               0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
@@ -349,31 +345,31 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
 
     EVP_CIPHER_CTX_init(&ctx);
     EVP_EncryptInit(&ctx, EVP_aes_128_ecb(), aacs->uks + curr_uk * 16, NULL);
-    EVP_EncryptUpdate(&ctx, key, &outlen, tmp_buf, 16);
+    EVP_EncryptUpdate(&ctx, key, &outlen, buf, 16);
     EVP_EncryptFinal(&ctx, key + outlen, &outlen);
     EVP_CIPHER_CTX_cleanup(&ctx);
 
     for (a = 0; a < 16; a++) {
-        key[a] ^= tmp_buf[a];
+        key[a] ^= buf[a];
     }
+
+    memcpy(out, buf, 16);
 
     EVP_CIPHER_CTX_init(&ctx);
     EVP_DecryptInit(&ctx, EVP_aes_128_cbc(), key, iv);
-    EVP_DecryptUpdate(&ctx, tmp_buf + 16, &outlen, tmp_buf + 16, len - 16);
-    EVP_DecryptFinal(&ctx, tmp_buf + 16 + outlen, &outlen);
+    EVP_DecryptUpdate(&ctx, out + 16, &outlen, buf + 16, len - 16);
+    EVP_DecryptFinal(&ctx, out + 16 + outlen, &outlen);
     EVP_CIPHER_CTX_cleanup(&ctx);
 
-    if (_verify_ts(tmp_buf, len)) {
+    if (_verify_ts(out, len)) {
         DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %"PRIu64" (%p)\n",
               len % 6144 ? "PARTIAL" : "FULL", len, offset, aacs);
-
-        memcpy(buf, tmp_buf, len);
 
         return 1;
     }
 
     if (curr_uk < aacs->num_uks - (uint32_t)1) {
-        return _decrypt_unit(aacs, buf, len, offset, curr_uk++);
+        return _decrypt_unit(aacs, out, buf, len, offset, curr_uk++);
     }
 
     return 0;
@@ -471,7 +467,13 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset)
         return 0;
     }
 
-    return _decrypt_unit(aacs, buf, len, offset, 0);
+    uint8_t out[6144];
+    if (_decrypt_unit(aacs, out, buf, len, offset, 0)) {
+        memcpy(buf, out, len);
+        return 1;
+    }
+
+    return 0;
 }
 
 uint8_t *aacs_get_vid(AACS *aacs)
