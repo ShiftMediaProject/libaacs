@@ -41,7 +41,7 @@
 int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
                  uint8_t *mk)
 {
-    int a, ret = 0;
+    int a, ret = 0, outlen;
     uint8_t dec_vd[16];
     char str[40];
 
@@ -52,18 +52,17 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
     DEBUG(DBG_AACS, "   Verification data: %s\n", print_hex(str, vd, 16));
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    EVP_CIPHER_CTX_set_key_length(ctx, 16);
     EVP_DecryptInit(ctx, EVP_aes_128_ecb(), pk, NULL);
-    EVP_DecryptUpdate(ctx, mk, (int*)16, cvalue, 16);
-    EVP_DecryptFinal(ctx, mk, (int*)16);
+    EVP_DecryptUpdate(ctx, mk, &outlen, cvalue, 16);
+    EVP_DecryptFinal(ctx, mk, &outlen);
 
     for (a = 0; a < 4; a++) {
         mk[a + 12] ^= uv[a];
     }
 
     EVP_DecryptInit(ctx, NULL, mk, NULL);
-    EVP_DecryptUpdate(ctx, dec_vd, (int*)16, vd, 16);
-    EVP_DecryptFinal(ctx, dec_vd, (int*)16);
+    EVP_DecryptUpdate(ctx, dec_vd, &outlen, vd, 16);
+    EVP_DecryptFinal(ctx, dec_vd, &outlen);
     EVP_CIPHER_CTX_cleanup(ctx);
 
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
@@ -129,7 +128,7 @@ int _calc_mk(AACS *aacs, const char *path)
 
 int _calc_vuk(AACS *aacs, const char *path)
 {
-    int a;
+    int a, outlen;
     MMC* mmc = NULL;
 
     DEBUG(DBG_AACS, "Calculate volume unique key...\n");
@@ -141,10 +140,9 @@ int _calc_vuk(AACS *aacs, const char *path)
             configfile_record(aacs->kf, KF_HOST_KEY_POINT, NULL, NULL)))) {
         if (mmc_read_vid(mmc, aacs->vid)) {
             EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-            EVP_CIPHER_CTX_set_key_length(ctx, 16);
             EVP_DecryptInit(ctx, EVP_aes_128_ecb(), aacs->mk, NULL);
-            EVP_DecryptUpdate(ctx, aacs->vuk, (int*)16, aacs->vid, 16);
-            EVP_DecryptFinal(ctx, aacs->vuk, (int*)16);
+            EVP_DecryptUpdate(ctx, aacs->vuk, &outlen, aacs->vid, 16);
+            EVP_DecryptFinal(ctx, aacs->vuk, &outlen);
             EVP_CIPHER_CTX_cleanup(ctx);
 
             for (a = 0; a < 16; a++) {
@@ -174,7 +172,7 @@ int _calc_uks(AACS *aacs, const char *path)
     uint8_t buf[16];
     char f_name[100];
     uint64_t f_pos;
-    int i;
+    int i, outlen;
 
     DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
@@ -211,10 +209,9 @@ int _calc_uks(AACS *aacs, const char *path)
                 }
 
                 EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-                EVP_CIPHER_CTX_set_key_length(ctx, 16);
                 EVP_DecryptInit(ctx, EVP_aes_128_ecb(), aacs->vuk, NULL);
-                EVP_DecryptUpdate(ctx, aacs->uks + 16*i, (int*)16, buf, 16);
-                EVP_DecryptFinal(ctx, aacs->uks, (int*)16);
+                EVP_DecryptUpdate(ctx, aacs->uks + 16*i, &outlen, buf, 16);
+                EVP_DecryptFinal(ctx, aacs->uks, &outlen);
                 EVP_CIPHER_CTX_cleanup(ctx);
 
                 char str[40];
@@ -339,28 +336,24 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
 
     memcpy(tmp_buf, buf, len);
 
-    int a;
+    int a, outlen;
     uint8_t key[16], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
                               0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    EVP_CIPHER_CTX_set_key_length(ctx, 16);
     EVP_DecryptInit(ctx, EVP_aes_128_ecb(), aacs->uks + curr_uk * 16, NULL);
-    EVP_DecryptUpdate(ctx, key, (int*)16, tmp_buf, 16);
-    EVP_DecryptFinal(ctx, key, (int*)16);
+    EVP_DecryptUpdate(ctx, key, &outlen, tmp_buf, 16);
+    EVP_DecryptFinal(ctx, key, &outlen);
     EVP_CIPHER_CTX_cleanup(ctx);
 
     for (a = 0; a < 16; a++) {
         key[a] ^= tmp_buf[a];
     }
 
-    int tmplen = len - 16;
     ctx = EVP_CIPHER_CTX_new();
-    EVP_CIPHER_CTX_set_key_length(ctx, 16);
     EVP_DecryptInit(ctx, EVP_aes_128_ecb(), key, iv);
-    EVP_DecryptUpdate(ctx, tmp_buf + 16, &tmplen, tmp_buf + 16,
-                      len - 16);
-    EVP_DecryptFinal(ctx, tmp_buf + 16, &tmplen);
+    EVP_DecryptUpdate(ctx, tmp_buf + 16, &outlen, tmp_buf + 16, len - 16);
+    EVP_DecryptFinal(ctx, tmp_buf + 16, &outlen);
     EVP_CIPHER_CTX_cleanup(ctx);
 
     if (_verify_ts(tmp_buf,len)) {
