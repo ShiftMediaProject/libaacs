@@ -343,14 +343,14 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
     memcpy(tmp_buf, buf, len);
 
     int a, outlen;
-    uint8_t key[16], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
+    uint8_t key[32], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
                               0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
     EVP_CIPHER_CTX ctx;
 
     EVP_CIPHER_CTX_init(&ctx);
-    EVP_DecryptInit(&ctx, EVP_aes_128_ecb(), aacs->uks + curr_uk * 16, NULL);
-    EVP_DecryptUpdate(&ctx, key, &outlen, tmp_buf, 16);
-    EVP_DecryptFinal(&ctx, key, &outlen);
+    EVP_EncryptInit(&ctx, EVP_aes_128_ecb(), aacs->uks + curr_uk * 16, NULL);
+    EVP_EncryptUpdate(&ctx, key, &outlen, tmp_buf, 16);
+    EVP_EncryptFinal(&ctx, key + outlen, &outlen);
     EVP_CIPHER_CTX_cleanup(&ctx);
 
     for (a = 0; a < 16; a++) {
@@ -358,12 +358,12 @@ int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
     }
 
     EVP_CIPHER_CTX_init(&ctx);
-    EVP_DecryptInit(&ctx, EVP_aes_128_ecb(), key, iv);
+    EVP_DecryptInit(&ctx, EVP_aes_128_cbc(), key, iv);
     EVP_DecryptUpdate(&ctx, tmp_buf + 16, &outlen, tmp_buf + 16, len - 16);
-    EVP_DecryptFinal(&ctx, tmp_buf + 16, &outlen);
+    EVP_DecryptFinal(&ctx, tmp_buf + 16 + outlen, &outlen);
     EVP_CIPHER_CTX_cleanup(&ctx);
 
-    if (_verify_ts(tmp_buf,len)) {
+    if (_verify_ts(tmp_buf, len)) {
         DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %"PRIu64" (%p)\n",
               len % 6144 ? "PARTIAL" : "FULL", len, offset, aacs);
 
