@@ -75,7 +75,7 @@ PUNCT_EQUALS_SIGN       ([=])
 PUNCT_VERTICAL_BAR      ([|])
 PUNCT_HYPHEN            ([-])
 
-NEWLINE                 ([\n\r]|\n\r|\r\n)
+NEWLINE                 ([\n\r])
 
 COMMENT                 (;[^\n]*)
 BAD_ENTRY               ([^\n])
