@@ -57,22 +57,21 @@ enum
 };
 
 static pk_list *new_pk_list();
-static int add_pk_list(pk_list *list, const char *key);
-static int add_pk_list_entry(config_file *cfgfile, const char *entry);
+static pk_list *add_pk_list_entry(pk_list *list, const char *key);
 static cert_list *new_cert_list();
-static int add_cert_list(cert_list *list, const char *host_priv_key,
+static cert_list *add_cert_list(cert_list *list, const char *host_priv_key,
                          const char *host_cert, const char *host_nonce,
                          const char *host_key_point);
 static config_entry_list *new_config_entry_list();
 static int add_entry(config_entry_list *list, int type, const char *entry);
 static digit_key_pair_list *new_digit_key_pair_list();
-static int add_digit_key_pair(digit_key_pair_list *list, int type,
-                              unsigned int digit, const char *key);
-static int add_digit_key_pair_entry(config_entry_list *list, int type,
-                                    unsigned int digit, const char *entry);
+static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
+                              int type, unsigned int digit, const char *key);
 static int add_date_entry(config_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
-void yyerror (void *scanner, config_file *cfgfile, const char *msg);
+void yyerror (void *scanner, pk_list *pklist, cert_list *clist,
+              config_entry_list *celist, digit_key_pair_list *dkplist,
+              const char *msg);
 extern int yyget_lineno  (void *scanner);
 
 /* uncomment the line below for debugging */
@@ -88,7 +87,10 @@ extern int yyget_lineno  (void *scanner);
 %yacc
 %lex-param{void *scanner}
 %parse-param{void *scanner}
-%parse-param{config_file *cfgfile}
+%parse-param{pk_list *pklist}
+%parse-param{cert_list *clist}
+%parse-param{config_entry_list *celist}
+%parse-param{digit_key_pair_list *dkplist}
 
 %union
 {
@@ -151,11 +153,11 @@ pk_list
 pk_entry
   : newline_list HEXSTRING
     {
-      add_pk_list_entry(cfgfile, $2);
+      pklist = add_pk_list_entry(pklist, $2);
     }
   | HEXSTRING
     {
-      add_pk_list_entry(cfgfile, $1);
+      pklist = add_pk_list_entry(pklist, $1);
     }
   ;
 
@@ -195,7 +197,7 @@ host_cert_entry_end
 host_cert_entry
   : host_priv_key host_cert host_nonce host_key_point
     {
-      add_cert_list(cfgfile->host_cert_list, $1, $2, $3, $4);
+      clist = add_cert_list(clist, $1, $2, $3, $4);
     }
   ;
 
@@ -240,17 +242,13 @@ config_entries
 config_entry_list
   : config_entry_list config_entry NEWLINE
     {
-      config_entry_list *cursor = cfgfile->list;
-      while (cursor->next)
-        cursor = cursor->next;
-      cursor->next = new_config_entry_list();
+      celist->next = new_config_entry_list();
+      celist = celist->next;
     }
   | config_entry NEWLINE
     {
-      config_entry_list *cursor = cfgfile->list;
-      while (cursor->next)
-        cursor = cursor->next;
-      cursor->next = new_config_entry_list();
+      celist->next = new_config_entry_list();
+      celist = celist->next;
     }
   | config_entry_list error NEWLINE
     {
@@ -277,8 +275,8 @@ newline_list
 disc_info
   : discid PUNCT_EQUALS_SIGN disc_title
     {
-      add_entry(cfgfile->list, ENTRY_TYPE_DISCID, $1);
-      add_entry(cfgfile->list, ENTRY_TYPE_TITLE, $3);
+      add_entry(celist, ENTRY_TYPE_DISCID, $1);
+      add_entry(celist, ENTRY_TYPE_TITLE, $3);
     }
   ;
 
@@ -309,26 +307,29 @@ entry
 date_entry
   : ENTRY_ID_DATE DIGIT PUNCT_HYPHEN DIGIT PUNCT_HYPHEN DIGIT
     {
-      add_date_entry(cfgfile->list, $2, $4, $6);
+      add_date_entry(celist, $2, $4, $6);
     }
   ;
 
 mek_entry
   : ENTRY_ID_MEK HEXSTRING
     {
-      add_entry(cfgfile->list, ENTRY_TYPE_MEK, $2);
+      add_entry(celist, ENTRY_TYPE_MEK, $2);
     }
   ;
 
 vid_entry
   : ENTRY_ID_VID HEXSTRING
     {
-      add_entry(cfgfile->list, ENTRY_TYPE_VID, $2);
+      add_entry(celist, ENTRY_TYPE_VID, $2);
     }
   ;
 
 bn_entry
   : ENTRY_ID_BN bn_data_list
+    {
+      dkplist = NULL;
+    }
   ;
 
 bn_data_list
@@ -339,19 +340,27 @@ bn_data_list
 bn_data
   : DIGIT PUNCT_HYPHEN HEXSTRING
     {
-      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_BN, $1, $3);
+      if (!dkplist)
+      {
+        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        celist->entry.bn = dkplist;
+      }
+      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_BN, $1, $3);
     }
   ;
 
 vuk_entry
   : ENTRY_ID_VUK HEXSTRING
     {
-      add_entry(cfgfile->list, ENTRY_TYPE_VUK, $2);
+      add_entry(celist, ENTRY_TYPE_VUK, $2);
     }
   ;
 
 pak_entry
   : ENTRY_ID_PAK pak_data_list
+    {
+      dkplist = NULL;
+    }
   ;
 
 pak_data_list
@@ -362,12 +371,20 @@ pak_data_list
 pak_data
   : DIGIT PUNCT_HYPHEN HEXSTRING
     {
-      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_PAK, $1, $3);
+      if (!dkplist)
+      {
+        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        celist->entry.pak = dkplist;
+      }
+      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_PAK, $1, $3);
     }
   ;
 
 tk_entry
   : ENTRY_ID_TK tk_data_list
+    {
+      dkplist = NULL;
+    }
   ;
 
 tk_data_list
@@ -378,12 +395,20 @@ tk_data_list
 tk_data
   : DIGIT PUNCT_HYPHEN HEXSTRING
     {
-      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_TK, $1, $3);
+      if (!dkplist)
+      {
+        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        celist->entry.tk = dkplist;
+      }
+      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_TK, $1, $3);
     }
   ;
 
 uk_entry
   : ENTRY_ID_UK uk_data_list
+    {
+      dkplist = NULL;
+    }
   ;
 
 uk_data_list
@@ -394,7 +419,12 @@ uk_data_list
 uk_data
   : DIGIT PUNCT_HYPHEN HEXSTRING
     {
-      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_UK, $1, $3);
+      if (!dkplist)
+      {
+        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        celist->entry.uk = dkplist;
+      }
+      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_UK, $1, $3);
     }
   ;
 %%
@@ -405,15 +435,20 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   if (!fp)
     return 0;
 
-  cfgfile->pkl = new_pk_list();
-  cfgfile->host_cert_list = new_cert_list();
-  cfgfile->list = new_config_entry_list();
+  pk_list *head_pklist = new_pk_list();
+  cert_list *head_clist = new_cert_list();
+  config_entry_list *head_celist = new_config_entry_list();
+  digit_key_pair_list *dkplist = NULL;
 
   void *scanner;
   yylex_init(&scanner);
   yyset_in(fp, scanner);
-  int retval = yyparse(scanner, cfgfile);
+  int retval = yyparse(scanner, head_pklist, head_clist, head_celist, dkplist);
   yylex_destroy(scanner);
+
+  cfgfile->pkl = head_pklist;
+  cfgfile->host_cert_list = head_clist;
+  cfgfile->list = head_celist;
 
   if (retval)
     return 0;
@@ -439,38 +474,21 @@ static pk_list *new_pk_list()
   return pkl;
 }
 
-/* Function to add pk to config entry list */
-static int add_pk_list(pk_list *list, const char *key)
+/* Function to add pk to config file */
+static pk_list *add_pk_list_entry(pk_list *list, const char *key)
 {
   if (!list)
   {
     printf("Error: No pk list passed as parameter.\n");
-    return 0;
+    return NULL;
   }
 
-  pk_list *cursor = list;
-  while (cursor->next)
-    cursor = cursor->next;
+  list->key = (char*)malloc(strlen(key) + 1);
+  strcpy(list->key, key);
 
-  cursor->key = (char*)malloc(strlen(key) + 1);
-  strcpy(cursor->key, key);
+  list->next = new_pk_list();
 
-  cursor->next = new_pk_list();
-
-  return 1;
-}
-
-static int add_pk_list_entry(config_file *cfgfile, const char *entry)
-{
-  if (!cfgfile)
-  {
-    printf("Error: No config file object passed as parameter.\n");
-    return 0;
-  }
-
-  add_pk_list(cfgfile->pkl, entry);
-
-  return 1;
+  return list->next;
 }
 
 /* Function to create new certificate list */
@@ -493,32 +511,28 @@ static cert_list *new_cert_list()
 }
 
 /* Function to add certificate list entry into config file object */
-static int add_cert_list(cert_list *list, const char *host_priv_key,
+static cert_list *add_cert_list(cert_list *list, const char *host_priv_key,
                          const char *host_cert, const char *host_nonce,
                          const char *host_key_point)
 {
   if (!list)
   {
     printf("Error: no certificate list object passed as parameter.\n");
-    return 0;
+    return NULL;
   }
 
-  cert_list *cursor = list;
-  while (cursor->next)
-    cursor = cursor->next;
+  list->host_priv_key = (char*)malloc(strlen(host_priv_key) + 1);
+  strcpy(list->host_priv_key, host_priv_key);
+  list->host_cert = (char*)malloc(strlen(host_cert) + 1);
+  strcpy(list->host_cert, host_cert);
+  list->host_nonce = (char*)malloc(strlen(host_nonce) + 1);
+  strcpy(list->host_nonce, host_nonce);
+  list->host_key_point = (char*)malloc(strlen(host_key_point) + 1);
+  strcpy(list->host_key_point, host_key_point);
 
-  cursor->host_priv_key = (char*)malloc(strlen(host_priv_key) + 1);
-  strcpy(cursor->host_priv_key, host_priv_key);
-  cursor->host_cert = (char*)malloc(strlen(host_cert) + 1);
-  strcpy(cursor->host_cert, host_cert);
-  cursor->host_nonce = (char*)malloc(strlen(host_nonce) + 1);
-  strcpy(cursor->host_nonce, host_nonce);
-  cursor->host_key_point = (char*)malloc(strlen(host_key_point) + 1);
-  strcpy(cursor->host_key_point, host_key_point);
+  list->next = new_cert_list();
 
-  cursor->next = new_cert_list();
-
-  return 1;
+  return list->next;
 }
 
 /* Function that returns pointer to new config entry list */
@@ -557,35 +571,31 @@ static int add_entry(config_entry_list *list, int type, const char *entry)
     return 0;
   }
 
-  config_entry_list *cursor = list;
-  while (cursor->next)
-    cursor = cursor->next;
-
   switch (type)
   {
     case ENTRY_TYPE_DISCID:
-      cursor->entry.discid = (char*)malloc(strlen(entry) + 1);
-      strcpy(cursor->entry.discid, entry);
+      list->entry.discid = (char*)malloc(strlen(entry) + 1);
+      strcpy(list->entry.discid, entry);
       break;
 
     case ENTRY_TYPE_TITLE:
-      cursor->entry.title = (char*)malloc(strlen(entry) + 1);
-      strcpy(cursor->entry.title, entry);
+      list->entry.title = (char*)malloc(strlen(entry) + 1);
+      strcpy(list->entry.title, entry);
       break;
 
     case ENTRY_TYPE_MEK:
-      cursor->entry.mek = (char*)malloc(strlen(entry) + 1);
-      strcpy(cursor->entry.mek, entry);
+      list->entry.mek = (char*)malloc(strlen(entry) + 1);
+      strcpy(list->entry.mek, entry);
       break;
 
     case ENTRY_TYPE_VID:
-      cursor->entry.vid = (char*)malloc(strlen(entry) + 1);
-      strcpy(cursor->entry.vid, entry);
+      list->entry.vid = (char*)malloc(strlen(entry) + 1);
+      strcpy(list->entry.vid, entry);
       break;
 
     case ENTRY_TYPE_VUK:
-      cursor->entry.vuk = (char*)malloc(strlen(entry) + 1);
-      strcpy(cursor->entry.vuk, entry);
+      list->entry.vuk = (char*)malloc(strlen(entry) + 1);
+      strcpy(list->entry.vuk, entry);
       break;
 
     default:
@@ -614,83 +624,22 @@ static digit_key_pair_list *new_digit_key_pair_list()
 }
 
 /* Function used to add a digit/key pair to a list of digit key pair entries */
-static int add_digit_key_pair(digit_key_pair_list *list, int type,
-                              unsigned int digit, const char *key)
+static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
+                              int type, unsigned int digit, const char *key)
 {
   if (!list)
   {
     printf("Error: No digit key pair list passed as parameter.\n");
-    return 0;
+    return NULL;
   }
 
-  digit_key_pair_list *cursor = list;
-  unsigned int count = 0;
-  if (type == ENTRY_ID_TK || type == ENTRY_ID_UK)
-    count = 1;
-  while (cursor->next)
-  {
-    cursor = cursor->next;
-    count++;
-  }
+  list->key_pair.digit = digit;
+  list->key_pair.key = (char*)malloc(strlen(key) + 1);
+  strcpy(list->key_pair.key, key);
 
-  if (count != digit)
-    printf("Warning: Digit list for entry may be out of order.\n");
+  list->next = new_digit_key_pair_list();
 
-  cursor->key_pair.digit = digit;
-  cursor->key_pair.key = (char*)malloc(strlen(key) + 1);
-  strcpy(cursor->key_pair.key, key);
-
-  cursor->next = new_digit_key_pair_list();
-
-  return 1;
-}
-
-/* Function to add a digit/key pair to a config entry */
-static int add_digit_key_pair_entry(config_entry_list *list, int type,
-                                    unsigned int digit, const char *entry)
-{
-  if (!list)
-  {
-    printf("Error: No config list passed as parameter.\n");
-    return 0;
-  }
-
-  config_entry_list *cursor = list;
-  while (cursor->next)
-    cursor = cursor->next;
-
-  switch (type)
-  {
-    case ENTRY_TYPE_BN:
-      if (!cursor->entry.bn)
-        cursor->entry.bn = new_digit_key_pair_list();
-      add_digit_key_pair(cursor->entry.bn, ENTRY_ID_BN, digit, entry);
-      break;
-
-    case ENTRY_TYPE_PAK:
-      if (!cursor->entry.pak)
-        cursor->entry.pak = new_digit_key_pair_list();
-      add_digit_key_pair(cursor->entry.pak, ENTRY_ID_PAK, digit, entry);
-      break;
-
-    case ENTRY_TYPE_TK:
-      if (!cursor->entry.tk)
-        cursor->entry.tk = new_digit_key_pair_list();
-      add_digit_key_pair(cursor->entry.tk, ENTRY_ID_TK, digit, entry);
-      break;
-
-    case ENTRY_TYPE_UK:
-      if (!cursor->entry.uk)
-        cursor->entry.uk = new_digit_key_pair_list();
-      add_digit_key_pair(cursor->entry.uk, ENTRY_ID_UK, digit, entry);
-      break;
-
-    default:
-      printf("WARNING: entry type passed in unknown\n");
-      return 0;
-  }
-
-  return 1;
+  return list->next;
 }
 
 /* Function to add a date entry */
@@ -703,19 +652,17 @@ static int add_date_entry(config_entry_list *list, unsigned int year,
     return 0;
   }
 
-  config_entry_list *cursor = list;
-  while (cursor->next)
-    cursor = cursor->next;
-
-  cursor->entry.date.year = year;
-  cursor->entry.date.month = month;
-  cursor->entry.date.day = day;
+  list->entry.date.year = year;
+  list->entry.date.month = month;
+  list->entry.date.day = day;
 
   return 1;
 }
 
 /* Our definition of yyerror */
-void yyerror (void *scanner, config_file *cfgfile, const char *msg)
+void yyerror (void *scanner, pk_list *pklist, cert_list *clist,
+              config_entry_list *celist, digit_key_pair_list *dkplist,
+              const char *msg)
 {
   fprintf(stderr, "%s: line %d\n", msg, yyget_lineno(scanner));
 }

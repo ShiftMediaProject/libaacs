@@ -128,22 +128,21 @@ enum
 };
 
 static pk_list *new_pk_list();
-static int add_pk_list(pk_list *list, const char *key);
-static int add_pk_list_entry(config_file *cfgfile, const char *entry);
+static pk_list *add_pk_list_entry(pk_list *list, const char *key);
 static cert_list *new_cert_list();
-static int add_cert_list(cert_list *list, const char *host_priv_key,
+static cert_list *add_cert_list(cert_list *list, const char *host_priv_key,
                          const char *host_cert, const char *host_nonce,
                          const char *host_key_point);
 static config_entry_list *new_config_entry_list();
 static int add_entry(config_entry_list *list, int type, const char *entry);
 static digit_key_pair_list *new_digit_key_pair_list();
-static int add_digit_key_pair(digit_key_pair_list *list, int type,
-                              unsigned int digit, const char *key);
-static int add_digit_key_pair_entry(config_entry_list *list, int type,
-                                    unsigned int digit, const char *entry);
+static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
+                              int type, unsigned int digit, const char *key);
 static int add_date_entry(config_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
-void yyerror (void *scanner, config_file *cfgfile, const char *msg);
+void yyerror (void *scanner, pk_list *pklist, cert_list *clist,
+              config_entry_list *celist, digit_key_pair_list *dkplist,
+              const char *msg);
 extern int yyget_lineno  (void *scanner);
 
 /* uncomment the line below for debugging */
@@ -151,7 +150,7 @@ extern int yyget_lineno  (void *scanner);
 
 
 /* Line 189 of yacc.c  */
-#line 155 "keydbcfg-parser.c"
+#line 154 "keydbcfg-parser.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -232,7 +231,7 @@ typedef union YYSTYPE
 {
 
 /* Line 214 of yacc.c  */
-#line 94 "keydbcfg-parser.y"
+#line 96 "keydbcfg-parser.y"
 
   char *string;
   unsigned int digit;
@@ -240,7 +239,7 @@ typedef union YYSTYPE
 
 
 /* Line 214 of yacc.c  */
-#line 244 "keydbcfg-parser.c"
+#line 243 "keydbcfg-parser.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -252,7 +251,7 @@ typedef union YYSTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 256 "keydbcfg-parser.c"
+#line 255 "keydbcfg-parser.c"
 
 #ifdef short
 # undef short
@@ -567,14 +566,14 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   129,   129,   133,   137,   138,   142,   143,   147,   148,
-     152,   156,   163,   167,   168,   172,   173,   177,   178,   182,
-     186,   187,   191,   192,   196,   203,   205,   210,   212,   217,
-     219,   224,   226,   231,   232,   233,   241,   248,   255,   260,
-     268,   269,   273,   274,   278,   286,   290,   294,   295,   299,
-     300,   301,   302,   303,   304,   305,   306,   310,   317,   324,
-     331,   335,   336,   340,   347,   354,   358,   359,   363,   370,
-     374,   375,   379,   386,   390,   391,   395
+       0,   131,   131,   135,   139,   140,   144,   145,   149,   150,
+     154,   158,   165,   169,   170,   174,   175,   179,   180,   184,
+     188,   189,   193,   194,   198,   205,   207,   212,   214,   219,
+     221,   226,   228,   233,   234,   235,   243,   248,   253,   258,
+     266,   267,   271,   272,   276,   284,   288,   292,   293,   297,
+     298,   299,   300,   301,   302,   303,   304,   308,   315,   322,
+     329,   336,   337,   341,   353,   360,   367,   368,   372,   384,
+     391,   392,   396,   408,   415,   416,   420
 };
 #endif
 
@@ -811,7 +810,7 @@ do								\
     }								\
   else								\
     {								\
-      yyerror (scanner, cfgfile, YY_("syntax error: cannot back up")); \
+      yyerror (scanner, pklist, clist, celist, dkplist, YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
 while (YYID (0))
@@ -891,7 +890,7 @@ do {									  \
     {									  \
       YYFPRINTF (stderr, "%s ", Title);					  \
       yy_symbol_print (stderr,						  \
-		  Type, Value, scanner, cfgfile); \
+		  Type, Value, scanner, pklist, clist, celist, dkplist); \
       YYFPRINTF (stderr, "\n");						  \
     }									  \
 } while (YYID (0))
@@ -905,21 +904,27 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, config_file *cfgfile)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist)
 #else
 static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, cfgfile)
+yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, pklist, clist, celist, dkplist)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
     void *scanner;
-    config_file *cfgfile;
+    pk_list *pklist;
+    cert_list *clist;
+    config_entry_list *celist;
+    digit_key_pair_list *dkplist;
 #endif
 {
   if (!yyvaluep)
     return;
   YYUSE (scanner);
-  YYUSE (cfgfile);
+  YYUSE (pklist);
+  YYUSE (clist);
+  YYUSE (celist);
+  YYUSE (dkplist);
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
     YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
@@ -941,15 +946,18 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, cfgfile)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, config_file *cfgfile)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist)
 #else
 static void
-yy_symbol_print (yyoutput, yytype, yyvaluep, scanner, cfgfile)
+yy_symbol_print (yyoutput, yytype, yyvaluep, scanner, pklist, clist, celist, dkplist)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
     void *scanner;
-    config_file *cfgfile;
+    pk_list *pklist;
+    cert_list *clist;
+    config_entry_list *celist;
+    digit_key_pair_list *dkplist;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -957,7 +965,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, scanner, cfgfile)
   else
     YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, cfgfile);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, pklist, clist, celist, dkplist);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -1000,14 +1008,17 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *scanner, config_file *cfgfile)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *scanner, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist)
 #else
 static void
-yy_reduce_print (yyvsp, yyrule, scanner, cfgfile)
+yy_reduce_print (yyvsp, yyrule, scanner, pklist, clist, celist, dkplist)
     YYSTYPE *yyvsp;
     int yyrule;
     void *scanner;
-    config_file *cfgfile;
+    pk_list *pklist;
+    cert_list *clist;
+    config_entry_list *celist;
+    digit_key_pair_list *dkplist;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -1021,7 +1032,7 @@ yy_reduce_print (yyvsp, yyrule, scanner, cfgfile)
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       		       , scanner, cfgfile);
+		       		       , scanner, pklist, clist, celist, dkplist);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1029,7 +1040,7 @@ yy_reduce_print (yyvsp, yyrule, scanner, cfgfile)
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (yyvsp, Rule, scanner, cfgfile); \
+    yy_reduce_print (yyvsp, Rule, scanner, pklist, clist, celist, dkplist); \
 } while (YYID (0))
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1280,20 +1291,26 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *scanner, config_file *cfgfile)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *scanner, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist)
 #else
 static void
-yydestruct (yymsg, yytype, yyvaluep, scanner, cfgfile)
+yydestruct (yymsg, yytype, yyvaluep, scanner, pklist, clist, celist, dkplist)
     const char *yymsg;
     int yytype;
     YYSTYPE *yyvaluep;
     void *scanner;
-    config_file *cfgfile;
+    pk_list *pklist;
+    cert_list *clist;
+    config_entry_list *celist;
+    digit_key_pair_list *dkplist;
 #endif
 {
   YYUSE (yyvaluep);
   YYUSE (scanner);
-  YYUSE (cfgfile);
+  YYUSE (pklist);
+  YYUSE (clist);
+  YYUSE (celist);
+  YYUSE (dkplist);
 
   if (!yymsg)
     yymsg = "Deleting";
@@ -1316,7 +1333,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (void *scanner, config_file *cfgfile);
+int yyparse (void *scanner, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist);
 #else
 int yyparse ();
 #endif
@@ -1344,12 +1361,15 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (void *scanner, config_file *cfgfile)
+yyparse (void *scanner, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist)
 #else
 int
-yyparse (scanner, cfgfile)
+yyparse (scanner, pklist, clist, celist, dkplist)
     void *scanner;
-    config_file *cfgfile;
+    pk_list *pklist;
+    cert_list *clist;
+    config_entry_list *celist;
+    digit_key_pair_list *dkplist;
 #endif
 #endif
 {
@@ -1604,90 +1624,90 @@ yyreduce:
         case 10:
 
 /* Line 1455 of yacc.c  */
-#line 153 "keydbcfg-parser.y"
+#line 155 "keydbcfg-parser.y"
     {
-      add_pk_list_entry(cfgfile, (yyvsp[(2) - (2)].string));
+      pklist = add_pk_list_entry(pklist, (yyvsp[(2) - (2)].string));
     }
     break;
 
   case 11:
 
 /* Line 1455 of yacc.c  */
-#line 157 "keydbcfg-parser.y"
+#line 159 "keydbcfg-parser.y"
     {
-      add_pk_list_entry(cfgfile, (yyvsp[(1) - (1)].string));
+      pklist = add_pk_list_entry(pklist, (yyvsp[(1) - (1)].string));
     }
     break;
 
   case 24:
 
 /* Line 1455 of yacc.c  */
-#line 197 "keydbcfg-parser.y"
+#line 199 "keydbcfg-parser.y"
     {
-      add_cert_list(cfgfile->host_cert_list, (yyvsp[(1) - (4)].string), (yyvsp[(2) - (4)].string), (yyvsp[(3) - (4)].string), (yyvsp[(4) - (4)].string));
+      clist = add_cert_list(clist, (yyvsp[(1) - (4)].string), (yyvsp[(2) - (4)].string), (yyvsp[(3) - (4)].string), (yyvsp[(4) - (4)].string));
     }
     break;
 
   case 25:
 
 /* Line 1455 of yacc.c  */
-#line 204 "keydbcfg-parser.y"
+#line 206 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(2) - (3)].string); }
     break;
 
   case 26:
 
 /* Line 1455 of yacc.c  */
-#line 206 "keydbcfg-parser.y"
+#line 208 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(1) - (2)].string); }
     break;
 
   case 27:
 
 /* Line 1455 of yacc.c  */
-#line 211 "keydbcfg-parser.y"
+#line 213 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(2) - (3)].string); }
     break;
 
   case 28:
 
 /* Line 1455 of yacc.c  */
-#line 213 "keydbcfg-parser.y"
+#line 215 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(1) - (2)].string); }
     break;
 
   case 29:
 
 /* Line 1455 of yacc.c  */
-#line 218 "keydbcfg-parser.y"
+#line 220 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(2) - (3)].string); }
     break;
 
   case 30:
 
 /* Line 1455 of yacc.c  */
-#line 220 "keydbcfg-parser.y"
+#line 222 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(1) - (2)].string); }
     break;
 
   case 31:
 
 /* Line 1455 of yacc.c  */
-#line 225 "keydbcfg-parser.y"
+#line 227 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(2) - (3)].string); }
     break;
 
   case 32:
 
 /* Line 1455 of yacc.c  */
-#line 227 "keydbcfg-parser.y"
+#line 229 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(1) - (2)].string); }
     break;
 
   case 35:
 
 /* Line 1455 of yacc.c  */
-#line 234 "keydbcfg-parser.y"
+#line 236 "keydbcfg-parser.y"
     {
       if (yychar == YYEOF)
         fprintf(stderr, "warning: last entry ended without newline\n");
@@ -1697,12 +1717,10 @@ yyreduce:
   case 36:
 
 /* Line 1455 of yacc.c  */
-#line 242 "keydbcfg-parser.y"
+#line 244 "keydbcfg-parser.y"
     {
-      config_entry_list *cursor = cfgfile->list;
-      while (cursor->next)
-        cursor = cursor->next;
-      cursor->next = new_config_entry_list();
+      celist->next = new_config_entry_list();
+      celist = celist->next;
     }
     break;
 
@@ -1711,17 +1729,15 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 249 "keydbcfg-parser.y"
     {
-      config_entry_list *cursor = cfgfile->list;
-      while (cursor->next)
-        cursor = cursor->next;
-      cursor->next = new_config_entry_list();
+      celist->next = new_config_entry_list();
+      celist = celist->next;
     }
     break;
 
   case 38:
 
 /* Line 1455 of yacc.c  */
-#line 256 "keydbcfg-parser.y"
+#line 254 "keydbcfg-parser.y"
     {
       fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
       yyerrok;
@@ -1731,7 +1747,7 @@ yyreduce:
   case 39:
 
 /* Line 1455 of yacc.c  */
-#line 261 "keydbcfg-parser.y"
+#line 259 "keydbcfg-parser.y"
     {
       fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
       yyerrok;
@@ -1741,89 +1757,145 @@ yyreduce:
   case 44:
 
 /* Line 1455 of yacc.c  */
-#line 279 "keydbcfg-parser.y"
+#line 277 "keydbcfg-parser.y"
     {
-      add_entry(cfgfile->list, ENTRY_TYPE_DISCID, (yyvsp[(1) - (3)].string));
-      add_entry(cfgfile->list, ENTRY_TYPE_TITLE, (yyvsp[(3) - (3)].string));
+      add_entry(celist, ENTRY_TYPE_DISCID, (yyvsp[(1) - (3)].string));
+      add_entry(celist, ENTRY_TYPE_TITLE, (yyvsp[(3) - (3)].string));
     }
     break;
 
   case 57:
 
 /* Line 1455 of yacc.c  */
-#line 311 "keydbcfg-parser.y"
+#line 309 "keydbcfg-parser.y"
     {
-      add_date_entry(cfgfile->list, (yyvsp[(2) - (6)].digit), (yyvsp[(4) - (6)].digit), (yyvsp[(6) - (6)].digit));
+      add_date_entry(celist, (yyvsp[(2) - (6)].digit), (yyvsp[(4) - (6)].digit), (yyvsp[(6) - (6)].digit));
     }
     break;
 
   case 58:
 
 /* Line 1455 of yacc.c  */
-#line 318 "keydbcfg-parser.y"
+#line 316 "keydbcfg-parser.y"
     {
-      add_entry(cfgfile->list, ENTRY_TYPE_MEK, (yyvsp[(2) - (2)].string));
+      add_entry(celist, ENTRY_TYPE_MEK, (yyvsp[(2) - (2)].string));
     }
     break;
 
   case 59:
 
 /* Line 1455 of yacc.c  */
-#line 325 "keydbcfg-parser.y"
+#line 323 "keydbcfg-parser.y"
     {
-      add_entry(cfgfile->list, ENTRY_TYPE_VID, (yyvsp[(2) - (2)].string));
+      add_entry(celist, ENTRY_TYPE_VID, (yyvsp[(2) - (2)].string));
+    }
+    break;
+
+  case 60:
+
+/* Line 1455 of yacc.c  */
+#line 330 "keydbcfg-parser.y"
+    {
+      dkplist = NULL;
     }
     break;
 
   case 63:
 
 /* Line 1455 of yacc.c  */
-#line 341 "keydbcfg-parser.y"
+#line 342 "keydbcfg-parser.y"
     {
-      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_BN, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+      if (!dkplist)
+      {
+        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        celist->entry.bn = dkplist;
+      }
+      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_BN, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
     }
     break;
 
   case 64:
 
 /* Line 1455 of yacc.c  */
-#line 348 "keydbcfg-parser.y"
+#line 354 "keydbcfg-parser.y"
     {
-      add_entry(cfgfile->list, ENTRY_TYPE_VUK, (yyvsp[(2) - (2)].string));
+      add_entry(celist, ENTRY_TYPE_VUK, (yyvsp[(2) - (2)].string));
+    }
+    break;
+
+  case 65:
+
+/* Line 1455 of yacc.c  */
+#line 361 "keydbcfg-parser.y"
+    {
+      dkplist = NULL;
     }
     break;
 
   case 68:
 
 /* Line 1455 of yacc.c  */
-#line 364 "keydbcfg-parser.y"
+#line 373 "keydbcfg-parser.y"
     {
-      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_PAK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+      if (!dkplist)
+      {
+        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        celist->entry.pak = dkplist;
+      }
+      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_PAK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+    }
+    break;
+
+  case 69:
+
+/* Line 1455 of yacc.c  */
+#line 385 "keydbcfg-parser.y"
+    {
+      dkplist = NULL;
     }
     break;
 
   case 72:
 
 /* Line 1455 of yacc.c  */
-#line 380 "keydbcfg-parser.y"
+#line 397 "keydbcfg-parser.y"
     {
-      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_TK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+      if (!dkplist)
+      {
+        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        celist->entry.tk = dkplist;
+      }
+      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_TK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+    }
+    break;
+
+  case 73:
+
+/* Line 1455 of yacc.c  */
+#line 409 "keydbcfg-parser.y"
+    {
+      dkplist = NULL;
     }
     break;
 
   case 76:
 
 /* Line 1455 of yacc.c  */
-#line 396 "keydbcfg-parser.y"
+#line 421 "keydbcfg-parser.y"
     {
-      add_digit_key_pair_entry(cfgfile->list, ENTRY_TYPE_UK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
+      if (!dkplist)
+      {
+        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        celist->entry.uk = dkplist;
+      }
+      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_UK, (yyvsp[(1) - (3)].digit), (yyvsp[(3) - (3)].string));
     }
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 1827 "keydbcfg-parser.c"
+#line 1899 "keydbcfg-parser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1858,7 +1930,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (scanner, cfgfile, YY_("syntax error"));
+      yyerror (scanner, pklist, clist, celist, dkplist, YY_("syntax error"));
 #else
       {
 	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
@@ -1882,11 +1954,11 @@ yyerrlab:
 	if (0 < yysize && yysize <= yymsg_alloc)
 	  {
 	    (void) yysyntax_error (yymsg, yystate, yychar);
-	    yyerror (scanner, cfgfile, yymsg);
+	    yyerror (scanner, pklist, clist, celist, dkplist, yymsg);
 	  }
 	else
 	  {
-	    yyerror (scanner, cfgfile, YY_("syntax error"));
+	    yyerror (scanner, pklist, clist, celist, dkplist, YY_("syntax error"));
 	    if (yysize != 0)
 	      goto yyexhaustedlab;
 	  }
@@ -1910,7 +1982,7 @@ yyerrlab:
       else
 	{
 	  yydestruct ("Error: discarding",
-		      yytoken, &yylval, scanner, cfgfile);
+		      yytoken, &yylval, scanner, pklist, clist, celist, dkplist);
 	  yychar = YYEMPTY;
 	}
     }
@@ -1966,7 +2038,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp, scanner, cfgfile);
+		  yystos[yystate], yyvsp, scanner, pklist, clist, celist, dkplist);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -2001,7 +2073,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (scanner, cfgfile, YY_("memory exhausted"));
+  yyerror (scanner, pklist, clist, celist, dkplist, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -2009,7 +2081,7 @@ yyexhaustedlab:
 yyreturn:
   if (yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
-		 yytoken, &yylval, scanner, cfgfile);
+		 yytoken, &yylval, scanner, pklist, clist, celist, dkplist);
   /* Do not reclaim the symbols of the rule which action triggered
      this YYABORT or YYACCEPT.  */
   YYPOPSTACK (yylen);
@@ -2017,7 +2089,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp, scanner, cfgfile);
+		  yystos[*yyssp], yyvsp, scanner, pklist, clist, celist, dkplist);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -2035,7 +2107,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 400 "keydbcfg-parser.y"
+#line 430 "keydbcfg-parser.y"
 
 /* Function to parse a config file */
 int keydbcfg_parse_config(config_file *cfgfile, const char *path)
@@ -2044,15 +2116,20 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   if (!fp)
     return 0;
 
-  cfgfile->pkl = new_pk_list();
-  cfgfile->host_cert_list = new_cert_list();
-  cfgfile->list = new_config_entry_list();
+  pk_list *head_pklist = new_pk_list();
+  cert_list *head_clist = new_cert_list();
+  config_entry_list *head_celist = new_config_entry_list();
+  digit_key_pair_list *dkplist = NULL;
 
   void *scanner;
   yylex_init(&scanner);
   yyset_in(fp, scanner);
-  int retval = yyparse(scanner, cfgfile);
+  int retval = yyparse(scanner, head_pklist, head_clist, head_celist, dkplist);
   yylex_destroy(scanner);
+
+  cfgfile->pkl = head_pklist;
+  cfgfile->host_cert_list = head_clist;
+  cfgfile->list = head_celist;
 
   if (retval)
     return 0;
@@ -2078,38 +2155,21 @@ static pk_list *new_pk_list()
   return pkl;
 }
 
-/* Function to add pk to config entry list */
-static int add_pk_list(pk_list *list, const char *key)
+/* Function to add pk to config file */
+static pk_list *add_pk_list_entry(pk_list *list, const char *key)
 {
   if (!list)
   {
     printf("Error: No pk list passed as parameter.\n");
-    return 0;
+    return NULL;
   }
 
-  pk_list *cursor = list;
-  while (cursor->next)
-    cursor = cursor->next;
+  list->key = (char*)malloc(strlen(key) + 1);
+  strcpy(list->key, key);
 
-  cursor->key = (char*)malloc(strlen(key) + 1);
-  strcpy(cursor->key, key);
+  list->next = new_pk_list();
 
-  cursor->next = new_pk_list();
-
-  return 1;
-}
-
-static int add_pk_list_entry(config_file *cfgfile, const char *entry)
-{
-  if (!cfgfile)
-  {
-    printf("Error: No config file object passed as parameter.\n");
-    return 0;
-  }
-
-  add_pk_list(cfgfile->pkl, entry);
-
-  return 1;
+  return list->next;
 }
 
 /* Function to create new certificate list */
@@ -2132,32 +2192,28 @@ static cert_list *new_cert_list()
 }
 
 /* Function to add certificate list entry into config file object */
-static int add_cert_list(cert_list *list, const char *host_priv_key,
+static cert_list *add_cert_list(cert_list *list, const char *host_priv_key,
                          const char *host_cert, const char *host_nonce,
                          const char *host_key_point)
 {
   if (!list)
   {
     printf("Error: no certificate list object passed as parameter.\n");
-    return 0;
+    return NULL;
   }
 
-  cert_list *cursor = list;
-  while (cursor->next)
-    cursor = cursor->next;
+  list->host_priv_key = (char*)malloc(strlen(host_priv_key) + 1);
+  strcpy(list->host_priv_key, host_priv_key);
+  list->host_cert = (char*)malloc(strlen(host_cert) + 1);
+  strcpy(list->host_cert, host_cert);
+  list->host_nonce = (char*)malloc(strlen(host_nonce) + 1);
+  strcpy(list->host_nonce, host_nonce);
+  list->host_key_point = (char*)malloc(strlen(host_key_point) + 1);
+  strcpy(list->host_key_point, host_key_point);
 
-  cursor->host_priv_key = (char*)malloc(strlen(host_priv_key) + 1);
-  strcpy(cursor->host_priv_key, host_priv_key);
-  cursor->host_cert = (char*)malloc(strlen(host_cert) + 1);
-  strcpy(cursor->host_cert, host_cert);
-  cursor->host_nonce = (char*)malloc(strlen(host_nonce) + 1);
-  strcpy(cursor->host_nonce, host_nonce);
-  cursor->host_key_point = (char*)malloc(strlen(host_key_point) + 1);
-  strcpy(cursor->host_key_point, host_key_point);
+  list->next = new_cert_list();
 
-  cursor->next = new_cert_list();
-
-  return 1;
+  return list->next;
 }
 
 /* Function that returns pointer to new config entry list */
@@ -2196,35 +2252,31 @@ static int add_entry(config_entry_list *list, int type, const char *entry)
     return 0;
   }
 
-  config_entry_list *cursor = list;
-  while (cursor->next)
-    cursor = cursor->next;
-
   switch (type)
   {
     case ENTRY_TYPE_DISCID:
-      cursor->entry.discid = (char*)malloc(strlen(entry) + 1);
-      strcpy(cursor->entry.discid, entry);
+      list->entry.discid = (char*)malloc(strlen(entry) + 1);
+      strcpy(list->entry.discid, entry);
       break;
 
     case ENTRY_TYPE_TITLE:
-      cursor->entry.title = (char*)malloc(strlen(entry) + 1);
-      strcpy(cursor->entry.title, entry);
+      list->entry.title = (char*)malloc(strlen(entry) + 1);
+      strcpy(list->entry.title, entry);
       break;
 
     case ENTRY_TYPE_MEK:
-      cursor->entry.mek = (char*)malloc(strlen(entry) + 1);
-      strcpy(cursor->entry.mek, entry);
+      list->entry.mek = (char*)malloc(strlen(entry) + 1);
+      strcpy(list->entry.mek, entry);
       break;
 
     case ENTRY_TYPE_VID:
-      cursor->entry.vid = (char*)malloc(strlen(entry) + 1);
-      strcpy(cursor->entry.vid, entry);
+      list->entry.vid = (char*)malloc(strlen(entry) + 1);
+      strcpy(list->entry.vid, entry);
       break;
 
     case ENTRY_TYPE_VUK:
-      cursor->entry.vuk = (char*)malloc(strlen(entry) + 1);
-      strcpy(cursor->entry.vuk, entry);
+      list->entry.vuk = (char*)malloc(strlen(entry) + 1);
+      strcpy(list->entry.vuk, entry);
       break;
 
     default:
@@ -2253,83 +2305,22 @@ static digit_key_pair_list *new_digit_key_pair_list()
 }
 
 /* Function used to add a digit/key pair to a list of digit key pair entries */
-static int add_digit_key_pair(digit_key_pair_list *list, int type,
-                              unsigned int digit, const char *key)
+static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
+                              int type, unsigned int digit, const char *key)
 {
   if (!list)
   {
     printf("Error: No digit key pair list passed as parameter.\n");
-    return 0;
+    return NULL;
   }
 
-  digit_key_pair_list *cursor = list;
-  unsigned int count = 0;
-  if (type == ENTRY_ID_TK || type == ENTRY_ID_UK)
-    count = 1;
-  while (cursor->next)
-  {
-    cursor = cursor->next;
-    count++;
-  }
+  list->key_pair.digit = digit;
+  list->key_pair.key = (char*)malloc(strlen(key) + 1);
+  strcpy(list->key_pair.key, key);
 
-  if (count != digit)
-    printf("Warning: Digit list for entry may be out of order.\n");
+  list->next = new_digit_key_pair_list();
 
-  cursor->key_pair.digit = digit;
-  cursor->key_pair.key = (char*)malloc(strlen(key) + 1);
-  strcpy(cursor->key_pair.key, key);
-
-  cursor->next = new_digit_key_pair_list();
-
-  return 1;
-}
-
-/* Function to add a digit/key pair to a config entry */
-static int add_digit_key_pair_entry(config_entry_list *list, int type,
-                                    unsigned int digit, const char *entry)
-{
-  if (!list)
-  {
-    printf("Error: No config list passed as parameter.\n");
-    return 0;
-  }
-
-  config_entry_list *cursor = list;
-  while (cursor->next)
-    cursor = cursor->next;
-
-  switch (type)
-  {
-    case ENTRY_TYPE_BN:
-      if (!cursor->entry.bn)
-        cursor->entry.bn = new_digit_key_pair_list();
-      add_digit_key_pair(cursor->entry.bn, ENTRY_ID_BN, digit, entry);
-      break;
-
-    case ENTRY_TYPE_PAK:
-      if (!cursor->entry.pak)
-        cursor->entry.pak = new_digit_key_pair_list();
-      add_digit_key_pair(cursor->entry.pak, ENTRY_ID_PAK, digit, entry);
-      break;
-
-    case ENTRY_TYPE_TK:
-      if (!cursor->entry.tk)
-        cursor->entry.tk = new_digit_key_pair_list();
-      add_digit_key_pair(cursor->entry.tk, ENTRY_ID_TK, digit, entry);
-      break;
-
-    case ENTRY_TYPE_UK:
-      if (!cursor->entry.uk)
-        cursor->entry.uk = new_digit_key_pair_list();
-      add_digit_key_pair(cursor->entry.uk, ENTRY_ID_UK, digit, entry);
-      break;
-
-    default:
-      printf("WARNING: entry type passed in unknown\n");
-      return 0;
-  }
-
-  return 1;
+  return list->next;
 }
 
 /* Function to add a date entry */
@@ -2342,19 +2333,17 @@ static int add_date_entry(config_entry_list *list, unsigned int year,
     return 0;
   }
 
-  config_entry_list *cursor = list;
-  while (cursor->next)
-    cursor = cursor->next;
-
-  cursor->entry.date.year = year;
-  cursor->entry.date.month = month;
-  cursor->entry.date.day = day;
+  list->entry.date.year = year;
+  list->entry.date.month = month;
+  list->entry.date.day = day;
 
   return 1;
 }
 
 /* Our definition of yyerror */
-void yyerror (void *scanner, config_file *cfgfile, const char *msg)
+void yyerror (void *scanner, pk_list *pklist, cert_list *clist,
+              config_entry_list *celist, digit_key_pair_list *dkplist,
+              const char *msg)
 {
   fprintf(stderr, "%s: line %d\n", msg, yyget_lineno(scanner));
 }
