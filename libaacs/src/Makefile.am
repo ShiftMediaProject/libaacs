@@ -37,7 +37,9 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	util/attributes.h \
 	util/macro.h \
 	util/logging.c \
-	util/logging.h
+	util/logging.h \
+	util/strutl.c \
+	util/strutl.h
 libaacs_ladir= $(includedir)/libaacs
 libaacs_la_HEADERS= libaacs/aacs.h file/configfile.h
 libaacs_la_LDFLAGS= -version-info $(LIB_VERSION_INFO)
