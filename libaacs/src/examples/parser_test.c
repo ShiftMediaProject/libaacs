@@ -169,8 +169,10 @@ int main (int argc, char **argv)
 {
   config_file *cfgfile = keydbcfg_new_config_file();
   int retval = keydbcfg_parse_config(cfgfile, argv[1]);
+  retval &= print_config_file(cfgfile);
+  keydbcfg_config_file_close(cfgfile);
 
-  if (!retval || !print_config_file(cfgfile))
+  if (!retval)
     return EXIT_FAILURE;
 
   return EXIT_SUCCESS;
