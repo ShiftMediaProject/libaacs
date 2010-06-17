@@ -140,5 +140,6 @@ static char *trim_string(const char *string)
 
   char *new_string = (char*)malloc(size + 1);
   strncpy(new_string, string + start, size);
+  new_string[size] = '\0';
   return new_string;
 }
