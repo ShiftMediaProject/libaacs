@@ -34,6 +34,7 @@
 #include "file/file.h"
 #include "util/macro.h"
 #include "util/logging.h"
+#include "util/strutl.h"
 
 #include <inttypes.h>
 #include <string.h>
@@ -81,8 +82,7 @@ int _calc_mk(AACS *aacs, const char *path)
 {
     int a, num_uvs = 0;
     size_t len;
-    uint8_t *buf = NULL, *rec, *uvs, *key_pos, *pks;
-    uint16_t num_pks;
+    uint8_t *buf = NULL, *rec, *uvs;
     MKB *mkb = NULL;
 
     DEBUG(DBG_AACS, "Calculate media key...\n");
@@ -100,10 +100,11 @@ int _calc_mk(AACS *aacs, const char *path)
 
         DEBUG(DBG_AACS, "Get cvalues...\n");
         rec = mkb_cvalues(mkb, &len);
-        if ((pks = configfile_record(aacs->kf, KF_PK_ARRAY, &num_pks, NULL))) {
-            key_pos = pks;
-            while (key_pos < pks + num_pks * 16) {
-                memcpy(aacs->pk, key_pos, 16);
+        if (aacs->cf->pkl) {
+            pk_list *pkcursor = aacs->cf->pkl;
+            while (pkcursor && pkcursor->key) {
+                hexstring_to_hex_array(aacs->pk, sizeof(aacs->pk),
+                                       pkcursor->key);
                 DEBUG(DBG_AACS, "Trying processing key...\n");
 
                 for (a = 0; a < num_uvs; a++) {
@@ -119,7 +120,7 @@ int _calc_mk(AACS *aacs, const char *path)
                     }
                 }
 
-                key_pos += 16;
+                pkcursor = pkcursor->next;
             }
         }
 
@@ -137,34 +138,42 @@ int _calc_vuk(AACS *aacs, const char *path)
 
     DEBUG(DBG_AACS, "Calculate volume unique key...\n");
 
-    if ((mmc = mmc_open(path,
-            configfile_record(aacs->kf, KF_HOST_PRIV_KEY, NULL, NULL),
-            configfile_record(aacs->kf, KF_HOST_CERT, NULL, NULL),
-            configfile_record(aacs->kf, KF_HOST_NONCE, NULL, NULL),
-            configfile_record(aacs->kf, KF_HOST_KEY_POINT, NULL, NULL)))) {
-        if (mmc_read_vid(mmc, aacs->vid)) {
+    cert_list *hccursor = aacs->cf->host_cert_list;
+    while (hccursor && hccursor->host_priv_key) {
+        uint8_t priv_key[20], cert[92], nonce[20], key_point[40];
+        hexstring_to_hex_array(priv_key, sizeof(priv_key),
+                               hccursor->host_priv_key);
+        hexstring_to_hex_array(cert, sizeof(cert), hccursor->host_cert);
+        hexstring_to_hex_array(nonce, sizeof(nonce), hccursor->host_nonce);
+        hexstring_to_hex_array(key_point, sizeof(key_point),
+                               hccursor->host_key_point);
 
-            EVP_CIPHER_CTX ctx;
-            EVP_CIPHER_CTX_init(&ctx);
-            EVP_DecryptInit(&ctx, EVP_aes_128_ecb(), aacs->mk, NULL);
-            EVP_DecryptUpdate(&ctx, aacs->vuk, &outlen, aacs->vid, 16);
-            EVP_DecryptFinal(&ctx, aacs->vuk, &outlen);
-            EVP_CIPHER_CTX_cleanup(&ctx);
+        if ((mmc = mmc_open(path, priv_key, cert, nonce, key_point))) {
+            if (mmc_read_vid(mmc, aacs->vid)) {
+                EVP_CIPHER_CTX ctx;
+                EVP_CIPHER_CTX_init(&ctx);
+                EVP_DecryptInit(&ctx, EVP_aes_128_ecb(), aacs->mk, NULL);
+                EVP_DecryptUpdate(&ctx, aacs->vuk, &outlen, aacs->vid, 16);
+                EVP_DecryptFinal(&ctx, aacs->vuk, &outlen);
+                EVP_CIPHER_CTX_cleanup(&ctx);
 
-            for (a = 0; a < 16; a++) {
-                aacs->vuk[a] ^= aacs->vid[a];
+                for (a = 0; a < 16; a++) {
+                    aacs->vuk[a] ^= aacs->vid[a];
+                }
+
+                mmc_close(mmc);
+
+                char str[40];
+                DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(str, aacs->vuk,
+                                                                    16));
+
+                return 1;
             }
 
             mmc_close(mmc);
-
-            char str[40];
-            DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(str, aacs->vuk,
-                                                                 16));
-
-            return 1;
         }
 
-        mmc_close(mmc);
+        hccursor = hccursor->next;
     }
 
     DEBUG(DBG_AACS, "Error calculating VUK!\n");
@@ -274,10 +283,9 @@ int _verify_ts(uint8_t *buf, size_t size)
 
 int _find_vuk(AACS *aacs, const char *path)
 {
-    uint8_t *vuks, *key_pos, hash[20], *ukf_buf;
+    uint8_t hash[20], *ukf_buf;
     FILE_H *fp = NULL;
     int64_t f_size;
-    uint16_t num_vuks;
     char f_name[100];
     char str[48];
 
@@ -312,24 +320,24 @@ int _find_vuk(AACS *aacs, const char *path)
 
     X_FREE(ukf_buf);
 
-    if ((vuks = configfile_record(aacs->kf, KF_VUK_ARRAY, &num_vuks, NULL))) {
-        key_pos = vuks;
-        while (key_pos < vuks + num_vuks * 46) {
-            if (!memcmp(hash, key_pos, 20)) {
-                uint8_t desc[11];
+    if (aacs->cf) {
+        aacs->ce = aacs->cf->list;
+        while (aacs->ce && aacs->ce->entry.discid) {
+            uint8_t discid[20];
+            memset(discid, 0, sizeof(discid));
+            hexstring_to_hex_array(discid, sizeof(discid),
+                                   aacs->ce->entry.discid);
+            if (!memcmp(hash, discid, 20)) {
+                hexstring_to_hex_array(aacs->vuk, sizeof(aacs->vuk),
+                                       aacs->ce->entry.vuk);
 
-                memcpy(desc, key_pos + 20, 10);
-                desc[10] = 0;
-
-                memcpy(aacs->vuk, key_pos + 30, 16);
-
-                DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n", desc,
-                      print_hex(str, aacs->vuk, 16));
+                DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
+                      aacs->ce->entry.discid, print_hex(str, aacs->vuk, 16));
 
                 return 1;
             }
 
-            key_pos += 46;
+            aacs->ce = aacs->ce->next;
         }
     }
 
@@ -411,13 +419,11 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 
     AACS *aacs = calloc(1, sizeof(AACS));
 
-    if ((aacs->kf = configfile_open(cfgfile))) {
+    aacs->cf = keydbcfg_new_config_file();
+    if (keydbcfg_parse_config(aacs->cf, cfgfile)) {
         DEBUG(DBG_AACS, "Searching for VUK...\n");
         if(_find_vuk(aacs, path)) {
             if (_calc_uks(aacs, path)) {
-                configfile_close(aacs->kf);
-                aacs->kf = NULL;
-
                 DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
                 return aacs;
             }
@@ -428,17 +434,11 @@ AACS *aacs_open(const char *path, const char *configfile_path)
         if (_calc_mk(aacs, path)) {
            if (_calc_vuk(aacs, path)) {
                 if (_calc_uks(aacs, path)) {
-                    configfile_close(aacs->kf);
-                    aacs->kf = NULL;
-
                     DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
                     return aacs;
                 }
             }
         }
-
-        configfile_close(aacs->kf);
-        aacs->kf = NULL;
     }
 
     DEBUG(DBG_AACS, "Failed to initialize AACS! (%p)\n", aacs);

@@ -30,17 +30,16 @@
 #ifndef AACS_H_
 #define AACS_H_
 
-#include "configfile.h"
+#include "keydbcfg.h"
+
+#include <stdint.h>
 
 typedef struct aacs AACS;
 struct aacs {
-    uint8_t pk[16], mk[16], vuk[16], vid[16];
-    uint8_t *uks;           /* unit key array (size = 16 * num_uks, each key is
-                             * at 16-byte offset)
-                             */
-    uint16_t num_uks;       /* number of unit keys */
-    uint8_t iv[16];
-    CONFIGFILE *kf;
+    uint8_t pk[16], mk[16], vuk[16], vid[16], *uks;
+    uint32_t num_uks;
+    config_file *cf;
+    config_entry_list *ce;
 };
 
 AACS *aacs_open(const char *path, const char *keyfile_path);
