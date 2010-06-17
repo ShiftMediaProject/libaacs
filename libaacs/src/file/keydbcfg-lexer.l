@@ -54,7 +54,7 @@ static char *trim_string(const char *string);
 WHITESPACE              ([\t ])
 
 HEXSTRING               ([0-9a-fA-F]{32,})
-DISC_TITLE              ([^\n|]*)
+DISC_TITLE              ([^\n|\\]*)
 DIGIT                   ([0-9]+)
 
 KEYWORD_BEGIN           ([Bb][Ee][Gg][Ii][Nn][ \t]+)
@@ -76,6 +76,7 @@ PUNCT_EQUALS_SIGN       ([=])
 PUNCT_VERTICAL_BAR      ([|])
 PUNCT_HYPHEN            ([-])
 
+NEWLINE_ESCAPE          (\\([\n\r]|\n\r|\r\n))
 NEWLINE                 ([\n\r])
 
 COMMENT                 (;[^\n]*)
@@ -122,6 +123,7 @@ BAD_ENTRY               ([^\n])
 {PUNCT_VERTICAL_BAR}      { return PUNCT_VERTICAL_BAR; }
 {PUNCT_HYPHEN}            { return PUNCT_HYPHEN; }
 
+{NEWLINE_ESCAPE}          {}
 {NEWLINE}                 { return NEWLINE; }
 
 {COMMENT}                 {}
