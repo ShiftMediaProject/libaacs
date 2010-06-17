@@ -424,6 +424,9 @@ AACS *aacs_open(const char *path, const char *configfile_path)
         DEBUG(DBG_AACS, "Searching for VUK...\n");
         if(_find_vuk(aacs, path)) {
             if (_calc_uks(aacs, path)) {
+                keydbcfg_config_file_close(aacs->cf);
+                aacs->cf = NULL;
+
                 DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
                 return aacs;
             }
@@ -439,6 +442,9 @@ AACS *aacs_open(const char *path, const char *configfile_path)
                 }
             }
         }
+
+        keydbcfg_config_file_close(aacs->cf);
+        aacs->cf = NULL;
     }
 
     DEBUG(DBG_AACS, "Failed to initialize AACS! (%p)\n", aacs);
