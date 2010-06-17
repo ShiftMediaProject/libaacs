@@ -107,5 +107,6 @@ struct config_file_t
 /* Functions used throughout the parser */
 int keydbcfg_parse_config(config_file *cfgfile, const char *path);
 config_file *keydbcfg_new_config_file();
+int keydbcfg_config_file_close(config_file *cfgfile);
 
 #endif

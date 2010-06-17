@@ -93,7 +93,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 97 "keydbcfg-parser.y"
+#line 109 "keydbcfg-parser.y"
 
   char *string;
   unsigned int digit;

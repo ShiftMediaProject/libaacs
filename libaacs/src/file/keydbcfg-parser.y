@@ -29,6 +29,7 @@
  */
 
 #include "keydbcfg.h"
+#include "util/macro.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +42,17 @@
 #pragma GCC diagnostic ignored "-Wundef"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
+
+#define DIGIT_KEY_PAIR_LIST_FREE(X) do   \
+{                                        \
+  while (X)                              \
+  {                                      \
+    digit_key_pair_list *next = X->next; \
+    X_FREE(X->key_pair.key);             \
+    X_FREE(X);                           \
+    X = next;                            \
+  }                                      \
+} while (0);
 
 /* enum used in certain functions to add proper entry */
 enum
@@ -464,6 +476,53 @@ config_file *keydbcfg_new_config_file()
   cfgfile->pkl = NULL;
   cfgfile->list = NULL;
   return cfgfile;
+}
+
+/* Function that closes and frees a config file object */
+int keydbcfg_config_file_close(config_file *cfgfile)
+{
+  /* free pk list */
+  while (cfgfile->pkl)
+  {
+    pk_list *next = cfgfile->pkl->next;
+    X_FREE(cfgfile->pkl->key);
+    X_FREE(cfgfile->pkl);
+    cfgfile->pkl = next;
+  }
+
+  /* free host cert list */
+  while (cfgfile->host_cert_list)
+  {
+    cert_list *next = cfgfile->host_cert_list->next;
+    X_FREE(cfgfile->host_cert_list->host_priv_key);
+    X_FREE(cfgfile->host_cert_list->host_cert);
+    X_FREE(cfgfile->host_cert_list->host_nonce);
+    X_FREE(cfgfile->host_cert_list->host_key_point);
+    X_FREE(cfgfile->host_cert_list);
+    cfgfile->host_cert_list = next;
+  }
+
+  /* free title entries */
+  while (cfgfile->list)
+  {
+    config_entry_list *next = cfgfile->list->next;
+    X_FREE(cfgfile->list->entry.discid);
+    X_FREE(cfgfile->list->entry.title);
+    X_FREE(cfgfile->list->entry.mek);
+    X_FREE(cfgfile->list->entry.vid);
+    DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.bn);
+    X_FREE(cfgfile->list->entry.vuk);
+    DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.pak);
+    DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.tk);
+    DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.uk);
+    X_FREE(cfgfile->list);
+    cfgfile->list = next;
+  }
+
+  /* free the config file object */
+  X_FREE(cfgfile);
+
+  return 1;
 }
 
 /* Function to return new pk_list object */
