@@ -32,6 +32,7 @@
 #include "mmc.h"
 #include "mkb.h"
 #include "file/file.h"
+#include "file/keydbcfg.h"
 #include "util/macro.h"
 #include "util/logging.h"
 #include "util/strutl.h"

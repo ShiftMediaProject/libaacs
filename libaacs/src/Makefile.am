@@ -41,7 +41,7 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	util/strutl.c \
 	util/strutl.h
 libaacs_ladir= $(includedir)/libaacs
-libaacs_la_HEADERS= libaacs/aacs.h file/keydbcfg.h
+libaacs_la_HEADERS= libaacs/aacs.h
 libaacs_la_LDFLAGS= -version-info $(LIB_VERSION_INFO)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libaacs.pc

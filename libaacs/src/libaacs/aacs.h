@@ -30,16 +30,18 @@
 #ifndef AACS_H_
 #define AACS_H_
 
-#include "keydbcfg.h"
-
 #include <stdint.h>
+
+/* Forward declarations of config file objects */
+struct config_file_t;
+struct config_entry_list_t;
 
 typedef struct aacs AACS;
 struct aacs {
     uint8_t pk[16], mk[16], vuk[16], vid[16], *uks;
     uint32_t num_uks;
-    config_file *cf;
-    config_entry_list *ce;
+    struct config_file_t *cf;
+    struct config_entry_list_t *ce;
 };
 
 AACS *aacs_open(const char *path, const char *keyfile_path);
