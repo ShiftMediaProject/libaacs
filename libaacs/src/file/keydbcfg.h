@@ -31,11 +31,12 @@
 #define KEYDBCFG_H
 
 /* struct holding a digit and key pair for <ENTRY NUMBER> - <ENTRY> entries */
-typedef struct
+typedef struct digit_key_pair_t digit_key_pair;
+struct digit_key_pair_t
 {
   unsigned int digit;
   char *key;
-} digit_key_pair;
+};
 
 /* list of digit_key_pair struct used in config entry */
 typedef struct digit_key_pair_list_t digit_key_pair_list;
@@ -46,12 +47,13 @@ struct digit_key_pair_list_t
 };
 
 /* date entry struct */
-typedef struct
+typedef struct date_entry_t date_entry;
+struct date_entry_t
 {
   unsigned int year;
   unsigned int month;
   unsigned int day;
-} date_entry;
+};
 
 /* pk entry */
 typedef struct pk_entry pk_list;
@@ -73,7 +75,8 @@ struct cert_entry
 };
 
 /* main config entry struct */
-typedef struct
+typedef struct config_entry_t config_entry;
+struct config_entry_t
 {
   char *discid;
   char *title;
@@ -85,7 +88,7 @@ typedef struct
   digit_key_pair_list *pak;
   digit_key_pair_list *tk;
   digit_key_pair_list *uk;
-} config_entry;
+};
 
 /* main struct for config entries, held in a list structure */
 typedef struct config_entry_list_t config_entry_list;
