@@ -58,9 +58,8 @@ AC_SYS_LARGEFILE
 # required functions
 AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
-# openssl check
-# check for ECDSA_do_sign, since it's needed
-AC_CHECK_LIB([crypto], [ECDSA_do_sign],,
+# gcrypt check
+AC_CHECK_LIB([gcrypt], [gcry_check_version],,
   [AC_MSG_ERROR($library_not_found)])
 
 # function testing for supported compiler options

@@ -31,6 +31,7 @@
 #include "logging.h"
 
 #include <string.h>
+#include <stdio.h>
 
 /* Function to assigns proper hex value of character to uint8_t pointer */
 int hexstring_to_unsigned_char(uint8_t *value, char c)
@@ -146,3 +147,20 @@ int hexstring_to_hex_array(uint8_t *hex_array, uint32_t size,
 
   return 1;
 }
+
+/* Function to convert a hex array into a hex string.
+ * str must be allocated by caller
+ * size is the size of the hex_array
+ */
+int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size)
+{
+  unsigned int i;
+
+  for (i = 0; i < size; i++)
+  {
+    sprintf(str + (i*2), "%02x", hex_array[i]);
+  }
+
+  return 1;
+}
+

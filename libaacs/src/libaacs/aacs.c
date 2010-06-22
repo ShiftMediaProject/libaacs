@@ -38,13 +38,14 @@
 
 #include <inttypes.h>
 #include <string.h>
-#include <openssl/evp.h>
+#include <stdio.h>
+#include <gcrypt.h>
 
 int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
                  uint8_t *mk)
 {
-    EVP_CIPHER_CTX ctx;
-    int a, ret = 0, outlen;
+    gcry_cipher_hd_t gcry_h;
+    int a, ret = 0;
     uint8_t dec_vd[16];
     char str[40];
 
@@ -54,21 +55,17 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
     DEBUG(DBG_AACS, "   cvalue: %s\n", print_hex(str, cvalue, 16));
     DEBUG(DBG_AACS, "   Verification data: %s\n", print_hex(str, vd, 16));
 
-    EVP_CIPHER_CTX_init(&ctx);
-    EVP_DecryptInit(&ctx, EVP_aes_128_ecb(), pk, NULL);
-    EVP_DecryptUpdate(&ctx, mk, &outlen, cvalue, 16);
-    EVP_DecryptFinal(&ctx, mk, &outlen);
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+    gcry_cipher_setkey(gcry_h, pk, 16);
+    gcry_cipher_decrypt(gcry_h, mk, 16, cvalue, 16);
 
     for (a = 0; a < 4; a++) {
         mk[a + 12] ^= uv[a];
     }
 
-    EVP_CIPHER_CTX_init(&ctx);
-    EVP_DecryptInit(&ctx, EVP_aes_128_ecb(), mk, NULL);
-    EVP_DecryptUpdate(&ctx, dec_vd, &outlen, vd, 16);
-    EVP_DecryptFinal(&ctx, dec_vd, &outlen);
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    gcry_cipher_setkey(gcry_h, mk, 16);
+    gcry_cipher_decrypt (gcry_h, dec_vd, 16, vd, 16);
+    gcry_cipher_close(gcry_h);
 
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
         DEBUG(DBG_AACS, "Processing key is valid!\n");
@@ -133,7 +130,7 @@ int _calc_mk(AACS *aacs, const char *path)
 
 int _calc_vuk(AACS *aacs, const char *path)
 {
-    int a, outlen;
+    int a;
     MMC* mmc = NULL;
 
     DEBUG(DBG_AACS, "Calculate volume unique key...\n");
@@ -150,12 +147,12 @@ int _calc_vuk(AACS *aacs, const char *path)
 
         if ((mmc = mmc_open(path, priv_key, cert, nonce, key_point))) {
             if (mmc_read_vid(mmc, aacs->vid)) {
-                EVP_CIPHER_CTX ctx;
-                EVP_CIPHER_CTX_init(&ctx);
-                EVP_DecryptInit(&ctx, EVP_aes_128_ecb(), aacs->mk, NULL);
-                EVP_DecryptUpdate(&ctx, aacs->vuk, &outlen, aacs->vid, 16);
-                EVP_DecryptFinal(&ctx, aacs->vuk, &outlen);
-                EVP_CIPHER_CTX_cleanup(&ctx);
+                gcry_cipher_hd_t gcry_h;
+                gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES,
+                                 GCRY_CIPHER_MODE_ECB, 0);
+                gcry_cipher_setkey(gcry_h, aacs->mk, 16);
+                gcry_cipher_decrypt(gcry_h, aacs->vuk, 16, aacs->vid, 16);
+                gcry_cipher_close(gcry_h);
 
                 for (a = 0; a < 16; a++) {
                     aacs->vuk[a] ^= aacs->vid[a];
@@ -187,7 +184,7 @@ int _calc_uks(AACS *aacs, const char *path)
     uint8_t buf[16];
     char f_name[100];
     uint64_t f_pos;
-    int i, outlen;
+    unsigned int i;
 
     DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
@@ -223,12 +220,12 @@ int _calc_uks(AACS *aacs, const char *path)
                     break;
                 }
 
-                EVP_CIPHER_CTX ctx;
-                EVP_CIPHER_CTX_init(&ctx);
-                EVP_DecryptInit(&ctx, EVP_aes_128_ecb(), aacs->vuk, NULL);
-                EVP_DecryptUpdate(&ctx, aacs->uks + 16*i, &outlen, buf, 16);
-                EVP_DecryptFinal(&ctx, aacs->uks, &outlen);
-                EVP_CIPHER_CTX_cleanup(&ctx);
+                gcry_cipher_hd_t gcry_h;
+                gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES,
+                                 GCRY_CIPHER_MODE_ECB, 0);
+                gcry_cipher_setkey(gcry_h, aacs->vuk, 16);
+                gcry_cipher_decrypt(gcry_h, aacs->uks + 16*i, 16, buf, 16);
+                gcry_cipher_close(gcry_h);
 
                 char str[40];
                 DEBUG(DBG_AACS, "Unit key %d: %s\n", i,
@@ -344,41 +341,48 @@ int _find_vuk(AACS *aacs, const char *path)
     return 0;
 }
 
-int _decrypt_unit(AACS *aacs, uint8_t *out, const uint8_t *buf, uint32_t len, uint64_t offset,
+int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
                   uint32_t curr_uk)
 {
-    int a, outlen;
-    uint8_t key[32], iv[] = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
-                              0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
-    EVP_CIPHER_CTX ctx;
+    gcry_cipher_hd_t gcry_h;
+    uint8_t *tmp_buf = malloc(len);
 
-    EVP_CIPHER_CTX_init(&ctx);
-    EVP_EncryptInit(&ctx, EVP_aes_128_ecb(), aacs->uks + curr_uk * 16, NULL);
-    EVP_EncryptUpdate(&ctx, key, &outlen, buf, 16);
-    EVP_EncryptFinal(&ctx, key + outlen, &outlen);
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    memcpy(tmp_buf, buf, len);
+
+    int a;
+    uint8_t key[16], iv[] = "\x0b\xa0\xf8\xdd\xfe\xa6\x1f\xb3"
+                            "\xd8\xdf\x9f\x56\x6a\x05\x0f\x78";
+
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+    gcry_cipher_setkey(gcry_h, aacs->uks + curr_uk * 16, 16);
+    gcry_cipher_encrypt(gcry_h, key, 16, tmp_buf, 16);
+    gcry_cipher_close(gcry_h);
 
     for (a = 0; a < 16; a++) {
-        key[a] ^= buf[a];
+        key[a] ^= tmp_buf[a];
     }
 
-    memcpy(out, buf, 16);
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
+    gcry_cipher_setkey(gcry_h, key, 16);
+    gcry_cipher_setiv(gcry_h, iv, 16);
+    gcry_cipher_decrypt(gcry_h, tmp_buf + 16, len - 16, tmp_buf + 16, len - 16);
+    gcry_cipher_close(gcry_h);
 
-    EVP_CIPHER_CTX_init(&ctx);
-    EVP_DecryptInit(&ctx, EVP_aes_128_cbc(), key, iv);
-    EVP_DecryptUpdate(&ctx, out + 16, &outlen, buf + 16, len - 16);
-    EVP_DecryptFinal(&ctx, out + 16 + outlen, &outlen);
-    EVP_CIPHER_CTX_cleanup(&ctx);
-
-    if (_verify_ts(out, len)) {
-        DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %"PRIu64" (%p)\n",
+    if (_verify_ts(tmp_buf,len)) {
+        DEBUG(DBG_AACS, "Decrypted %s unit [%d bytes] from offset %ld (%p)\n",
               len % 6144 ? "PARTIAL" : "FULL", len, offset, aacs);
+
+        memcpy(buf, tmp_buf, len);
+
+        X_FREE(tmp_buf);
 
         return 1;
     }
 
-    if (curr_uk < aacs->num_uks - (uint32_t)1) {
-        return _decrypt_unit(aacs, out, buf, len, offset, curr_uk++);
+    X_FREE(tmp_buf);
+
+    if (curr_uk < aacs->num_uks - 1) {
+        return _decrypt_unit(aacs, buf, len, offset, curr_uk++);
     }
 
     return 0;
@@ -388,6 +392,12 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 {
     DEBUG(DBG_AACS, "libaacs [%zd]\n", sizeof(AACS));
 
+    DEBUG(DBG_AACS, "Initializing libgcrypt...\n");
+    if (!crypto_init())
+    {
+        DEBUG(DBG_AACS, "Failed to initialize libgcrypt\n");
+        return NULL;
+    }
 
     char *cfgfile = NULL;
     if (configfile_path) {
@@ -474,13 +484,7 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset)
         return 0;
     }
 
-    uint8_t out[6144];
-    if (_decrypt_unit(aacs, out, buf, len, offset, 0)) {
-        memcpy(buf, out, len);
-        return 1;
-    }
-
-    return 0;
+    return _decrypt_unit(aacs, buf, len, offset, 0);
 }
 
 uint8_t *aacs_get_vid(AACS *aacs)

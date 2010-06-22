@@ -28,29 +28,56 @@
  */
 
 #include "crypto.h"
+#include "util/strutl.h"
 
 #include <string.h>
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-#include <openssl/ecdsa.h>
+#include <stdio.h>
+#include <gcrypt.h>
+#include <pthread.h>
+#include <errno.h>
+
+/* Set this in CFLAGS to debug gcrypt MPIs and S-expressions */
+#ifndef GCRYPT_DEBUG
+#define GCRYPT_DEBUG 0
+#endif
+
+/* Use pthread in libgcrypt */
+GCRY_THREAD_OPTION_PTHREAD_IMPL;
+
+static int crypto_init_check = 0;
 
 void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 {
     int a;
+    gcry_cipher_hd_t gcry_h;
     uint8_t seed[16] = { 0x7B, 0x10, 0x3C, 0x5D, 0xCB, 0x08, 0xC4, 0xE5,
                          0x1A, 0x27, 0xB0, 0x17, 0x99, 0x05, 0x3B, 0xD9 };
     seed[15] += inc;
 
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    EVP_CIPHER_CTX_set_key_length(ctx, 16);
-    EVP_DecryptInit(ctx, EVP_aes_128_ecb(), src_key, NULL);
-    EVP_DecryptUpdate(ctx, dst_key, (int*)16, seed, 16);
-    EVP_DecryptFinal(ctx, dst_key, (int*)16);
-    EVP_CIPHER_CTX_cleanup(ctx);
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+    gcry_cipher_setkey(gcry_h, src_key, 16);
+    gcry_cipher_decrypt (gcry_h, dst_key, 16, seed, 16);
+    gcry_cipher_close(gcry_h);
 
     for (a = 0; a < 16; a++) {
         dst_key[a] ^= seed[a];
     }
+}
+
+/* Initializes libgcrypt */
+int crypto_init()
+{
+  if (!crypto_init_check)
+  {
+    crypto_init_check = 1;
+    gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+    if (!gcry_check_version(GCRYPT_VERSION))
+    {
+      crypto_init_check = 0;
+    }
+  }
+
+  return crypto_init_check;
 }
 
 void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
@@ -71,107 +98,168 @@ void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
 void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig,
                       uint8_t *n, const uint8_t *dhp)
 {
-    EC_GROUP *grp;
-    const EC_GROUP *pkgrp;
-    EC_POINT *p;
-    EC_POINT *pk;
-    EC_KEY *k;
-    BIGNUM *bdp, *bda, *bdb, *bdx, *bdy, *bdr;
-    BIGNUM *x, *y;
-    BIGNUM *bpk;
-    BN_CTX *ctx;
-    EVP_MD_CTX mdctx;
-    ECDSA_SIG *s;
+    gcry_mpi_t mpi_d, mpi_md;
+    gcry_sexp_t sexp_key, sexp_data, sexp_sig, sexp_r, sexp_s;
+    unsigned char Q[41], block[60], md[20], *r = NULL, *s = NULL;
+    gpg_error_t err;
+    char errstr[100];
 
-    unsigned char md_value[20], block[60];
-    unsigned int md_len;
+    /* Assign MPI values for ECDSA parameters Q and d.
+     * Values are:
+     *   Q.x = c[12]..c[31]
+     *   Q.y = c[32]..c[51]
+     *   d = privk
+     *
+     * Note: The MPI values for Q are in the form "<format>||Q.x||Q.y".
+     */
+    memcpy(&Q[0], "\x04", 1);   // format
+    memcpy(&Q[1], c + 12, 20);  // Q.x
+    memcpy(&Q[21], c + 32, 20); // Q.y
+    gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, pubk, 20, NULL);
 
-    const char *dp = "900812823637587646514106462588455890498729007071";
-    const char *da = "-3";
-    const char *db = "366394034647231750324370400222002566844354703832";
-    const char *dx = "264865613959729647018113670854605162895977008838";
-    const char *dy = "51841075954883162510413392745168936296187808697";
-    const char *dr = "900812823637587646514106555566573588779770753047";
+    /* Show the values of the MPIs Q.x, Q.y, and d when debugging */
+    if (GCRYPT_DEBUG)
+    {
+      gcry_mpi_t mpi_Q_x, mpi_Q_y;
+      gcry_mpi_scan(&mpi_Q_x, GCRYMPI_FMT_USG, c + 12, 20, NULL);
+      gcry_mpi_scan(&mpi_Q_y, GCRYMPI_FMT_USG, c + 32, 20, NULL);
+      gcry_mpi_dump(mpi_Q_x);
+      printf("\n");
+      gcry_mpi_dump(mpi_Q_y);
+      printf("\n");
+      gcry_mpi_dump(mpi_d);
+      printf("\n");
+    }
 
-    ctx = BN_CTX_new();
+    /* Build the s-expression for the ecdsa private key
+     * Constant values are:
+     *   p = 900812823637587646514106462588455890498729007071
+     *   a = -3
+     *   b = 366394034647231750324370400222002566844354703832
+     *   G.x = 264865613959729647018113670854605162895977008838
+     *   G.y = 51841075954883162510413392745168936296187808697
+     *   n = 900812823637587646514106555566573588779770753047
+     *
+     * Note: Here a = -3 mod p
+     */
 
-    bdp = BN_new();
-    bda = BN_new();
-    bdb = BN_new();
-    bdx = BN_new();
-    bdy = BN_new();
-    bdr = BN_new();
+    /* Points are currently only supported in standard format, so get a
+     * hexstring out of Q.
+     */
+    char str_Q[sizeof(Q)*2];
+    hex_array_to_hexstring(str_Q, Q, sizeof(Q));
 
-    BN_dec2bn(&bdp, dp);
-    BN_dec2bn(&bda, da);
-    BN_dec2bn(&bdb, db);
-    BN_dec2bn(&bdx, dx);
-    BN_dec2bn(&bdy, dy);
-    BN_dec2bn(&bdr, dr);
+    char *strfmt = (char*)malloc(
+      sizeof("(private-key") +
+      sizeof("(ecdsa") +
+      sizeof("(p #9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DF#)") +
+      sizeof("(a #9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DC#)") +
+      sizeof("(b #402DAD3EC1CBCD165248D68E1245E0C4DAACB1D8#)") +
+      sizeof("(g #04") +
+          sizeof("2E64FC22578351E6F4CCA7EB81D0A4BDC54CCEC6") +
+          sizeof("0914A25DD05442889DB455C7F23C9A0707F5CBB9") +
+          sizeof("#)") +
+      sizeof("(n #9DC9D81355ECCEB560BDC44F54817B2C7F5AB017#)") +
+      sizeof("(q #") + sizeof(str_Q) + sizeof("#)") +
+      sizeof("(d %m)))") + 1);
 
-    grp = EC_GROUP_new_curve_GFp(bdp, bda, bdb, ctx);
+    sprintf(strfmt,
+      "(private-key"
+      "(ecdsa"
+      "(p #9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DF#)"
+      "(a #9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DC#)"
+      "(b #402DAD3EC1CBCD165248D68E1245E0C4DAACB1D8#)"
+      "(g #04"
+          "2E64FC22578351E6F4CCA7EB81D0A4BDC54CCEC6"
+          "0914A25DD05442889DB455C7F23C9A0707F5CBB9"
+          "#)"
+      "(n #9DC9D81355ECCEB560BDC44F54817B2C7F5AB017#)"
+      "(q #%s#)"
+      "(d %%m)))",
+      str_Q
+      );
 
-    p = EC_POINT_new(grp);
+    /* Now build the S-expression */
+    err = gcry_sexp_build(&sexp_key, NULL, strfmt, mpi_d);
 
-    EC_POINT_set_affine_coordinates_GF2m(grp, p, bdx, bdy, ctx);
+    if (err)
+    {
+      memset(errstr, 0, sizeof(errstr));
+      gpg_strerror_r(err, errstr, sizeof(errstr));
+      printf("error was: %s\n", errstr);
+      return;
+    }
 
-    BN_set_word(bdx, 1);
+    /* Dump information about the key s-expression when debugging */
+    if (GCRYPT_DEBUG)
+      gcry_sexp_dump(sexp_key);
 
-    EC_GROUP_set_generator(grp, p, bdr, bdx);
-
-    k = EC_KEY_new();
-    EC_KEY_set_group(k, grp);
-
-    pkgrp = EC_KEY_get0_group(k);
-    pk = EC_POINT_new(grp);
-
-    x = BN_bin2bn(c + 12, 20, 0);
-    y = BN_bin2bn(c + 32, 20, 0);
-
-    EC_POINT_set_affine_coordinates_GFp(pkgrp, pk, x, y, NULL);
-
-    EC_KEY_set_public_key(k, pk);
-
-    memset(md_value, 0, 64);
-
-    bpk = BN_bin2bn(pubk, 20, 0);
-
-    EC_KEY_set_private_key(k, bpk);
-
+    /* Calculate the sha1 hash from the nonce and host key point and covert
+     * the hash into an MPI.
+     */
     memcpy(&block, n, 20);
     memcpy(&block[20], dhp, 40);
+    gcry_md_hash_buffer(GCRY_MD_SHA1, md, block, sizeof(block));
+    gcry_mpi_scan(&mpi_md, GCRYMPI_FMT_USG, md, sizeof(md), NULL);
 
-    EVP_MD_CTX_init(&mdctx);
-    EVP_DigestInit(&mdctx, EVP_sha1());
-    EVP_DigestUpdate(&mdctx, block, sizeof(block));
-    EVP_DigestFinal(&mdctx, md_value, &md_len);
+    /* Dump information about the md MPI when debugging */
+    if (GCRYPT_DEBUG)
+      gcry_mpi_dump(mpi_md);
 
-    s = ECDSA_do_sign(md_value, md_len, k);
+    /* Build an s-expression for the hash */
+    gcry_sexp_build(&sexp_data, NULL,
+                    "(data"
+                    "  (flags raw)"
+                    "  (value %m))",
+                    mpi_md
+                    );
 
-    BN_bn2bin(s->r, sig);
-    BN_bn2bin(s->s, sig + 20);
+    /* Dump information about the data s-expression when debugging */
+    if (GCRYPT_DEBUG)
+      gcry_sexp_dump(sexp_data);
 
-    ECDSA_SIG_free(s);
-    EC_KEY_free(k);
-    BN_clear_free(bpk);
-    BN_clear_free(x);
-    BN_clear_free(y);
-    EC_POINT_free(pk);
-    EC_POINT_free(p);
-    BN_CTX_free(ctx);
-    BN_free(bdp);
-    BN_free(bda);
-    BN_free(bdb);
-    BN_free(bdx);
-    BN_free(bdy);
-    BN_free(bdr);
+    /* Sign the hash with the ECDSA key. The resulting s-expression should be
+     * in the form:
+     * (sig-val
+     *   (dsa
+     *     (r r-mpi)
+     *     (s s-mpi)))
+     */
+    err = gcry_pk_sign(&sexp_sig, sexp_data, sexp_key);
+
+    if (err)
+    {
+      memset(errstr, 0, sizeof(errstr));
+      gpg_strerror_r(err, errstr, sizeof(errstr));
+      printf("error was: %s\n", errstr);
+      return;
+    }
+
+    /* Dump information about the signature s-expression when debugging */
+    if (GCRYPT_DEBUG)
+      gcry_sexp_dump(sexp_sig);
+
+    /* Get the resulting s-expressions for 'r' and 's' */
+    sexp_r = gcry_sexp_find_token(sexp_sig, "r", 0);
+    sexp_s = gcry_sexp_find_token(sexp_sig, "s", 0);
+
+    /* Dump information about 'r' and 's' values when debugging */
+    if (GCRYPT_DEBUG)
+    {
+      gcry_sexp_dump(sexp_r);
+      gcry_sexp_dump(sexp_s);
+    }
+
+    /* Convert the data for 'r' and 's' into unsigned char form */
+    r = (unsigned char*)gcry_sexp_nth_string(sexp_r, 1);
+    s = (unsigned char*)gcry_sexp_nth_string(sexp_s, 1);
+
+    /* Finally concatenate 'r' and 's' to get the ECDSA signature */
+    memcpy(sig, r, 20);
+    memcpy(sig + 20, s, 20);
 }
 
 void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
 {
-    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
-    EVP_DigestInit(ctx, EVP_sha1());
-    EVP_DigestUpdate(ctx, ukf, len);
-    EVP_DigestFinal(ctx, hash, NULL);
-    EVP_MD_CTX_cleanup(ctx);
+    gcry_md_hash_buffer(GCRY_MD_SHA1, hash, ukf, len);
 }
