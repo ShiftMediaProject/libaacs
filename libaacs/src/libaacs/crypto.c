@@ -29,6 +29,7 @@
 
 #include "crypto.h"
 #include "util/strutl.h"
+#include "util/macro.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -257,6 +258,18 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig,
     /* Finally concatenate 'r' and 's' to get the ECDSA signature */
     memcpy(sig, r, 20);
     memcpy(sig + 20, s, 20);
+
+    /* Free allocated memory */
+    gcry_mpi_release(mpi_d);
+    gcry_mpi_release(mpi_md);
+    gcry_sexp_release(sexp_key);
+    gcry_sexp_release(sexp_data);
+    gcry_sexp_release(sexp_sig);
+    gcry_sexp_release(sexp_r);
+    gcry_sexp_release(sexp_s);
+    gcry_free(r);
+    gcry_free(s);
+    X_FREE(strfmt);
 }
 
 void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
