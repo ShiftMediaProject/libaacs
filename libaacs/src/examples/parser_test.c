@@ -167,6 +167,9 @@ static int print_config_file(config_file *cfgfile)
 /* main */
 int main (int argc, char **argv)
 {
+  /* suppress unused parameter warning */
+  if (argc) {}
+
   config_file *cfgfile = keydbcfg_new_config_file();
   int retval = keydbcfg_parse_config(cfgfile, argv[1]);
   retval &= print_config_file(cfgfile);
