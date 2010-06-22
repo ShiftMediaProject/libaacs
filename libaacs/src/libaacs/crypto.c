@@ -83,7 +83,7 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig,
     EVP_MD_CTX mdctx;
     ECDSA_SIG *s;
 
-    unsigned char md_value[20];
+    unsigned char md_value[20], block[60];
     unsigned int md_len;
 
     const char *dp = "900812823637587646514106462588455890498729007071";
@@ -138,10 +138,12 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig,
 
     EC_KEY_set_private_key(k, bpk);
 
+    memcpy(&block, n, 20);
+    memcpy(&block[20], dhp, 40);
+
     EVP_MD_CTX_init(&mdctx);
     EVP_DigestInit(&mdctx, EVP_sha1());
-    EVP_DigestUpdate(&mdctx, n, 20);
-    EVP_DigestUpdate(&mdctx, dhp, 40);
+    EVP_DigestUpdate(&mdctx, block, sizeof(block));
     EVP_DigestFinal(&mdctx, md_value, &md_len);
 
     s = ECDSA_do_sign(md_value, md_len, k);
