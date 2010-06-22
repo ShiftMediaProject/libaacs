@@ -39,9 +39,12 @@
 #if defined __GNUC__
 #pragma GCC diagnostic ignored "-Wredundant-decls"
 #pragma GCC diagnostic ignored "-Wimplicit-function-declaration"
-#pragma GCC diagnostic ignored "-Wundef"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
+
+/* Fix some warnings trigger by -Wundef which can't be ignored */
+#define YYENABLE_NLS 0
+#define YYLTYPE_IS_TRIVIAL 0
 
 #define DIGIT_KEY_PAIR_LIST_FREE(X) do   \
 {                                        \

@@ -110,9 +110,12 @@
 #if defined __GNUC__
 #pragma GCC diagnostic ignored "-Wredundant-decls"
 #pragma GCC diagnostic ignored "-Wimplicit-function-declaration"
-#pragma GCC diagnostic ignored "-Wundef"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
+
+/* Fix some warnings trigger by -Wundef which can't be ignored */
+#define YYENABLE_NLS 0
+#define YYLTYPE_IS_TRIVIAL 0
 
 #define DIGIT_KEY_PAIR_LIST_FREE(X) do   \
 {                                        \
@@ -163,7 +166,7 @@ extern int yyget_lineno  (void *scanner);
 
 
 /* Line 189 of yacc.c  */
-#line 167 "keydbcfg-parser.c"
+#line 170 "keydbcfg-parser.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -244,7 +247,7 @@ typedef union YYSTYPE
 {
 
 /* Line 214 of yacc.c  */
-#line 109 "keydbcfg-parser.y"
+#line 112 "keydbcfg-parser.y"
 
   char *string;
   unsigned int digit;
@@ -252,7 +255,7 @@ typedef union YYSTYPE
 
 
 /* Line 214 of yacc.c  */
-#line 256 "keydbcfg-parser.c"
+#line 259 "keydbcfg-parser.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -264,7 +267,7 @@ typedef union YYSTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 268 "keydbcfg-parser.c"
+#line 271 "keydbcfg-parser.c"
 
 #ifdef short
 # undef short
@@ -579,14 +582,14 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   144,   144,   148,   152,   153,   157,   158,   162,   163,
-     167,   171,   178,   182,   183,   187,   188,   192,   193,   197,
-     201,   202,   206,   207,   211,   218,   220,   225,   227,   232,
-     234,   239,   241,   246,   247,   248,   256,   261,   266,   271,
-     279,   280,   284,   285,   289,   297,   301,   305,   306,   310,
-     311,   312,   313,   314,   315,   316,   317,   321,   328,   335,
-     342,   349,   350,   354,   366,   373,   380,   381,   385,   397,
-     404,   405,   409,   421,   428,   429,   433
+       0,   147,   147,   151,   155,   156,   160,   161,   165,   166,
+     170,   174,   181,   185,   186,   190,   191,   195,   196,   200,
+     204,   205,   209,   210,   214,   221,   223,   228,   230,   235,
+     237,   242,   244,   249,   250,   251,   259,   264,   269,   274,
+     282,   283,   287,   288,   292,   300,   304,   308,   309,   313,
+     314,   315,   316,   317,   318,   319,   320,   324,   331,   338,
+     345,   352,   353,   357,   369,   376,   383,   384,   388,   400,
+     407,   408,   412,   424,   431,   432,   436
 };
 #endif
 
@@ -1637,7 +1640,7 @@ yyreduce:
         case 10:
 
 /* Line 1455 of yacc.c  */
-#line 168 "keydbcfg-parser.y"
+#line 171 "keydbcfg-parser.y"
     {
       pklist = add_pk_list_entry(pklist, (yyvsp[(2) - (2)].string));
     }
@@ -1646,7 +1649,7 @@ yyreduce:
   case 11:
 
 /* Line 1455 of yacc.c  */
-#line 172 "keydbcfg-parser.y"
+#line 175 "keydbcfg-parser.y"
     {
       pklist = add_pk_list_entry(pklist, (yyvsp[(1) - (1)].string));
     }
@@ -1655,7 +1658,7 @@ yyreduce:
   case 24:
 
 /* Line 1455 of yacc.c  */
-#line 212 "keydbcfg-parser.y"
+#line 215 "keydbcfg-parser.y"
     {
       clist = add_cert_list(clist, (yyvsp[(1) - (4)].string), (yyvsp[(2) - (4)].string), (yyvsp[(3) - (4)].string), (yyvsp[(4) - (4)].string));
     }
@@ -1664,63 +1667,63 @@ yyreduce:
   case 25:
 
 /* Line 1455 of yacc.c  */
-#line 219 "keydbcfg-parser.y"
+#line 222 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(2) - (3)].string); }
     break;
 
   case 26:
 
 /* Line 1455 of yacc.c  */
-#line 221 "keydbcfg-parser.y"
+#line 224 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(1) - (2)].string); }
     break;
 
   case 27:
 
 /* Line 1455 of yacc.c  */
-#line 226 "keydbcfg-parser.y"
+#line 229 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(2) - (3)].string); }
     break;
 
   case 28:
 
 /* Line 1455 of yacc.c  */
-#line 228 "keydbcfg-parser.y"
+#line 231 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(1) - (2)].string); }
     break;
 
   case 29:
 
 /* Line 1455 of yacc.c  */
-#line 233 "keydbcfg-parser.y"
+#line 236 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(2) - (3)].string); }
     break;
 
   case 30:
 
 /* Line 1455 of yacc.c  */
-#line 235 "keydbcfg-parser.y"
+#line 238 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(1) - (2)].string); }
     break;
 
   case 31:
 
 /* Line 1455 of yacc.c  */
-#line 240 "keydbcfg-parser.y"
+#line 243 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(2) - (3)].string); }
     break;
 
   case 32:
 
 /* Line 1455 of yacc.c  */
-#line 242 "keydbcfg-parser.y"
+#line 245 "keydbcfg-parser.y"
     { (yyval.string) = (yyvsp[(1) - (2)].string); }
     break;
 
   case 35:
 
 /* Line 1455 of yacc.c  */
-#line 249 "keydbcfg-parser.y"
+#line 252 "keydbcfg-parser.y"
     {
       if (yychar == YYEOF)
         fprintf(stderr, "warning: last entry ended without newline\n");
@@ -1730,7 +1733,7 @@ yyreduce:
   case 36:
 
 /* Line 1455 of yacc.c  */
-#line 257 "keydbcfg-parser.y"
+#line 260 "keydbcfg-parser.y"
     {
       celist->next = new_config_entry_list();
       celist = celist->next;
@@ -1740,7 +1743,7 @@ yyreduce:
   case 37:
 
 /* Line 1455 of yacc.c  */
-#line 262 "keydbcfg-parser.y"
+#line 265 "keydbcfg-parser.y"
     {
       celist->next = new_config_entry_list();
       celist = celist->next;
@@ -1750,7 +1753,7 @@ yyreduce:
   case 38:
 
 /* Line 1455 of yacc.c  */
-#line 267 "keydbcfg-parser.y"
+#line 270 "keydbcfg-parser.y"
     {
       fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
       yyerrok;
@@ -1760,7 +1763,7 @@ yyreduce:
   case 39:
 
 /* Line 1455 of yacc.c  */
-#line 272 "keydbcfg-parser.y"
+#line 275 "keydbcfg-parser.y"
     {
       fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
       yyerrok;
@@ -1770,7 +1773,7 @@ yyreduce:
   case 44:
 
 /* Line 1455 of yacc.c  */
-#line 290 "keydbcfg-parser.y"
+#line 293 "keydbcfg-parser.y"
     {
       add_entry(celist, ENTRY_TYPE_DISCID, (yyvsp[(1) - (3)].string));
       add_entry(celist, ENTRY_TYPE_TITLE, (yyvsp[(3) - (3)].string));
@@ -1780,7 +1783,7 @@ yyreduce:
   case 57:
 
 /* Line 1455 of yacc.c  */
-#line 322 "keydbcfg-parser.y"
+#line 325 "keydbcfg-parser.y"
     {
       add_date_entry(celist, (yyvsp[(2) - (6)].digit), (yyvsp[(4) - (6)].digit), (yyvsp[(6) - (6)].digit));
     }
@@ -1789,7 +1792,7 @@ yyreduce:
   case 58:
 
 /* Line 1455 of yacc.c  */
-#line 329 "keydbcfg-parser.y"
+#line 332 "keydbcfg-parser.y"
     {
       add_entry(celist, ENTRY_TYPE_MEK, (yyvsp[(2) - (2)].string));
     }
@@ -1798,7 +1801,7 @@ yyreduce:
   case 59:
 
 /* Line 1455 of yacc.c  */
-#line 336 "keydbcfg-parser.y"
+#line 339 "keydbcfg-parser.y"
     {
       add_entry(celist, ENTRY_TYPE_VID, (yyvsp[(2) - (2)].string));
     }
@@ -1807,7 +1810,7 @@ yyreduce:
   case 60:
 
 /* Line 1455 of yacc.c  */
-#line 343 "keydbcfg-parser.y"
+#line 346 "keydbcfg-parser.y"
     {
       dkplist = NULL;
     }
@@ -1816,7 +1819,7 @@ yyreduce:
   case 63:
 
 /* Line 1455 of yacc.c  */
-#line 355 "keydbcfg-parser.y"
+#line 358 "keydbcfg-parser.y"
     {
       if (!dkplist)
       {
@@ -1830,7 +1833,7 @@ yyreduce:
   case 64:
 
 /* Line 1455 of yacc.c  */
-#line 367 "keydbcfg-parser.y"
+#line 370 "keydbcfg-parser.y"
     {
       add_entry(celist, ENTRY_TYPE_VUK, (yyvsp[(2) - (2)].string));
     }
@@ -1839,7 +1842,7 @@ yyreduce:
   case 65:
 
 /* Line 1455 of yacc.c  */
-#line 374 "keydbcfg-parser.y"
+#line 377 "keydbcfg-parser.y"
     {
       dkplist = NULL;
     }
@@ -1848,7 +1851,7 @@ yyreduce:
   case 68:
 
 /* Line 1455 of yacc.c  */
-#line 386 "keydbcfg-parser.y"
+#line 389 "keydbcfg-parser.y"
     {
       if (!dkplist)
       {
@@ -1862,7 +1865,7 @@ yyreduce:
   case 69:
 
 /* Line 1455 of yacc.c  */
-#line 398 "keydbcfg-parser.y"
+#line 401 "keydbcfg-parser.y"
     {
       dkplist = NULL;
     }
@@ -1871,7 +1874,7 @@ yyreduce:
   case 72:
 
 /* Line 1455 of yacc.c  */
-#line 410 "keydbcfg-parser.y"
+#line 413 "keydbcfg-parser.y"
     {
       if (!dkplist)
       {
@@ -1885,7 +1888,7 @@ yyreduce:
   case 73:
 
 /* Line 1455 of yacc.c  */
-#line 422 "keydbcfg-parser.y"
+#line 425 "keydbcfg-parser.y"
     {
       dkplist = NULL;
     }
@@ -1894,7 +1897,7 @@ yyreduce:
   case 76:
 
 /* Line 1455 of yacc.c  */
-#line 434 "keydbcfg-parser.y"
+#line 437 "keydbcfg-parser.y"
     {
       if (!dkplist)
       {
@@ -1908,7 +1911,7 @@ yyreduce:
 
 
 /* Line 1455 of yacc.c  */
-#line 1912 "keydbcfg-parser.c"
+#line 1915 "keydbcfg-parser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2120,7 +2123,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 443 "keydbcfg-parser.y"
+#line 446 "keydbcfg-parser.y"
 
 /* Function to parse a config file */
 int keydbcfg_parse_config(config_file *cfgfile, const char *path)
