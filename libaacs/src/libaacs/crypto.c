@@ -92,7 +92,7 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig,
     gcry_mpi_t mpi_d, mpi_md;
     gcry_sexp_t sexp_key, sexp_data, sexp_sig, sexp_r, sexp_s;
     unsigned char Q[41], block[60], md[20], *r = NULL, *s = NULL;
-    gpg_error_t err;
+    gcry_error_t err;
     char errstr[100];
 
     /* Assign MPI values for ECDSA parameters Q and d.
