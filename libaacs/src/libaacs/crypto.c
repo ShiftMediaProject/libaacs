@@ -152,7 +152,7 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig,
           sizeof("#)") +
       sizeof("(n #9DC9D81355ECCEB560BDC44F54817B2C7F5AB017#)") +
       sizeof("(q #") + sizeof(str_Q) + sizeof("#)") +
-      sizeof("(d %m)))") + 1);
+      sizeof("(d %%m)))") + 1);
 
     sprintf(strfmt,
       "(private-key"
