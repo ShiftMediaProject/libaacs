@@ -679,16 +679,6 @@ static yyconst flex_int32_t yy_rule_can_match_eol[27] =
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library. If not, see
  * <http://www.gnu.org/licenses/>.
- *
- * In addition, as a special exception, the copyright holders of libaacs
- * gives permission to link the code of its release of libaacs with the
- * OpenSSL project's "OpenSSL" library (or with modified versions of it
- * that use the same license as the "OpenSSL" library), and distribute
- * the linked library.  You must obey the GNU Lesser General Public
- * License in all respects for all of the code used other than "OpenSSL".
- * If you modify this file, you may extend this exception to your
- * version of the file, but you are not obligated to do so.  If you do
- * not wish to do so, delete this exception statement from your version.
  */
 
 #include "keydbcfg-parser.h"
@@ -707,7 +697,7 @@ static char *trim_string(const char *string);
  */
 #define YY_NO_INPUT 1
 
-#line 711 "keydbcfg-lexer.c"
+#line 701 "keydbcfg-lexer.c"
 
 #define INITIAL 0
 #define TITLE_STATE 1
@@ -944,9 +934,9 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 84 "keydbcfg-lexer.l"
+#line 74 "keydbcfg-lexer.l"
 
-#line 950 "keydbcfg-lexer.c"
+#line 940 "keydbcfg-lexer.c"
 
     yylval = yylval_param;
 
@@ -1045,12 +1035,12 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 85 "keydbcfg-lexer.l"
+#line 75 "keydbcfg-lexer.l"
 {}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 87 "keydbcfg-lexer.l"
+#line 77 "keydbcfg-lexer.l"
 {
                             yylval->string = trim_string(yytext);
                             BEGIN INITIAL;
@@ -1060,7 +1050,7 @@ YY_RULE_SETUP
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 92 "keydbcfg-lexer.l"
+#line 82 "keydbcfg-lexer.l"
 {
                             printf("Bad entry at line %u!\n", yylineno);
                             BEGIN INITIAL;
@@ -1069,7 +1059,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 98 "keydbcfg-lexer.l"
+#line 88 "keydbcfg-lexer.l"
 {
                             yylval->string = trim_string(yytext);
                             return HEXSTRING;
@@ -1077,7 +1067,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 102 "keydbcfg-lexer.l"
+#line 92 "keydbcfg-lexer.l"
 {
                             yylval->digit = (unsigned int)atoi(yytext);
                             return DIGIT;
@@ -1085,112 +1075,112 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 107 "keydbcfg-lexer.l"
+#line 97 "keydbcfg-lexer.l"
 { return KEYWORD_BEGIN; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 108 "keydbcfg-lexer.l"
+#line 98 "keydbcfg-lexer.l"
 { return KEYWORD_END; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 109 "keydbcfg-lexer.l"
+#line 99 "keydbcfg-lexer.l"
 { return KEYWORD_PK_LIST; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 110 "keydbcfg-lexer.l"
+#line 100 "keydbcfg-lexer.l"
 { return KEYWORD_HOST_CERT_LIST; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 111 "keydbcfg-lexer.l"
+#line 101 "keydbcfg-lexer.l"
 { return KEYWORD_HOST_CERT_ENTRY; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 113 "keydbcfg-lexer.l"
+#line 103 "keydbcfg-lexer.l"
 { return ENTRY_ID_DATE; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 114 "keydbcfg-lexer.l"
+#line 104 "keydbcfg-lexer.l"
 { return ENTRY_ID_MEK; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 115 "keydbcfg-lexer.l"
+#line 105 "keydbcfg-lexer.l"
 { return ENTRY_ID_VID; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 116 "keydbcfg-lexer.l"
+#line 106 "keydbcfg-lexer.l"
 { return ENTRY_ID_BN; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 117 "keydbcfg-lexer.l"
+#line 107 "keydbcfg-lexer.l"
 { return ENTRY_ID_VUK; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 118 "keydbcfg-lexer.l"
+#line 108 "keydbcfg-lexer.l"
 { return ENTRY_ID_PAK; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 119 "keydbcfg-lexer.l"
+#line 109 "keydbcfg-lexer.l"
 { return ENTRY_ID_TK; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 120 "keydbcfg-lexer.l"
+#line 110 "keydbcfg-lexer.l"
 { return ENTRY_ID_UK; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 122 "keydbcfg-lexer.l"
+#line 112 "keydbcfg-lexer.l"
 { BEGIN TITLE_STATE; return PUNCT_EQUALS_SIGN; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 123 "keydbcfg-lexer.l"
+#line 113 "keydbcfg-lexer.l"
 { return PUNCT_VERTICAL_BAR; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 124 "keydbcfg-lexer.l"
+#line 114 "keydbcfg-lexer.l"
 { return PUNCT_HYPHEN; }
 	YY_BREAK
 case 22:
 /* rule 22 can match eol */
 YY_RULE_SETUP
-#line 126 "keydbcfg-lexer.l"
+#line 116 "keydbcfg-lexer.l"
 {}
 	YY_BREAK
 case 23:
 /* rule 23 can match eol */
 YY_RULE_SETUP
-#line 127 "keydbcfg-lexer.l"
+#line 117 "keydbcfg-lexer.l"
 { return NEWLINE; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 129 "keydbcfg-lexer.l"
+#line 119 "keydbcfg-lexer.l"
 {}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 130 "keydbcfg-lexer.l"
+#line 120 "keydbcfg-lexer.l"
 { return BAD_ENTRY; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 131 "keydbcfg-lexer.l"
+#line 121 "keydbcfg-lexer.l"
 ECHO;
 	YY_BREAK
-#line 1194 "keydbcfg-lexer.c"
+#line 1184 "keydbcfg-lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(TITLE_STATE):
 	yyterminate();
@@ -2327,7 +2317,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 131 "keydbcfg-lexer.l"
+#line 121 "keydbcfg-lexer.l"
 
 
 /* Function used to trim leading and trailing space from a string */
