@@ -446,14 +446,12 @@ hexstring_list
       strcat(str, $2);
       $$ = str;
       X_FREE($1);
-      X_FREE($2);
     }
   | HEXSTRING
     {
       char *str = (char*)malloc(strlen($1) + 1);
       strcpy(str, $1);
       $$ = str;
-      X_FREE($1);
     }
   ;
 %%

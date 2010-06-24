@@ -589,7 +589,7 @@ static const yytype_uint16 yyrline[] =
      276,   277,   281,   282,   286,   294,   298,   302,   303,   307,
      308,   309,   310,   311,   312,   313,   314,   318,   325,   332,
      339,   346,   347,   351,   363,   370,   377,   378,   382,   394,
-     401,   402,   406,   418,   425,   426,   430,   442,   451
+     401,   402,   406,   418,   425,   426,   430,   442,   450
 };
 #endif
 
@@ -1921,26 +1921,24 @@ yyreduce:
       strcat(str, (yyvsp[(2) - (2)].string));
       (yyval.string) = str;
       X_FREE((yyvsp[(1) - (2)].string));
-      X_FREE((yyvsp[(2) - (2)].string));
     }
     break;
 
   case 78:
 
 /* Line 1455 of yacc.c  */
-#line 452 "keydbcfg-parser.y"
+#line 451 "keydbcfg-parser.y"
     {
       char *str = (char*)malloc(strlen((yyvsp[(1) - (1)].string)) + 1);
       strcpy(str, (yyvsp[(1) - (1)].string));
       (yyval.string) = str;
-      X_FREE((yyvsp[(1) - (1)].string));
     }
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 1944 "keydbcfg-parser.c"
+#line 1942 "keydbcfg-parser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2152,7 +2150,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 459 "keydbcfg-parser.y"
+#line 457 "keydbcfg-parser.y"
 
 /* Function to parse a config file */
 int keydbcfg_parse_config(config_file *cfgfile, const char *path)

@@ -43,7 +43,7 @@ static char *trim_string(const char *string);
 
 WHITESPACE              ([\t ])
 
-HEXSTRING               ([0-9a-fA-F]{32,})
+HEXSTRING               (0[Xx][0-9a-fA-F]+)
 DISC_TITLE              ([^\n|\\]*)
 DIGIT                   ([0-9]+)
 
@@ -90,7 +90,8 @@ BAD_ENTRY               ([^\n])
                           }
 
 {HEXSTRING}               {
-                            yylval->string = trim_string(yytext);
+                            /* strip the '0x' portion of hexstring */
+                            yylval->string = yytext + 2;
                             return HEXSTRING;
                           }
 {DIGIT}                   {
