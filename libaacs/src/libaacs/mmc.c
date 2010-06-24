@@ -36,6 +36,11 @@
 #include <linux/cdrom.h>
 #endif
 
+/* define in CFLAGS to skip drive certificate checks */
+#ifndef PATCHED_DRIVE
+#define PATCHED_DRIVE 0
+#endif
+
 static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
                          size_t rx)
 {
@@ -331,8 +336,7 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     }
     DEBUG(DBG_MMC, "Got AGID from drive: %d (%p)\n", agid, mmc);
 
-    int patched = 0;
-    if (!patched) do {
+    if (!PATCHED_DRIVE) do {
 
         // send host cert + nonce
         if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, mmc->host_cert)) {
