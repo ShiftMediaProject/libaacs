@@ -52,6 +52,10 @@ KEYWORD_END             ([Ee][Nn][Dd][ \t]+)
 KEYWORD_PK_LIST         ([Pp][Kk]_[Ll][Ii][Ss][Tt])
 KEYWORD_HOST_CERT_LIST  ([Hh][Oo][Ss][Tt]_[Cc][Ee][Rr][Tt]_[Ll][Ii][Ss][Tt])
 KEYWORD_HOST_CERT_ENTRY ([Hh][Oo][Ss][Tt]_[Cc][Ee][Rr][Tt]_[Ee][Nn][Tt][Rr][Yy])
+KEYWORD_HOST_PRIV_KEY   ([Hh][Oo][Ss][Tt]_[Pp][Rr][Ii][Vv]_[Kk][Ee][Yy][ \t]+)
+KEYWORD_HOST_CERT       ([Hh][Oo][Ss][Tt]_[Cc][Ee][Rr][Tt][ \t]+)
+KEYWORD_HOST_NONCE      ([Hh][Oo][Ss][Tt]_[Nn][Oo][Nn][Cc][Ee][ \t]+)
+KEYWORD_HOST_KEY_POINT  ([Hh][Oo][Ss][Tt]_[Kk][Ee][Yy]_[Pp][Oo][Ii][Nn][Tt][ \t]+)
 
 ENTRY_ID_DATE           (\|[\t ]*[Dd][\t ]*\|)
 ENTRY_ID_MEK            (\|[\t ]*[Mm][\t ]*\|)
@@ -99,6 +103,10 @@ BAD_ENTRY               ([^\n])
 {KEYWORD_PK_LIST}         { return KEYWORD_PK_LIST; }
 {KEYWORD_HOST_CERT_LIST}  { return KEYWORD_HOST_CERT_LIST; }
 {KEYWORD_HOST_CERT_ENTRY} { return KEYWORD_HOST_CERT_ENTRY; }
+{KEYWORD_HOST_PRIV_KEY}   { return KEYWORD_HOST_PRIV_KEY; }
+{KEYWORD_HOST_CERT}       { return KEYWORD_HOST_CERT; }
+{KEYWORD_HOST_NONCE}      { return KEYWORD_HOST_NONCE; }
+{KEYWORD_HOST_KEY_POINT}  { return KEYWORD_HOST_KEY_POINT; }
 
 {ENTRY_ID_DATE}           { return ENTRY_ID_DATE; }
 {ENTRY_ID_MEK}            { return ENTRY_ID_MEK; }

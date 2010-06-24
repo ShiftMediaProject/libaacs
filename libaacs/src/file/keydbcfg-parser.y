@@ -113,6 +113,10 @@ extern int yyget_lineno  (void *scanner);
 %token KEYWORD_PK_LIST
 %token KEYWORD_HOST_CERT_LIST
 %token KEYWORD_HOST_CERT_ENTRY
+%token KEYWORD_HOST_PRIV_KEY
+%token KEYWORD_HOST_CERT
+%token KEYWORD_HOST_NONCE
+%token KEYWORD_HOST_KEY_POINT
 
 %token PUNCT_EQUALS_SIGN
 %token PUNCT_VERTICAL_BAR
@@ -131,7 +135,7 @@ extern int yyget_lineno  (void *scanner);
 %token BAD_ENTRY
 
 %type <string> discid disc_title
-%type <string> host_priv_key host_cert host_nonce host_key_point
+%type <string> host_priv_key host_cert host_nonce host_key_point hexstring_list
 %%
 config_file
   : pk_block host_cert_list_block config_entries
@@ -157,11 +161,11 @@ pk_list
   ;
 
 pk_entry
-  : newline_list HEXSTRING
+  : newline_list hexstring_list
     {
       pklist = add_pk_list_entry(pklist, $2);
     }
-  | HEXSTRING
+  | hexstring_list
     {
       pklist = add_pk_list_entry(pklist, $1);
     }
@@ -208,31 +212,31 @@ host_cert_entry
   ;
 
 host_priv_key
-  : newline_list HEXSTRING NEWLINE
+  : newline_list KEYWORD_HOST_PRIV_KEY hexstring_list NEWLINE
+    { $$ = $3; }
+  | KEYWORD_HOST_PRIV_KEY hexstring_list NEWLINE
     { $$ = $2; }
-  | HEXSTRING NEWLINE
-    { $$ = $1; }
   ;
 
 host_cert
-  : newline_list HEXSTRING NEWLINE
+  : newline_list KEYWORD_HOST_CERT hexstring_list NEWLINE
+    { $$ = $3; }
+  | KEYWORD_HOST_CERT hexstring_list NEWLINE
     { $$ = $2; }
-  | HEXSTRING NEWLINE
-    { $$ = $1; }
   ;
 
 host_nonce
-  : newline_list HEXSTRING NEWLINE
+  : newline_list KEYWORD_HOST_NONCE hexstring_list NEWLINE
+    { $$ = $3; }
+  | KEYWORD_HOST_NONCE hexstring_list NEWLINE
     { $$ = $2; }
-  | HEXSTRING NEWLINE
-    { $$ = $1; }
   ;
 
 host_key_point
-  : newline_list HEXSTRING NEWLINE
+  : newline_list KEYWORD_HOST_KEY_POINT hexstring_list NEWLINE
+    { $$ = $3; }
+  | KEYWORD_HOST_KEY_POINT hexstring_list NEWLINE
     { $$ = $2; }
-  | HEXSTRING NEWLINE
-    { $$ = $1; }
   ;
 
 config_entries
@@ -287,7 +291,7 @@ disc_info
   ;
 
 discid
-  : HEXSTRING
+  : hexstring_list
   ;
 
 disc_title
@@ -318,14 +322,14 @@ date_entry
   ;
 
 mek_entry
-  : ENTRY_ID_MEK HEXSTRING
+  : ENTRY_ID_MEK hexstring_list
     {
       add_entry(celist, ENTRY_TYPE_MEK, $2);
     }
   ;
 
 vid_entry
-  : ENTRY_ID_VID HEXSTRING
+  : ENTRY_ID_VID hexstring_list
     {
       add_entry(celist, ENTRY_TYPE_VID, $2);
     }
@@ -344,7 +348,7 @@ bn_data_list
   ;
 
 bn_data
-  : DIGIT PUNCT_HYPHEN HEXSTRING
+  : DIGIT PUNCT_HYPHEN hexstring_list
     {
       if (!dkplist)
       {
@@ -356,7 +360,7 @@ bn_data
   ;
 
 vuk_entry
-  : ENTRY_ID_VUK HEXSTRING
+  : ENTRY_ID_VUK hexstring_list
     {
       add_entry(celist, ENTRY_TYPE_VUK, $2);
     }
@@ -375,7 +379,7 @@ pak_data_list
   ;
 
 pak_data
-  : DIGIT PUNCT_HYPHEN HEXSTRING
+  : DIGIT PUNCT_HYPHEN hexstring_list
     {
       if (!dkplist)
       {
@@ -399,7 +403,7 @@ tk_data_list
   ;
 
 tk_data
-  : DIGIT PUNCT_HYPHEN HEXSTRING
+  : DIGIT PUNCT_HYPHEN hexstring_list
     {
       if (!dkplist)
       {
@@ -423,7 +427,7 @@ uk_data_list
   ;
 
 uk_data
-  : DIGIT PUNCT_HYPHEN HEXSTRING
+  : DIGIT PUNCT_HYPHEN hexstring_list
     {
       if (!dkplist)
       {
@@ -431,6 +435,25 @@ uk_data
         celist->entry.uk = dkplist;
       }
       dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_UK, $1, $3);
+    }
+  ;
+
+hexstring_list
+  : hexstring_list HEXSTRING
+    {
+      char *str = (char*)malloc(strlen($1) + strlen($2) + 1);
+      strcpy(str, $1);
+      strcat(str, $2);
+      $$ = str;
+      X_FREE($1);
+      X_FREE($2);
+    }
+  | HEXSTRING
+    {
+      char *str = (char*)malloc(strlen($1) + 1);
+      strcpy(str, $1);
+      $$ = str;
+      X_FREE($1);
     }
   ;
 %%
