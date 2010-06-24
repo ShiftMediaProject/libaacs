@@ -24,9 +24,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-static int debug_init = 0;
 static debug_mask_t debug_mask = DBG_CRIT;
-static FILE *logfile = NULL;
 
 char *print_hex(char *out, const uint8_t *buf, int count)
 {
@@ -38,8 +36,11 @@ char *print_hex(char *out, const uint8_t *buf, int count)
     return out;
 }
 
-void debug(const char *file, int line, uint32_t mask, const char *format, ...)
+void aacs_debug(const char *file, int line, uint32_t mask, const char *format, ...)
 {
+    static int debug_init = 0;
+    static FILE *logfile = NULL;
+
     // Only call getenv() once.
     if (!debug_init) {
         debug_init = 1;
