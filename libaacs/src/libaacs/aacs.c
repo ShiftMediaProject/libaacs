@@ -269,13 +269,17 @@ int _verify_ts(uint8_t *buf, size_t size)
     return 0;
 }
 
-int _find_vuk(AACS *aacs, const char *path)
+/* Function that collects keys from keydb config entry */
+uint32_t _find_config_entry(AACS *aacs, const char *path)
 {
-    uint8_t hash[20], *ukf_buf;
+    uint8_t hash[20], discid[20], *ukf_buf;
     FILE_H *fp = NULL;
     int64_t f_size;
     char f_name[100];
     char str[48];
+    uint32_t retval = 0;
+    aacs->uks = NULL;
+    aacs->num_uks = 0;
 
     snprintf(f_name , 100, "/%s/AACS/Unit_Key_RO.inf", path);
 
@@ -311,25 +315,53 @@ int _find_vuk(AACS *aacs, const char *path)
     if (aacs->cf) {
         aacs->ce = aacs->cf->list;
         while (aacs->ce && aacs->ce->entry.discid) {
-            uint8_t discid[20];
             memset(discid, 0, sizeof(discid));
             hexstring_to_hex_array(discid, sizeof(discid),
                                    aacs->ce->entry.discid);
             if (!memcmp(hash, discid, 20)) {
-                hexstring_to_hex_array(aacs->vuk, sizeof(aacs->vuk),
-                                       aacs->ce->entry.vuk);
-
-                DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
-                      aacs->ce->entry.discid, print_hex(str, aacs->vuk, 16));
-
-                return 1;
+                DEBUG(DBG_AACS, "Found config entry for discid %s\n",
+                      aacs->ce->entry.discid);
+                break;
             }
 
             aacs->ce = aacs->ce->next;
         }
+
+        if (aacs->ce->entry.vuk) {
+            hexstring_to_hex_array(aacs->vuk, sizeof(aacs->vuk),
+                                    aacs->ce->entry.vuk);
+
+            DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
+                  aacs->ce->entry.discid, print_hex(str, aacs->vuk, 16));
+
+            retval = 1;
+        }
+
+        if (aacs->ce && aacs->ce->entry.uk) {
+            DEBUG(DBG_AACS, "Acquire CPS unit keys from keydb config file...\n");
+
+            digit_key_pair_list *ukcursor = aacs->ce->entry.uk;
+            while (ukcursor && ukcursor->key_pair.key) {
+                aacs->num_uks++;
+
+                aacs->uks = (uint8_t*)realloc(aacs->uks, 16 * aacs->num_uks);
+                hexstring_to_hex_array(aacs->uks + (16 * (aacs->num_uks - 1)), 16,
+                                      ukcursor->key_pair.key);
+
+                char str[40];
+                DEBUG(DBG_AACS, "Unit key %d from keydb entry: %s\n",
+                      aacs->num_uks,
+                      print_hex(str, aacs->uks + (16 * (aacs->num_uks - 1)), 16));
+
+                ukcursor = ukcursor->next;
+            }
+        }
     }
 
-    return 0;
+    if (aacs->num_uks)
+      retval = aacs->num_uks;
+
+    return retval;
 }
 
 int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
@@ -422,9 +454,9 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 
     aacs->cf = keydbcfg_new_config_file();
     if (keydbcfg_parse_config(aacs->cf, cfgfile)) {
-        DEBUG(DBG_AACS, "Searching for VUK...\n");
-        if(_find_vuk(aacs, path)) {
-            if (_calc_uks(aacs, path)) {
+        DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
+        if(_find_config_entry(aacs, path)) {
+            if (aacs->uks || _calc_uks(aacs, path)) {
                 keydbcfg_config_file_close(aacs->cf);
                 aacs->cf = NULL;
 
