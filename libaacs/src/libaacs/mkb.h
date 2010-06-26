@@ -24,10 +24,6 @@
 #include <stdint.h>
 
 typedef struct mkb MKB;
-struct mkb {
-    size_t size;    // file size
-    uint8_t *buf;   // file contents
-};
 
 MKB *mkb_open(const char *path);    // init MKB
 void mkb_close(MKB *mkb);           // free MKB

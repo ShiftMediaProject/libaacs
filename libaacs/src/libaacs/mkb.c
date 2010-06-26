@@ -24,6 +24,11 @@
 
 #include <stdio.h>
 
+struct mkb {
+    size_t size;    // file size
+    uint8_t *buf;   // file contents
+};
+
 uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
 {
     size_t pos = 0, len = 0;
