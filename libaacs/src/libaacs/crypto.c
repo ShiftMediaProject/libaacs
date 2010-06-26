@@ -35,9 +35,7 @@
 /* Use pthread in libgcrypt */
 GCRY_THREAD_OPTION_PTHREAD_IMPL;
 
-static int crypto_init_check = 0;
-
-void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
+static void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 {
     int a;
     gcry_cipher_hd_t gcry_h;
@@ -58,6 +56,8 @@ void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 /* Initializes libgcrypt */
 int crypto_init()
 {
+  static int crypto_init_check = 0;
+
   if (!crypto_init_check)
   {
     crypto_init_check = 1;
