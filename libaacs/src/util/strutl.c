@@ -24,7 +24,7 @@
 #include <stdio.h>
 
 /* Function to assigns proper hex value of character to uint8_t pointer */
-int hexstring_to_unsigned_char(uint8_t *value, char c)
+static int _hexstring_to_unsigned_char(uint8_t *value, char c)
 {
     *value = 0;
 
@@ -125,8 +125,8 @@ int hexstring_to_hex_array(uint8_t *hex_array, uint32_t size,
   while (i < size)
   {
     uint8_t tmp1 = 0, tmp2 = 0;
-    if (!(hexstring_to_unsigned_char(&tmp1, hexstring[(i*2)])) ||
-      !(hexstring_to_unsigned_char(&tmp2, hexstring[(i*2)+1])))
+    if (!(_hexstring_to_unsigned_char(&tmp1, hexstring[(i*2)])) ||
+      !(_hexstring_to_unsigned_char(&tmp2, hexstring[(i*2)+1])))
       return 0;
 
     hex_array[i] = tmp1 * 16;
