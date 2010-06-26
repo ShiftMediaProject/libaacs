@@ -41,6 +41,13 @@
 #define PATCHED_DRIVE 0
 #endif
 
+struct mmc {
+    int fd;
+    uint8_t sk, asc, ascq;
+    uint8_t host_priv_key[20], host_cert[92], host_nonce[20];
+    uint8_t host_key_point[40];
+};
+
 static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
                          size_t rx)
 {
