@@ -24,7 +24,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-static debug_mask_t debug_mask = DBG_CRIT;
+static debug_mask_t debug_mask AACS_PRIVATE = DBG_CRIT;
 
 char *print_hex(char *out, const uint8_t *buf, int count)
 {

@@ -45,8 +45,9 @@ enum debug_mask_enum {
 
 typedef enum debug_mask_enum debug_mask_t;
 
-char *print_hex(char *out, const uint8_t *str, int count);
+char *print_hex(char *out, const uint8_t *str, int count) AACS_PRIVATE;
 void aacs_debug(const char *file, int line, uint32_t mask, const char *format, ...)
-  BD_ATTR_FORMAT_PRINTF(4,5);
+  BD_ATTR_FORMAT_PRINTF(4,5)
+  AACS_PRIVATE;
 
 #endif /* LOGGING_H_ */
