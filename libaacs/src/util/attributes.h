@@ -31,4 +31,12 @@
 #  define BD_ATTR_PACKED
 #endif
 
+#if __GNUC__ >= 4
+#  define AACS_PUBLIC  __attribute__((visibility("default")))
+#  define AACS_PRIVATE __attribute__((visibility("hidden")))
+#else
+#  define AACS_PUBLIC
+#  define AACS_PRIVATE
+#endif
+
 #endif /* LIBBLURAY_ATTRIBUTES_H_ */
