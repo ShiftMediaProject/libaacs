@@ -86,7 +86,7 @@ void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
     }
 }
 
-void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig,
+void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
                       uint8_t *n, const uint8_t *dhp)
 {
     gcry_mpi_t mpi_d, mpi_md;
@@ -106,7 +106,7 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *pubk, uint8_t *sig,
     memcpy(&Q[0], "\x04", 1);   // format
     memcpy(&Q[1], c + 12, 20);  // Q.x
     memcpy(&Q[21], c + 32, 20); // Q.y
-    gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, pubk, 20, NULL);
+    gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, privk, 20, NULL);
 
     /* Show the values of the MPIs Q.x, Q.y, and d when debugging */
     if (GCRYPT_DEBUG)
