@@ -20,6 +20,8 @@
 #ifndef KEYDBCFG_H
 #define KEYDBCFG_H
 
+#include <util/attributes.h>
+
 /* struct holding a digit and key pair for <ENTRY NUMBER> - <ENTRY> entries */
 typedef struct digit_key_pair_t digit_key_pair;
 struct digit_key_pair_t
@@ -98,8 +100,8 @@ struct config_file_t
 };
 
 /* Functions used throughout the parser */
-int keydbcfg_parse_config(config_file *cfgfile, const char *path);
-config_file *keydbcfg_new_config_file();
-int keydbcfg_config_file_close(config_file *cfgfile);
+int keydbcfg_parse_config(config_file *cfgfile, const char *path) AACS_PRIVATE;
+config_file *keydbcfg_new_config_file() AACS_PRIVATE;
+int keydbcfg_config_file_close(config_file *cfgfile) AACS_PRIVATE;
 
 #endif

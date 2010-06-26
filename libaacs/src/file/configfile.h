@@ -17,6 +17,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#include <util/attributes.h>
+
 #ifndef CONFIGFILE_H_
 #define CONFIGFILE_H_
 
@@ -39,10 +41,10 @@ enum configfile_types {
     KF_VUK_ARRAY
 };
 
-CONFIGFILE *configfile_open(const char *path);
-void configfile_close(CONFIGFILE *kf);
+CONFIGFILE *configfile_open(const char *path) AACS_PRIVATE;
+void configfile_close(CONFIGFILE *kf) AACS_PRIVATE;
 uint8_t *configfile_record(CONFIGFILE *kf, enum configfile_types type,
-                           uint16_t *entries, size_t *entry_len);
+                           uint16_t *entries, size_t *entry_len) AACS_PRIVATE;
 
 /* Keys are stored in a binary file in a record format which is queried from
  * this code

@@ -20,6 +20,8 @@
 #ifndef FILE_H_
 #define FILE_H_
 
+#include <util/attributes.h>
+
 #include <stdint.h>
 
 //#ifdef __LINUX__
@@ -46,6 +48,6 @@ struct file
     int (*write)(FILE_H *file, uint8_t *buf, int64_t size);
 };
 
-FILE_H *file_open_linux(const char* filename, const char *mode);
+FILE_H *file_open_linux(const char* filename, const char *mode) AACS_PRIVATE;
 
 #endif /* FILE_H_ */
