@@ -32,6 +32,9 @@
 #include <stdio.h>
 #include <gcrypt.h>
 
+static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
+                                   "\x00\x00\x00\x00\x00\x00\x00\x00";
+
 int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
                  uint8_t *mk)
 {
@@ -72,6 +75,10 @@ int _calc_mk(AACS *aacs, const char *path)
     size_t len;
     uint8_t *buf = NULL, *rec, *uvs;
     MKB *mkb = NULL;
+
+    /* Skip if retrieved from config file */
+    if (memcmp(aacs->mk, empty_key, 16))
+      return 1;
 
     DEBUG(DBG_AACS, "Calculate media key...\n");
 
@@ -124,7 +131,31 @@ int _calc_vuk(AACS *aacs, const char *path)
     int a;
     MMC* mmc = NULL;
 
+    /* Skip if retrieved from config file */
+    if (memcmp(aacs->vuk, empty_key, 16))
+      return 1;
+
     DEBUG(DBG_AACS, "Calculate volume unique key...\n");
+
+    /* Use VID given in config file if available */
+    if (memcmp(aacs->vid, empty_key, 16))
+    {
+        gcry_cipher_hd_t gcry_h;
+        gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+        gcry_cipher_setkey(gcry_h, aacs->mk, 16);
+        gcry_cipher_decrypt(gcry_h, aacs->vuk, 16, aacs->vid, 16);
+        gcry_cipher_close(gcry_h);
+
+        for (a = 0; a < 16; a++) {
+            aacs->vuk[a] ^= aacs->vid[a];
+        }
+
+        char str[40];
+        DEBUG(DBG_AACS, "Volume unique key: %s\n",
+              print_hex(str, aacs->vuk, 16));
+
+        return 1;
+    }
 
     cert_list *hccursor = aacs->cf->host_cert_list;
     while (hccursor && hccursor->host_priv_key) {
@@ -176,6 +207,14 @@ int _calc_uks(AACS *aacs, const char *path)
     char f_name[100];
     uint64_t f_pos;
     unsigned int i;
+
+    /* Skip if retrieved from config file */
+    if (aacs->uks)
+      return 1;
+
+    /* Fail if we don't have a volume unique key */
+    if (!memcmp(aacs->vuk, empty_key, 16))
+      return 0;
 
     DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
@@ -327,6 +366,26 @@ uint32_t _find_config_entry(AACS *aacs, const char *path)
             aacs->ce = aacs->ce->next;
         }
 
+        if (aacs->ce->entry.mek) {
+            hexstring_to_hex_array(aacs->mk, sizeof(aacs->mk),
+                                    aacs->ce->entry.mek);
+
+            DEBUG(DBG_AACS, "Found media key for %s: %s\n",
+                  aacs->ce->entry.discid, print_hex(str, aacs->mk, 16));
+
+            retval = 1;
+        }
+
+        if (aacs->ce->entry.vid) {
+            hexstring_to_hex_array(aacs->vid, sizeof(aacs->vid),
+                                    aacs->ce->entry.vid);
+
+            DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
+                  aacs->ce->entry.discid, print_hex(str, aacs->vid, 16));
+
+            retval = 1;
+        }
+
         if (aacs->ce->entry.vuk) {
             hexstring_to_hex_array(aacs->vuk, sizeof(aacs->vuk),
                                     aacs->ce->entry.vuk);
@@ -456,7 +515,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
     if (keydbcfg_parse_config(aacs->cf, cfgfile)) {
         DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
         if(_find_config_entry(aacs, path)) {
-            if (aacs->uks || _calc_uks(aacs, path)) {
+            if (_calc_uks(aacs, path)) {
                 keydbcfg_config_file_close(aacs->cf);
                 aacs->cf = NULL;
 
