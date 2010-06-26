@@ -31,7 +31,7 @@ AACS_PRIVATE MKB *mkb_open(const char *path);    // init MKB
 AACS_PRIVATE void mkb_close(MKB *mkb);           // free MKB
 
 // returns type
-AACS_PRIVATE uint8_t mkb_type(MKB *mkb));
+AACS_PRIVATE uint8_t mkb_type(MKB *mkb);
 // returns version
 AACS_PRIVATE uint32_t mkb_version(MKB *mkb);
 // returns list of revoked host entries
