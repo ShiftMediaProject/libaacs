@@ -20,14 +20,16 @@
 #ifndef MMC_H_
 #define MMC_H_
 
+#include <util/attributes.h>
+
 #include <stdint.h>
 
 typedef struct mmc MMC;
 
-MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
-              const uint8_t *host_cert, const uint8_t *host_nonce,
-              const uint8_t *host_key_point);
-void mmc_close(MMC *drive);
-int mmc_read_vid(MMC *mmc, uint8_t *vid);
+AACS_PRIVATE MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
+                           const uint8_t *host_cert, const uint8_t *host_nonce,
+                           const uint8_t *host_key_point);
+AACS_PRIVATE void mmc_close(MMC *drive);
+AACS_PRIVATE int mmc_read_vid(MMC *mmc, uint8_t *vid);
 
 #endif /* MMC_H_ */

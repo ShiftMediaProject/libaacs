@@ -20,13 +20,15 @@
 #ifndef CRYPTO_H_
 #define CRYPTO_H_
 
+#include <util/attributes.h>
+
 #include <stdint.h>
 
-int crypto_init();
-void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk,
-                  uint8_t *pk);   // returns left, centre, right keys
-void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
-                      uint8_t *n, const uint8_t *dhp);
-void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash);
+AACS_PRIVATE int  crypto_init(void);
+AACS_PRIVATE void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk,
+                               uint8_t *pk);   // returns left, centre, right keys
+AACS_PRIVATE void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
+                                   uint8_t *n, const uint8_t *dhp);
+AACS_PRIVATE void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash);
 
 #endif /* CRYPTO_H_ */
