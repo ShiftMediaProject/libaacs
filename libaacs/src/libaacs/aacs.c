@@ -17,6 +17,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#include <util/attributes.h>
+
 #include "aacs.h"
 #include "crypto.h"
 #include "mmc.h"
@@ -35,8 +37,8 @@
 static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
                                    "\x00\x00\x00\x00\x00\x00\x00\x00";
 
-int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
-                 uint8_t *mk)
+static int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
+                        uint8_t *mk)
 {
     gcry_cipher_hd_t gcry_h;
     int a, ret = 0;
@@ -69,7 +71,7 @@ int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
     return ret;
 }
 
-int _calc_mk(AACS *aacs, const char *path)
+static int _calc_mk(AACS *aacs, const char *path)
 {
     int a, num_uvs = 0;
     size_t len;
@@ -126,7 +128,7 @@ int _calc_mk(AACS *aacs, const char *path)
     return 0;
 }
 
-int _calc_vuk(AACS *aacs, const char *path)
+static int _calc_vuk(AACS *aacs, const char *path)
 {
     int a;
     MMC* mmc = NULL;
@@ -200,7 +202,7 @@ int _calc_vuk(AACS *aacs, const char *path)
     return 0;
 }
 
-int _calc_uks(AACS *aacs, const char *path)
+static int _calc_uks(AACS *aacs, const char *path)
 {
     FILE_H *fp = NULL;
     uint8_t buf[16];
@@ -277,7 +279,7 @@ int _calc_uks(AACS *aacs, const char *path)
 
 
 
-int _verify_ts(uint8_t *buf, size_t size)
+static int _verify_ts(uint8_t *buf, size_t size)
 {
     uint8_t *ptr;
 
@@ -309,7 +311,7 @@ int _verify_ts(uint8_t *buf, size_t size)
 }
 
 /* Function that collects keys from keydb config entry */
-uint32_t _find_config_entry(AACS *aacs, const char *path)
+static uint32_t _find_config_entry(AACS *aacs, const char *path)
 {
     uint8_t hash[20], discid[20], *ukf_buf;
     FILE_H *fp = NULL;
@@ -423,7 +425,7 @@ uint32_t _find_config_entry(AACS *aacs, const char *path)
     return retval;
 }
 
-int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
+static int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset,
                   uint32_t curr_uk)
 {
     gcry_cipher_hd_t gcry_h;
