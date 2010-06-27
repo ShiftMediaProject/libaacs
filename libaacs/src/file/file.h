@@ -45,9 +45,9 @@ struct file
     int64_t (*tell)(FILE_H *file);
     int (*eof)(FILE_H *file);
     int (*read)(FILE_H *file, uint8_t *buf, int64_t size);
-    int (*write)(FILE_H *file, uint8_t *buf, int64_t size);
+    int (*write)(FILE_H *file, const uint8_t *buf, int64_t size);
 };
 
-FILE_H *file_open_linux(const char* filename, const char *mode) AACS_PRIVATE;
+AACS_PRIVATE FILE_H *file_open_linux(const char* filename, const char *mode);
 
 #endif /* FILE_H_ */
