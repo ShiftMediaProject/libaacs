@@ -34,6 +34,13 @@
 #include <stdio.h>
 #include <gcrypt.h>
 
+struct aacs {
+    uint8_t pk[16], mk[16], vuk[16], vid[16], *uks;
+    uint32_t num_uks;
+    struct config_file_t *cf;
+    struct config_entry_list_t *ce;
+};
+
 static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
                                    "\x00\x00\x00\x00\x00\x00\x00\x00";
 
