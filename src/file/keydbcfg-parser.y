@@ -161,6 +161,12 @@ config_entry
   | pk_entry
   | host_cert_entry_block
   | title_entry
+  | error NEWLINE
+    {
+      fprintf(stderr, "bad entry at or around line %d\n",
+              yyget_lineno(scanner) - 1);
+      yyerrok;
+    }
   ;
 
 dk_entry_block
@@ -268,11 +274,6 @@ title_entry
     {
       celist->next = new_title_entry_list();
       celist = celist->next;
-    }
-  | error NEWLINE
-    {
-      fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
-      yyerrok;
     }
   ;
 
