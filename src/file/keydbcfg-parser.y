@@ -114,12 +114,10 @@ extern int yyget_lineno  (void *scanner);
 
 %token KEYWORD_BEGIN
 %token KEYWORD_END
-%token KEYWORD_DK_LIST
 %token KEYWORD_DK_ENTRY
 %token KEYWORD_DEVICE_KEY
 %token KEYWORD_DEVICE_NODE
 %token KEYWORD_PROCESSING_KEY
-%token KEYWORD_HOST_CERT_LIST
 %token KEYWORD_HOST_CERT_ENTRY
 %token KEYWORD_HOST_PRIV_KEY
 %token KEYWORD_HOST_CERT
@@ -157,29 +155,10 @@ config_entry_list
   ;
 
 config_entry
-  : dk_list_block
+  : dk_entry_block
   | pk_entry
-  | host_cert_list_block
+  | host_cert_entry_block
   | title_entry
-  ;
-
-dk_list_block
-  : dk_list_start dk_entries dk_list_end
-  ;
-
-dk_list_start
-  : newline_list KEYWORD_BEGIN KEYWORD_DK_LIST NEWLINE
-  | KEYWORD_BEGIN KEYWORD_DK_LIST NEWLINE
-  ;
-
-dk_list_end
-  : newline_list KEYWORD_END KEYWORD_DK_LIST NEWLINE
-  | KEYWORD_END KEYWORD_DK_LIST NEWLINE
-  ;
-
-dk_entries
-  : dk_entries dk_entry_block
-  | dk_entry_block
   ;
 
 dk_entry_block
@@ -226,25 +205,6 @@ pk_entry
     {
       pklist = add_pk_list_entry(pklist, $2);
     }
-  ;
-
-host_cert_list_block
-  : host_cert_list_start host_cert_entries host_cert_list_end
-  ;
-
-host_cert_list_start
-  : newline_list KEYWORD_BEGIN KEYWORD_HOST_CERT_LIST NEWLINE
-  | KEYWORD_BEGIN KEYWORD_HOST_CERT_LIST NEWLINE
-  ;
-
-host_cert_list_end
-  : newline_list KEYWORD_END KEYWORD_HOST_CERT_LIST NEWLINE
-  | KEYWORD_END KEYWORD_HOST_CERT_LIST NEWLINE
-  ;
-
-host_cert_entries
-  : host_cert_entries host_cert_entry_block
-  | host_cert_entry_block
   ;
 
 host_cert_entry_block

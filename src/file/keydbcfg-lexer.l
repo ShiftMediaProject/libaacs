@@ -49,12 +49,10 @@ DIGIT                   ([0-9]+)
 
 KEYWORD_BEGIN           ([Bb][Ee][Gg][Ii][Nn][ \t]+)
 KEYWORD_END             ([Ee][Nn][Dd][ \t]+)
-KEYWORD_DK_LIST         ([Dd][Kk]_[Ll][Ii][Ss][Tt])
 KEYWORD_DK_ENTRY        ([Dd][Kk]_[Ee][Nn][Tt][Rr][Yy])
 KEYWORD_DEVICE_KEY      ([Dd][Ee][Vv][Ii][Cc][Ee]_[Kk][Ee][Yy])
 KEYWORD_DEVICE_NODE     ([Dd][Ee][Vv][Ii][Cc][Ee]_[Nn][Oo][Dd][Ee])
 KEYWORD_PROCESSING_KEY  ([Pp][Rr][Oo][Cc][Ee][Ss][Ss][Ii][Nn][Gg]_[Kk][Ee][Yy][ \t]+)
-KEYWORD_HOST_CERT_LIST  ([Hh][Oo][Ss][Tt]_[Cc][Ee][Rr][Tt]_[Ll][Ii][Ss][Tt])
 KEYWORD_HOST_CERT_ENTRY ([Hh][Oo][Ss][Tt]_[Cc][Ee][Rr][Tt]_[Ee][Nn][Tt][Rr][Yy])
 KEYWORD_HOST_PRIV_KEY   ([Hh][Oo][Ss][Tt]_[Pp][Rr][Ii][Vv]_[Kk][Ee][Yy][ \t]+)
 KEYWORD_HOST_CERT       ([Hh][Oo][Ss][Tt]_[Cc][Ee][Rr][Tt][ \t]+)
@@ -105,12 +103,10 @@ BAD_ENTRY               ([^\n])
 
 {KEYWORD_BEGIN}           { return KEYWORD_BEGIN; }
 {KEYWORD_END}             { return KEYWORD_END; }
-{KEYWORD_DK_LIST}         { return KEYWORD_DK_LIST; }
 {KEYWORD_DK_ENTRY}        { return KEYWORD_DK_ENTRY; }
 {KEYWORD_DEVICE_KEY}      { return KEYWORD_DEVICE_KEY; }
 {KEYWORD_DEVICE_NODE}     { return KEYWORD_DEVICE_NODE; }
 {KEYWORD_PROCESSING_KEY}  { return KEYWORD_PROCESSING_KEY; }
-{KEYWORD_HOST_CERT_LIST}  { return KEYWORD_HOST_CERT_LIST; }
 {KEYWORD_HOST_CERT_ENTRY} { return KEYWORD_HOST_CERT_ENTRY; }
 {KEYWORD_HOST_PRIV_KEY}   { return KEYWORD_HOST_PRIV_KEY; }
 {KEYWORD_HOST_CERT}       { return KEYWORD_HOST_CERT; }
