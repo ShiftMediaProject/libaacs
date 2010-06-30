@@ -118,7 +118,7 @@ extern int yyget_lineno  (void *scanner);
 %token KEYWORD_DK_ENTRY
 %token KEYWORD_DEVICE_KEY
 %token KEYWORD_DEVICE_NODE
-%token KEYWORD_PK_LIST
+%token KEYWORD_PROCESSING_KEY
 %token KEYWORD_HOST_CERT_LIST
 %token KEYWORD_HOST_CERT_ENTRY
 %token KEYWORD_HOST_PRIV_KEY
@@ -158,7 +158,7 @@ config_entry_list
 
 config_entry
   : dk_list_block
-  | pk_block
+  | pk_entry
   | host_cert_list_block
   | title_entry
   ;
@@ -217,33 +217,14 @@ device_node
     { $$ = $2; }
   ;
 
-pk_block
-  : pk_list_start pk_list pk_list_end
-  ;
-
-pk_list_start
-  : newline_list KEYWORD_BEGIN KEYWORD_PK_LIST NEWLINE
-  | KEYWORD_BEGIN KEYWORD_PK_LIST NEWLINE
-  ;
-
-pk_list_end
-  : newline_list KEYWORD_END KEYWORD_PK_LIST NEWLINE
-  | KEYWORD_END KEYWORD_PK_LIST NEWLINE
-  ;
-
-pk_list
-  : pk_list pk_entry NEWLINE
-  | pk_entry NEWLINE
-  ;
-
 pk_entry
-  : newline_list hexstring_list
+  : newline_list KEYWORD_PROCESSING_KEY hexstring_list NEWLINE
+    {
+      pklist = add_pk_list_entry(pklist, $3);
+    }
+  | KEYWORD_PROCESSING_KEY hexstring_list NEWLINE
     {
       pklist = add_pk_list_entry(pklist, $2);
-    }
-  | hexstring_list
-    {
-      pklist = add_pk_list_entry(pklist, $1);
     }
   ;
 
