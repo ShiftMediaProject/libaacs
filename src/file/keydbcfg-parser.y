@@ -71,15 +71,15 @@ static cert_list *new_cert_list();
 static cert_list *add_cert_list(cert_list *list, const char *host_priv_key,
                          const char *host_cert, const char *host_nonce,
                          const char *host_key_point);
-static config_entry_list *new_config_entry_list();
-static int add_entry(config_entry_list *list, int type, const char *entry);
+static title_entry_list *new_title_entry_list();
+static int add_entry(title_entry_list *list, int type, const char *entry);
 static digit_key_pair_list *new_digit_key_pair_list();
 static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
                               int type, unsigned int digit, const char *key);
-static int add_date_entry(config_entry_list *list, unsigned int year,
+static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
 void yyerror (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist,
-              config_entry_list *celist, digit_key_pair_list *dkplist,
+              title_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg);
 extern int yyget_lineno  (void *scanner);
 
@@ -88,7 +88,7 @@ extern int yyget_lineno  (void *scanner);
 %}
 /* Options set to generate a reentrant parser that is POSIX yacc compatible
  * The basic 'scanner' parameters are set. Also, another parameter is set
- * to pass in a config entry list struct used to hold all config entries.
+ * to pass in a title entry list struct used to hold all title entries.
  * Most of these options are bison specific, but some BSD's have bison
  * compatibility support for these options in byacc.
  */
@@ -99,7 +99,7 @@ extern int yyget_lineno  (void *scanner);
 %parse-param{dk_list *dklist}
 %parse-param{pk_list *pklist}
 %parse-param{cert_list *clist}
-%parse-param{config_entry_list *celist}
+%parse-param{title_entry_list *celist}
 %parse-param{digit_key_pair_list *dkplist}
 
 %union
@@ -147,7 +147,7 @@ extern int yyget_lineno  (void *scanner);
 %type <string> device_key device_node
 %%
 config_file
-  : dk_list_block pk_block host_cert_list_block config_entries
+  : dk_list_block pk_block host_cert_list_block title_entries
   ;
 
 dk_list_block
@@ -302,28 +302,28 @@ host_key_point
     { $$ = $2; }
   ;
 
-config_entries
-  : config_entry_list newline_list
-  | config_entry_list
-  | config_entry_list error
+title_entries
+  : title_entry_list newline_list
+  | title_entry_list
+  | title_entry_list error
     {
       if (yychar == YYEOF)
         fprintf(stderr, "warning: last entry ended without newline\n");
     }
   ;
 
-config_entry_list
-  : config_entry_list config_entry NEWLINE
+title_entry_list
+  : title_entry_list title_entry NEWLINE
     {
-      celist->next = new_config_entry_list();
+      celist->next = new_title_entry_list();
       celist = celist->next;
     }
-  | config_entry NEWLINE
+  | title_entry NEWLINE
     {
-      celist->next = new_config_entry_list();
+      celist->next = new_title_entry_list();
       celist = celist->next;
     }
-  | config_entry_list error NEWLINE
+  | title_entry_list error NEWLINE
     {
       fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
       yyerrok;
@@ -335,7 +335,7 @@ config_entry_list
     }
   ;
 
-config_entry
+title_entry
   : newline_list disc_info entry_list
   | disc_info entry_list
   ;
@@ -528,7 +528,7 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   dk_list *head_dklist = new_dk_list();
   pk_list *head_pklist = new_pk_list();
   cert_list *head_clist = new_cert_list();
-  config_entry_list *head_celist = new_config_entry_list();
+  title_entry_list *head_celist = new_title_entry_list();
   digit_key_pair_list *dkplist = NULL;
 
   void *scanner;
@@ -585,7 +585,7 @@ int keydbcfg_config_file_close(config_file *cfgfile)
   /* free title entries */
   while (cfgfile->list)
   {
-    config_entry_list *next = cfgfile->list->next;
+    title_entry_list *next = cfgfile->list->next;
     X_FREE(cfgfile->list->entry.discid);
     X_FREE(cfgfile->list->entry.title);
     X_FREE(cfgfile->list->entry.mek);
@@ -703,13 +703,13 @@ static cert_list *add_cert_list(cert_list *list, const char *host_priv_key,
   return list->next;
 }
 
-/* Function that returns pointer to new config entry list */
-config_entry_list *new_config_entry_list()
+/* Function that returns pointer to new title entry list */
+title_entry_list *new_title_entry_list()
 {
-  config_entry_list *list = (config_entry_list *)malloc(sizeof(*list));
+  title_entry_list *list = (title_entry_list *)malloc(sizeof(*list));
   if (!list)
   {
-    printf("Error allocating memory for new config entry list!\n");
+    printf("Error allocating memory for new title entry list!\n");
     return NULL;
   }
 
@@ -731,11 +731,11 @@ config_entry_list *new_config_entry_list()
 }
 
 /* Function to add standard string entries to a config entry */
-static int add_entry(config_entry_list *list, int type, const char *entry)
+static int add_entry(title_entry_list *list, int type, const char *entry)
 {
   if (!list)
   {
-    printf("Error: No config list passed as parameter.\n");
+    printf("Error: No title list passed as parameter.\n");
     return 0;
   }
 
@@ -811,12 +811,12 @@ static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
 }
 
 /* Function to add a date entry */
-static int add_date_entry(config_entry_list *list, unsigned int year,
+static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day)
 {
   if (!list)
   {
-    printf("Error: No config list passed as parameter.\n");
+    printf("Error: No title list passed as parameter.\n");
     return 0;
   }
 
@@ -829,7 +829,7 @@ static int add_date_entry(config_entry_list *list, unsigned int year,
 
 /* Our definition of yyerror */
 void yyerror (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist,
-              config_entry_list *celist, digit_key_pair_list *dkplist,
+              title_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg)
 {
   fprintf(stderr, "%s: line %d\n", msg, yyget_lineno(scanner));

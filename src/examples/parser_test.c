@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 static int print_digit_key_pair_enties(digit_key_pair_list *list);
-static int print_config_entries(config_entry_list *list);
+static int print_title_entries(title_entry_list *list);
 
 /* Function to print the entres in a digit key pair list */
 static int print_digit_key_pair_enties(digit_key_pair_list *list)
@@ -49,15 +49,15 @@ static int print_digit_key_pair_enties(digit_key_pair_list *list)
 }
 
 /* Function that prints all entries parsed from a config file */
-static int print_config_entries(config_entry_list *list)
+static int print_title_entries(title_entry_list *list)
 {
   if (!list)
   {
-    printf("Error: No config list passed as parameter.\n");
+    printf("Error: No title list passed as parameter.\n");
     return 0;
   }
 
-  config_entry_list *cursor = list;
+  title_entry_list *cursor = list;
   while (cursor)
   {
     if (!cursor->entry.discid)
@@ -163,7 +163,7 @@ static int print_config_file(config_file *cfgfile)
   printf("\n");
 
   int status1 = print_cert_list(cfgfile->host_cert_list);
-  int status2 = print_config_entries(cfgfile->list);
+  int status2 = print_title_entries(cfgfile->list);
 
   return status1 & status2;
 }

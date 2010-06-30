@@ -142,15 +142,15 @@ static cert_list *new_cert_list();
 static cert_list *add_cert_list(cert_list *list, const char *host_priv_key,
                          const char *host_cert, const char *host_nonce,
                          const char *host_key_point);
-static config_entry_list *new_config_entry_list();
-static int add_entry(config_entry_list *list, int type, const char *entry);
+static title_entry_list *new_title_entry_list();
+static int add_entry(title_entry_list *list, int type, const char *entry);
 static digit_key_pair_list *new_digit_key_pair_list();
 static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
                               int type, unsigned int digit, const char *key);
-static int add_date_entry(config_entry_list *list, unsigned int year,
+static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
 void yyerror (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist,
-              config_entry_list *celist, digit_key_pair_list *dkplist,
+              title_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg);
 extern int yyget_lineno  (void *scanner);
 
@@ -636,7 +636,7 @@ static const char *const yytname[] =
   "host_cert_list_end", "host_cert_entries", "host_cert_entry_block",
   "host_cert_entry_start", "host_cert_entry_end", "host_cert_entry",
   "host_priv_key", "host_cert", "host_nonce", "host_key_point",
-  "config_entries", "config_entry_list", "config_entry", "newline_list",
+  "title_entries", "title_entry_list", "title_entry", "newline_list",
   "disc_info", "discid", "disc_title", "entry_list", "entry", "date_entry",
   "mek_entry", "vid_entry", "bn_entry", "bn_data_list", "bn_data",
   "vuk_entry", "pak_entry", "pak_data_list", "pak_data", "tk_entry",
@@ -983,7 +983,7 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, title_entry_list *celist, digit_key_pair_list *dkplist)
 #else
 static void
 yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, dklist, pklist, clist, celist, dkplist)
@@ -994,7 +994,7 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, dklist, pklist, clis
     dk_list *dklist;
     pk_list *pklist;
     cert_list *clist;
-    config_entry_list *celist;
+    title_entry_list *celist;
     digit_key_pair_list *dkplist;
 #endif
 {
@@ -1027,7 +1027,7 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, scanner, dklist, pklist, clis
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, title_entry_list *celist, digit_key_pair_list *dkplist)
 #else
 static void
 yy_symbol_print (yyoutput, yytype, yyvaluep, scanner, dklist, pklist, clist, celist, dkplist)
@@ -1038,7 +1038,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, scanner, dklist, pklist, clist, cel
     dk_list *dklist;
     pk_list *pklist;
     cert_list *clist;
-    config_entry_list *celist;
+    title_entry_list *celist;
     digit_key_pair_list *dkplist;
 #endif
 {
@@ -1090,7 +1090,7 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, title_entry_list *celist, digit_key_pair_list *dkplist)
 #else
 static void
 yy_reduce_print (yyvsp, yyrule, scanner, dklist, pklist, clist, celist, dkplist)
@@ -1100,7 +1100,7 @@ yy_reduce_print (yyvsp, yyrule, scanner, dklist, pklist, clist, celist, dkplist)
     dk_list *dklist;
     pk_list *pklist;
     cert_list *clist;
-    config_entry_list *celist;
+    title_entry_list *celist;
     digit_key_pair_list *dkplist;
 #endif
 {
@@ -1374,7 +1374,7 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, title_entry_list *celist, digit_key_pair_list *dkplist)
 #else
 static void
 yydestruct (yymsg, yytype, yyvaluep, scanner, dklist, pklist, clist, celist, dkplist)
@@ -1385,7 +1385,7 @@ yydestruct (yymsg, yytype, yyvaluep, scanner, dklist, pklist, clist, celist, dkp
     dk_list *dklist;
     pk_list *pklist;
     cert_list *clist;
-    config_entry_list *celist;
+    title_entry_list *celist;
     digit_key_pair_list *dkplist;
 #endif
 {
@@ -1418,7 +1418,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist);
+int yyparse (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, title_entry_list *celist, digit_key_pair_list *dkplist);
 #else
 int yyparse ();
 #endif
@@ -1446,7 +1446,7 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, config_entry_list *celist, digit_key_pair_list *dkplist)
+yyparse (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist, title_entry_list *celist, digit_key_pair_list *dkplist)
 #else
 int
 yyparse (scanner, dklist, pklist, clist, celist, dkplist)
@@ -1454,7 +1454,7 @@ yyparse (scanner, dklist, pklist, clist, celist, dkplist)
     dk_list *dklist;
     pk_list *pklist;
     cert_list *clist;
-    config_entry_list *celist;
+    title_entry_list *celist;
     digit_key_pair_list *dkplist;
 #endif
 #endif
@@ -1842,7 +1842,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 317 "keydbcfg-parser.y"
     {
-      celist->next = new_config_entry_list();
+      celist->next = new_title_entry_list();
       celist = celist->next;
     }
     break;
@@ -1852,7 +1852,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 322 "keydbcfg-parser.y"
     {
-      celist->next = new_config_entry_list();
+      celist->next = new_title_entry_list();
       celist = celist->next;
     }
     break;
@@ -2266,7 +2266,7 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   dk_list *head_dklist = new_dk_list();
   pk_list *head_pklist = new_pk_list();
   cert_list *head_clist = new_cert_list();
-  config_entry_list *head_celist = new_config_entry_list();
+  title_entry_list *head_celist = new_title_entry_list();
   digit_key_pair_list *dkplist = NULL;
 
   void *scanner;
@@ -2323,7 +2323,7 @@ int keydbcfg_config_file_close(config_file *cfgfile)
   /* free title entries */
   while (cfgfile->list)
   {
-    config_entry_list *next = cfgfile->list->next;
+    title_entry_list *next = cfgfile->list->next;
     X_FREE(cfgfile->list->entry.discid);
     X_FREE(cfgfile->list->entry.title);
     X_FREE(cfgfile->list->entry.mek);
@@ -2441,13 +2441,13 @@ static cert_list *add_cert_list(cert_list *list, const char *host_priv_key,
   return list->next;
 }
 
-/* Function that returns pointer to new config entry list */
-config_entry_list *new_config_entry_list()
+/* Function that returns pointer to new title entry list */
+title_entry_list *new_title_entry_list()
 {
-  config_entry_list *list = (config_entry_list *)malloc(sizeof(*list));
+  title_entry_list *list = (title_entry_list *)malloc(sizeof(*list));
   if (!list)
   {
-    printf("Error allocating memory for new config entry list!\n");
+    printf("Error allocating memory for new title entry list!\n");
     return NULL;
   }
 
@@ -2469,11 +2469,11 @@ config_entry_list *new_config_entry_list()
 }
 
 /* Function to add standard string entries to a config entry */
-static int add_entry(config_entry_list *list, int type, const char *entry)
+static int add_entry(title_entry_list *list, int type, const char *entry)
 {
   if (!list)
   {
-    printf("Error: No config list passed as parameter.\n");
+    printf("Error: No title list passed as parameter.\n");
     return 0;
   }
 
@@ -2549,12 +2549,12 @@ static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
 }
 
 /* Function to add a date entry */
-static int add_date_entry(config_entry_list *list, unsigned int year,
+static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day)
 {
   if (!list)
   {
-    printf("Error: No config list passed as parameter.\n");
+    printf("Error: No title list passed as parameter.\n");
     return 0;
   }
 
@@ -2567,7 +2567,7 @@ static int add_date_entry(config_entry_list *list, unsigned int year,
 
 /* Our definition of yyerror */
 void yyerror (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist,
-              config_entry_list *celist, digit_key_pair_list *dkplist,
+              title_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg)
 {
   fprintf(stderr, "%s: line %d\n", msg, yyget_lineno(scanner));

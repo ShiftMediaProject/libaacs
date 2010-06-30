@@ -30,7 +30,7 @@ struct digit_key_pair_t
   char *key;
 };
 
-/* list of digit_key_pair struct used in config entry */
+/* list of digit_key_pair struct used in title entry */
 typedef struct digit_key_pair_list_t digit_key_pair_list;
 struct digit_key_pair_list_t
 {
@@ -75,9 +75,9 @@ struct cert_entry
   cert_list *next;
 };
 
-/* main config entry struct */
-typedef struct config_entry_t config_entry;
-struct config_entry_t
+/* title entry struct */
+typedef struct title_entry_t title_entry;
+struct title_entry_t
 {
   char *discid;
   char *title;
@@ -91,12 +91,12 @@ struct config_entry_t
   digit_key_pair_list *uk;
 };
 
-/* main struct for config entries, held in a list structure */
-typedef struct config_entry_list_t config_entry_list;
-struct config_entry_list_t
+/* main struct for title entries, held in a list structure */
+typedef struct title_entry_list_t title_entry_list;
+struct title_entry_list_t
 {
-  config_entry entry;
-  config_entry_list *next;
+  title_entry entry;
+  title_entry_list *next;
 };
 
 /* struct representing the contents of a config file */
@@ -106,7 +106,7 @@ struct config_file_t
   dk_list *dkl;
   pk_list *pkl;
   cert_list *host_cert_list;
-  config_entry_list *list;
+  title_entry_list *list;
 };
 
 /* Functions used throughout the parser */
