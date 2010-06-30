@@ -27,8 +27,6 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	libaacs/crypto.c \
 	libaacs/crypto.h \
 	libaacs/mkb.c \
-	file/configfile.c \
-	file/configfile.h \
 	file/file.h \
 	file/file_posix.c \
 	file/keydbcfg.h \
