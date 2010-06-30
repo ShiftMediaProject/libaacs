@@ -147,7 +147,20 @@ extern int yyget_lineno  (void *scanner);
 %type <string> device_key device_node
 %%
 config_file
-  : dk_list_block pk_block host_cert_list_block title_entries
+  : config_entry_list newline_list
+  | config_entry_list
+  ;
+
+config_entry_list
+  : config_entry_list config_entry
+  | config_entry
+  ;
+
+config_entry
+  : dk_list_block
+  | pk_block
+  | host_cert_list_block
+  | title_entry
   ;
 
 dk_list_block
@@ -302,42 +315,22 @@ host_key_point
     { $$ = $2; }
   ;
 
-title_entries
-  : title_entry_list newline_list
-  | title_entry_list
-  | title_entry_list error
-    {
-      if (yychar == YYEOF)
-        fprintf(stderr, "warning: last entry ended without newline\n");
-    }
-  ;
-
-title_entry_list
-  : title_entry_list title_entry NEWLINE
+title_entry
+  : newline_list disc_info entry_list NEWLINE
     {
       celist->next = new_title_entry_list();
       celist = celist->next;
     }
-  | title_entry NEWLINE
+  | disc_info entry_list NEWLINE
     {
       celist->next = new_title_entry_list();
       celist = celist->next;
-    }
-  | title_entry_list error NEWLINE
-    {
-      fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
-      yyerrok;
     }
   | error NEWLINE
     {
       fprintf(stderr, "bad entry at line %d\n", yyget_lineno(scanner) - 1);
       yyerrok;
     }
-  ;
-
-title_entry
-  : newline_list disc_info entry_list
-  | disc_info entry_list
   ;
 
 newline_list
