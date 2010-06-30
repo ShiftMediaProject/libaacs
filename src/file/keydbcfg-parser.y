@@ -62,6 +62,9 @@ enum
   ENTRY_TYPE_UK
 };
 
+static dk_list *new_dk_list();
+static dk_list *add_dk_list_entry(dk_list *list, const char *key,
+                                  const char *node);
 static pk_list *new_pk_list();
 static pk_list *add_pk_list_entry(pk_list *list, const char *key);
 static cert_list *new_cert_list();
@@ -75,7 +78,7 @@ static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
                               int type, unsigned int digit, const char *key);
 static int add_date_entry(config_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
-void yyerror (void *scanner, pk_list *pklist, cert_list *clist,
+void yyerror (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist,
               config_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg);
 extern int yyget_lineno  (void *scanner);
@@ -93,6 +96,7 @@ extern int yyget_lineno  (void *scanner);
 %yacc
 %lex-param{void *scanner}
 %parse-param{void *scanner}
+%parse-param{dk_list *dklist}
 %parse-param{pk_list *pklist}
 %parse-param{cert_list *clist}
 %parse-param{config_entry_list *celist}
@@ -110,6 +114,10 @@ extern int yyget_lineno  (void *scanner);
 
 %token KEYWORD_BEGIN
 %token KEYWORD_END
+%token KEYWORD_DK_LIST
+%token KEYWORD_DK_ENTRY
+%token KEYWORD_DEVICE_KEY
+%token KEYWORD_DEVICE_NODE
 %token KEYWORD_PK_LIST
 %token KEYWORD_HOST_CERT_LIST
 %token KEYWORD_HOST_CERT_ENTRY
@@ -136,9 +144,64 @@ extern int yyget_lineno  (void *scanner);
 
 %type <string> discid disc_title
 %type <string> host_priv_key host_cert host_nonce host_key_point hexstring_list
+%type <string> device_key device_node
 %%
 config_file
-  : pk_block host_cert_list_block config_entries
+  : dk_list_block pk_block host_cert_list_block config_entries
+  ;
+
+dk_list_block
+  : dk_list_start dk_entries dk_list_end
+  ;
+
+dk_list_start
+  : newline_list KEYWORD_BEGIN KEYWORD_DK_LIST NEWLINE
+  | KEYWORD_BEGIN KEYWORD_DK_LIST NEWLINE
+  ;
+
+dk_list_end
+  : newline_list KEYWORD_END KEYWORD_DK_LIST NEWLINE
+  | KEYWORD_END KEYWORD_DK_LIST NEWLINE
+  ;
+
+dk_entries
+  : dk_entries dk_entry_block
+  | dk_entry_block
+  ;
+
+dk_entry_block
+  : dk_entry_start dk_entry dk_entry_end
+  ;
+
+dk_entry_start
+  : newline_list KEYWORD_BEGIN KEYWORD_DK_ENTRY NEWLINE
+  | KEYWORD_BEGIN KEYWORD_DK_ENTRY NEWLINE
+  ;
+
+dk_entry_end
+  : newline_list KEYWORD_END KEYWORD_DK_ENTRY NEWLINE
+  | KEYWORD_END KEYWORD_DK_ENTRY NEWLINE
+  ;
+
+dk_entry
+  : device_key device_node
+    {
+      dklist = add_dk_list_entry(dklist, $1, $2);
+    }
+  ;
+
+device_key
+  : newline_list KEYWORD_DEVICE_KEY hexstring_list NEWLINE
+    { $$ = $3; }
+  | KEYWORD_DEVICE_KEY hexstring_list NEWLINE
+    { $$ = $2; }
+  ;
+
+device_node
+  : newline_list KEYWORD_DEVICE_NODE hexstring_list NEWLINE
+    { $$ = $3; }
+  | KEYWORD_DEVICE_NODE hexstring_list NEWLINE
+    { $$ = $2; }
   ;
 
 pk_block
@@ -462,6 +525,7 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   if (!fp)
     return 0;
 
+  dk_list *head_dklist = new_dk_list();
   pk_list *head_pklist = new_pk_list();
   cert_list *head_clist = new_cert_list();
   config_entry_list *head_celist = new_config_entry_list();
@@ -470,9 +534,11 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   void *scanner;
   yylex_init(&scanner);
   yyset_in(fp, scanner);
-  int retval = yyparse(scanner, head_pklist, head_clist, head_celist, dkplist);
+  int retval = yyparse(scanner, head_dklist, head_pklist, head_clist,
+                       head_celist, dkplist);
   yylex_destroy(scanner);
 
+  cfgfile->dkl = head_dklist;
   cfgfile->pkl = head_pklist;
   cfgfile->host_cert_list = head_clist;
   cfgfile->list = head_celist;
@@ -537,6 +603,34 @@ int keydbcfg_config_file_close(config_file *cfgfile)
   X_FREE(cfgfile);
 
   return 1;
+}
+
+/* Function to return new dk_list object */
+static dk_list *new_dk_list()
+{
+  dk_list *dkl = (dk_list *)malloc(sizeof(*dkl));
+  dkl->key = NULL;
+  dkl->next = NULL;
+  return dkl;
+}
+
+/* Function to add dk to config file */
+static dk_list *add_dk_list_entry(dk_list *list, const char *key,
+                                  const char *node)
+{
+  if (!list)
+  {
+    printf("Error: No dk list passed as parameter.\n");
+    return NULL;
+  }
+
+  list->key = (char*)malloc(strlen(key) + 1);
+  strcpy(list->key, key);
+  list->node = strtoul(node, NULL, 16);
+
+  list->next = new_dk_list();
+
+  return list->next;
 }
 
 /* Function to return new pk_list object */
@@ -734,7 +828,7 @@ static int add_date_entry(config_entry_list *list, unsigned int year,
 }
 
 /* Our definition of yyerror */
-void yyerror (void *scanner, pk_list *pklist, cert_list *clist,
+void yyerror (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist,
               config_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg)
 {

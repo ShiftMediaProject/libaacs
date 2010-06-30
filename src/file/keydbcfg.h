@@ -47,6 +47,15 @@ struct date_entry_t
   unsigned int day;
 };
 
+/* dk entry */
+typedef struct dk_entry dk_list;
+struct dk_entry
+{
+  char *key;
+  unsigned long node;
+  dk_list *next;
+};
+
 /* pk entry */
 typedef struct pk_entry pk_list;
 struct pk_entry
@@ -94,6 +103,7 @@ struct config_entry_list_t
 typedef struct config_file_t config_file;
 struct config_file_t
 {
+  dk_list *dkl;
   pk_list *pkl;
   cert_list *host_cert_list;
   config_entry_list *list;

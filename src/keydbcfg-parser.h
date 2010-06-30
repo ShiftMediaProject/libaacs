@@ -44,26 +44,30 @@
      DIGIT = 260,
      KEYWORD_BEGIN = 261,
      KEYWORD_END = 262,
-     KEYWORD_PK_LIST = 263,
-     KEYWORD_HOST_CERT_LIST = 264,
-     KEYWORD_HOST_CERT_ENTRY = 265,
-     KEYWORD_HOST_PRIV_KEY = 266,
-     KEYWORD_HOST_CERT = 267,
-     KEYWORD_HOST_NONCE = 268,
-     KEYWORD_HOST_KEY_POINT = 269,
-     PUNCT_EQUALS_SIGN = 270,
-     PUNCT_VERTICAL_BAR = 271,
-     PUNCT_HYPHEN = 272,
-     ENTRY_ID_DATE = 273,
-     ENTRY_ID_MEK = 274,
-     ENTRY_ID_VID = 275,
-     ENTRY_ID_BN = 276,
-     ENTRY_ID_VUK = 277,
-     ENTRY_ID_PAK = 278,
-     ENTRY_ID_TK = 279,
-     ENTRY_ID_UK = 280,
-     NEWLINE = 281,
-     BAD_ENTRY = 282
+     KEYWORD_DK_LIST = 263,
+     KEYWORD_DK_ENTRY = 264,
+     KEYWORD_DEVICE_KEY = 265,
+     KEYWORD_DEVICE_NODE = 266,
+     KEYWORD_PK_LIST = 267,
+     KEYWORD_HOST_CERT_LIST = 268,
+     KEYWORD_HOST_CERT_ENTRY = 269,
+     KEYWORD_HOST_PRIV_KEY = 270,
+     KEYWORD_HOST_CERT = 271,
+     KEYWORD_HOST_NONCE = 272,
+     KEYWORD_HOST_KEY_POINT = 273,
+     PUNCT_EQUALS_SIGN = 274,
+     PUNCT_VERTICAL_BAR = 275,
+     PUNCT_HYPHEN = 276,
+     ENTRY_ID_DATE = 277,
+     ENTRY_ID_MEK = 278,
+     ENTRY_ID_VID = 279,
+     ENTRY_ID_BN = 280,
+     ENTRY_ID_VUK = 281,
+     ENTRY_ID_PAK = 282,
+     ENTRY_ID_TK = 283,
+     ENTRY_ID_UK = 284,
+     NEWLINE = 285,
+     BAD_ENTRY = 286
    };
 #endif
 /* Tokens.  */
@@ -72,26 +76,30 @@
 #define DIGIT 260
 #define KEYWORD_BEGIN 261
 #define KEYWORD_END 262
-#define KEYWORD_PK_LIST 263
-#define KEYWORD_HOST_CERT_LIST 264
-#define KEYWORD_HOST_CERT_ENTRY 265
-#define KEYWORD_HOST_PRIV_KEY 266
-#define KEYWORD_HOST_CERT 267
-#define KEYWORD_HOST_NONCE 268
-#define KEYWORD_HOST_KEY_POINT 269
-#define PUNCT_EQUALS_SIGN 270
-#define PUNCT_VERTICAL_BAR 271
-#define PUNCT_HYPHEN 272
-#define ENTRY_ID_DATE 273
-#define ENTRY_ID_MEK 274
-#define ENTRY_ID_VID 275
-#define ENTRY_ID_BN 276
-#define ENTRY_ID_VUK 277
-#define ENTRY_ID_PAK 278
-#define ENTRY_ID_TK 279
-#define ENTRY_ID_UK 280
-#define NEWLINE 281
-#define BAD_ENTRY 282
+#define KEYWORD_DK_LIST 263
+#define KEYWORD_DK_ENTRY 264
+#define KEYWORD_DEVICE_KEY 265
+#define KEYWORD_DEVICE_NODE 266
+#define KEYWORD_PK_LIST 267
+#define KEYWORD_HOST_CERT_LIST 268
+#define KEYWORD_HOST_CERT_ENTRY 269
+#define KEYWORD_HOST_PRIV_KEY 270
+#define KEYWORD_HOST_CERT 271
+#define KEYWORD_HOST_NONCE 272
+#define KEYWORD_HOST_KEY_POINT 273
+#define PUNCT_EQUALS_SIGN 274
+#define PUNCT_VERTICAL_BAR 275
+#define PUNCT_HYPHEN 276
+#define ENTRY_ID_DATE 277
+#define ENTRY_ID_MEK 278
+#define ENTRY_ID_VID 279
+#define ENTRY_ID_BN 280
+#define ENTRY_ID_VUK 281
+#define ENTRY_ID_PAK 282
+#define ENTRY_ID_TK 283
+#define ENTRY_ID_UK 284
+#define NEWLINE 285
+#define BAD_ENTRY 286
 
 
 
@@ -101,7 +109,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 102 "keydbcfg-parser.y"
+#line 106 "keydbcfg-parser.y"
 
   char *string;
   unsigned int digit;
@@ -109,7 +117,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 113 "keydbcfg-parser.h"
+#line 121 "keydbcfg-parser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

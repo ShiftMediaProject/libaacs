@@ -133,6 +133,21 @@ static int print_cert_list(cert_list *list)
 /* Function to print config file */
 static int print_config_file(config_file *cfgfile)
 {
+  printf("Available device keys:\n");
+  dk_list *dkcursor = cfgfile->dkl;
+  while (dkcursor)
+  {
+    if (!dkcursor->key)
+      break;
+
+    printf("  Device key: %s\n", dkcursor->key);
+    printf("  Device node: %lu\n", dkcursor->node);
+
+    dkcursor = dkcursor->next;
+  }
+  printf("\n");
+
+
   printf("Available processing keys:\n");
 
   pk_list *cursor = cfgfile->pkl;
@@ -145,7 +160,6 @@ static int print_config_file(config_file *cfgfile)
 
     cursor = cursor->next;
   }
-
   printf("\n");
 
   int status1 = print_cert_list(cfgfile->host_cert_list);
