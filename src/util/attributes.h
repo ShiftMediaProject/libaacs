@@ -1,6 +1,6 @@
 /*
- * This file is part of libbluray
- * Copyright (C) 2010  hpi1
+ * This file is part of libaacs
+ * Copyright (C) 2009-2010  Obliter0n
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,22 +20,23 @@
 #ifndef LIBBLURAY_ATTRIBUTES_H_
 #define LIBBLURAY_ATTRIBUTES_H_
 
-#if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3 )
-#  define BD_ATTR_FORMAT_PRINTF(format,var) __attribute__((__format__(__printf__,format,var)))
-#  define BD_ATTR_MALLOC                    __attribute__((__malloc__))
-#  define BD_ATTR_PACKED                    __attribute__((packed))
+#if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3 ))
+#    define BD_ATTR_FORMAT_PRINTF(format,var) \
+            __attribute__((__format__(__printf__,format,var)))
+#    define BD_ATTR_MALLOC __attribute__((__malloc__))
+#    define BD_ATTR_PACKED __attribute__((packed))
 #else
-#  define BD_ATTR_FORMAT_PRINTF(format,var)
-#  define BD_ATTR_MALLOC
-#  define BD_ATTR_PACKED
+#    define BD_ATTR_FORMAT_PRINTF(format,var)
+#    define BD_ATTR_MALLOC
+#    define BD_ATTR_PACKED
 #endif
 
-#if __GNUC__ >= 4
-#  define BD_PUBLIC  __attribute__((visibility("default")))
-#  define BD_PRIVATE __attribute__((visibility("hidden")))
+#if defined(__GNUC__) && __GNUC__ >= 4
+#    define AACS_PUBLIC  __attribute__((visibility("default")))
+#    define AACS_PRIVATE __attribute__((visibility("hidden")))
 #else
-#  define BD_PUBLIC
-#  define BD_PRIVATE
+#    define AACS_PUBLIC
+#    define AACS_PRIVATE
 #endif
 
 #endif /* LIBBLURAY_ATTRIBUTES_H_ */

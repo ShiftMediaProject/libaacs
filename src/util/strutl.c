@@ -1,6 +1,6 @@
 /*
  * This file is part of libbluray
- * Copyright (C) 2009-2010  John Stebbins
+ * Copyright (C) 2009-2010  gates
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,43 +18,139 @@
  */
 
 #include "strutl.h"
+#include "logging.h"
 
+#include <string.h>
 #include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
 
-char * str_printf(const char *fmt, ...)
+/* Function to assigns proper hex value of character to uint8_t pointer */
+static int _hexstring_to_unsigned_char(uint8_t *value, char c)
 {
-    /* Guess we need no more than 100 bytes. */
-    int len;
-    va_list ap;
-    int size = 100;
-    char *tmp, *str = NULL;
+    *value = 0;
 
-    str = malloc(size);
-    while (1) 
+    switch (c)
     {
-        /* Try to print in the allocated space. */
-        va_start(ap, fmt);
-        len = vsnprintf(str, size, fmt, ap);
-        va_end(ap);
+      case '0':
+        break;
 
-        /* If that worked, return the string. */
-        if (len > -1 && len < size) {
-            return str;
-        }
+      case '1':
+        *value = 1;
+        break;
 
-        /* Else try again with more space. */
-        if (len > -1)    /* glibc 2.1 */
-            size = len+1; /* precisely what is needed */
-        else           /* glibc 2.0 */
-            size *= 2;  /* twice the old size */
+      case '2':
+        *value = 2;
+        break;
 
-        tmp = realloc(str, size);
-        if (tmp == NULL) {
-            return str;
-        }
-        str = tmp;
+      case '3':
+        *value = 3;
+        break;
+
+      case '4':
+        *value = 4;
+        break;
+
+      case '5':
+        *value = 5;
+        break;
+
+      case '6':
+        *value = 6;
+        break;
+
+      case '7':
+        *value = 7;
+        break;
+
+      case '8':
+        *value = 8;
+        break;
+
+      case '9':
+        *value = 9;
+        break;
+
+      case 'a':
+      case 'A':
+        *value = 10;
+        break;
+
+      case 'b':
+      case 'B':
+        *value = 11;
+        break;
+
+      case 'c':
+      case 'C':
+        *value = 12;
+        break;
+
+      case 'd':
+      case 'D':
+        *value = 13;
+        break;
+
+      case 'e':
+      case 'E':
+        *value = 14;
+        break;
+
+      case 'f':
+      case 'F':
+        *value = 15;
+        break;
+
+      default:
+        DEBUG(DBG_AACS, "Invalid hex value '%c'", c);
+        return 0;
     }
+
+    return 1;
+}
+
+/* Function used to convert hex string into an equivalent hex array of
+ * unsigned characters
+ */
+int hexstring_to_hex_array(uint8_t *hex_array, uint32_t size,
+                                  const char *hexstring)
+{
+  if (strlen(hexstring) > size * 2)
+  {
+    DEBUG(DBG_AACS,
+          "hex array is not sufficiently large enough to hold value "
+          "of hex string");
+    return 0;
+  }
+
+  unsigned int i = 0;
+  while (i < size)
+  {
+    uint8_t tmp1 = 0, tmp2 = 0;
+    if (!(_hexstring_to_unsigned_char(&tmp1, hexstring[(i*2)])) ||
+      !(_hexstring_to_unsigned_char(&tmp2, hexstring[(i*2)+1])))
+      return 0;
+
+    hex_array[i] = tmp1 * 16;
+    hex_array[i] += tmp2;
+
+    i++;
+  }
+
+  return 1;
+}
+
+/* Function to convert a hex array into a hex string.
+ * str must be allocated by caller
+ * size is the size of the hex_array
+ */
+int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size)
+{
+  unsigned int i;
+
+  for (i = 0; i < size; i++)
+  {
+    sprintf(str + (i*2), "%02x", hex_array[i]);
+  }
+
+  return 1;
 }
 

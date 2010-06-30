@@ -1,6 +1,6 @@
 /*
  * This file is part of libbluray
- * Copyright (C) 2009-2010  John Stebbins
+ * Copyright (C) 2009-2010  gates
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,11 @@
 #define STRUTL_H_
 
 #include "attributes.h"
- 
-char * str_printf(const char *fmt, ...) BD_ATTR_FORMAT_PRINTF(1,2) BD_ATTR_MALLOC;
+
+#include <stdint.h>
+
+int hexstring_to_hex_array(uint8_t *hex_array, uint32_t size,
+                           const char *hexstring) AACS_PRIVATE;
+int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size) AACS_PRIVATE;
 
 #endif // STRUTL_H_

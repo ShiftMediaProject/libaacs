@@ -1,7 +1,6 @@
 /*
- * This file is part of libbluray
+ * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
- * Copyright (C) 2009-2010  John Stebbins
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,7 +24,7 @@
 
 #include <stdint.h>
 
-#define DEBUG(X,Y,...) bd_debug(__FILE__,__LINE__,X,Y,##__VA_ARGS__)
+#define DEBUG(X,Y,...) aacs_debug(__FILE__,__LINE__,X,Y,##__VA_ARGS__)
 
 enum debug_mask_enum {
     DBG_RESERVED = 1,
@@ -39,16 +38,16 @@ enum debug_mask_enum {
     DBG_NAV = 256,
     DBG_BDPLUS = 512,
     DBG_DLX = 1024,
-    DBG_CRIT = 2048,         // this is libbluray's default debug mask so use this if you want to display critical info
+    DBG_CRIT = 2048, // this is the default debug mask so use this if you want to
+                     // display critical info
     DBG_HDMV = 4096,
 };
 
 typedef enum debug_mask_enum debug_mask_t;
 
-char *print_hex(char *out, const uint8_t *str, int count);
-void bd_debug(const char *file, int line, uint32_t mask, const char *format, ...) BD_ATTR_FORMAT_PRINTF(4,5);
-
-void bd_set_debug_mask(debug_mask_t mask);
-debug_mask_t bd_get_debug_mask(void);
+char *print_hex(char *out, const uint8_t *str, int count) AACS_PRIVATE;
+void aacs_debug(const char *file, int line, uint32_t mask, const char *format, ...)
+  BD_ATTR_FORMAT_PRINTF(4,5)
+  AACS_PRIVATE;
 
 #endif /* LOGGING_H_ */

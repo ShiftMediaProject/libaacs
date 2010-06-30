@@ -1,7 +1,6 @@
 /*
- * This file is part of libbluray
+ * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
- * Copyright (C) 2009-2010  John Stebbins
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +19,8 @@
 
 #ifndef FILE_H_
 #define FILE_H_
+
+#include <util/attributes.h>
 
 #include <stdint.h>
 
@@ -44,9 +45,9 @@ struct file
     int64_t (*tell)(FILE_H *file);
     int (*eof)(FILE_H *file);
     int (*read)(FILE_H *file, uint8_t *buf, int64_t size);
-    int (*write)(FILE_H *file, uint8_t *buf, int64_t size);
+    int (*write)(FILE_H *file, const uint8_t *buf, int64_t size);
 };
 
-FILE_H *file_open_linux(const char* filename, const char *mode);
+AACS_PRIVATE FILE_H *file_open_linux(const char* filename, const char *mode);
 
 #endif /* FILE_H_ */

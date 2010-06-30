@@ -1,23 +1,16 @@
 # initilization
-AC_INIT([libbluray],[0.1], [http://bd.videolan.org/])
+AC_INIT([libaacs],[0.1], [http://bd.videolan.org/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
 AM_CONFIG_HEADER(config.h)
+AM_MAINTAINER_MODE
 
 # messages
 library_not_found="Could not find required library!"
 function_not_found="Could not find required function!"
-using_dlopen="Using libaacs and libbdplus via dlopen."
-using_normal_linking="Using libaacs and libbdplus via normal linking."
 
 # configure options
-AC_ARG_WITH([dlopen],
-  [AS_HELP_STRING([--with-dlopen],
-  [use libaacs and libbdplus via dlopen (default is auto)])],
-  [use_dlopen=$withval],
-  [use_dlopen=auto])
-
 AC_ARG_ENABLE([werror],
   [AS_HELP_STRING([--enable-werror],
   [set warnings as errors via -Werror (default is no)])],
@@ -45,6 +38,8 @@ AC_ARG_ENABLE([debug],
 # required programs
 AC_PROG_CC
 AC_PROG_LIBTOOL
+AM_PROG_LEX
+AC_PROG_YACC
 
 # required types
 AC_TYPE_SIGNAL
@@ -63,26 +58,9 @@ AC_SYS_LARGEFILE
 # required functions
 AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
-# dlopen check
-if [[ $use_dlopen = "auto" ]]; then
-  AC_CHECK_LIB([dl], [dlopen],
-    [DLOPEN_LDFLAGS="-ldl"; AC_MSG_NOTICE($using_dlopen)
-     AC_DEFINE([USING_DLOPEN], [1], ["Define to 1 if using dlopen"])],
-    [use_dlopen="no"; AC_MSG_NOTICE($using_normal_linking)])
-elif [[ $use_dlopen = "yes" ]]; then
-  AC_CHECK_LIB([dl], [dlopen],
-    [DLOPEN_LDFLAGS="-ldl"; AC_MSG_NOTICE($using_dlopen)
-     AC_DEFINE([USING_DLOPEN], [1], ["Define to 1 if using dlopen"])],
-    [AC_MSG_ERROR($library_not_found)])
-else
-  AC_CHECK_LIB([aacs], [aacs_open],,
-    [AC_MSG_ERROR($library_not_found)])
-  AC_CHECK_LIB([bdplus], [bdplus_init],,
-    [AC_MSG_ERROR($library_not_found)])
-  AC_MSG_NOTICE($using_normal_linking)
-fi
-AM_CONDITIONAL([USING_DLOPEN],
-  [test $use_dlopen = "auto" || test $use_dlopen = "yes"])
+# gcrypt check
+AC_CHECK_LIB([gcrypt], [gcry_check_version],,
+  [AC_MSG_ERROR($library_not_found)])
 
 # function testing for supported compiler options
 check_cc_options()
@@ -151,9 +129,8 @@ if [[ $use_debug = "yes" ]]; then
 fi
 
 # generate output files
-AC_SUBST(DLOPEN_LDFLAGS)
 AC_SUBST(SET_WARNINGS)
 AC_SUBST(SET_OPTIMIZATIONS)
 AC_SUBST(SET_DEBUG_OPTS)
-AC_CONFIG_FILES([Makefile src/Makefile src/examples/Makefile src/libbluray.pc])
+AC_CONFIG_FILES([Makefile src/Makefile src/examples/Makefile src/libaacs.pc])
 AC_OUTPUT

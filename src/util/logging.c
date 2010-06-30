@@ -1,7 +1,6 @@
 /*
- * This file is part of libbluray
+ * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
- * Copyright (C) 2009-2010  John Stebbins
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,18 +24,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-static debug_mask_t debug_mask = DBG_CRIT;
-
-
-void bd_set_debug_mask(debug_mask_t mask)
-{
-    debug_mask = mask;
-}
-
-debug_mask_t bd_get_debug_mask(void)
-{
-    return debug_mask;
-}
+static debug_mask_t debug_mask AACS_PRIVATE = DBG_CRIT;
 
 char *print_hex(char *out, const uint8_t *buf, int count)
 {
@@ -48,10 +36,10 @@ char *print_hex(char *out, const uint8_t *buf, int count)
     return out;
 }
 
-void bd_debug(const char *file, int line, uint32_t mask, const char *format, ...)
+void aacs_debug(const char *file, int line, uint32_t mask, const char *format, ...)
 {
-    static int   debug_init = 0;
-    static FILE *logfile    = NULL;
+    static int debug_init = 0;
+    static FILE *logfile = NULL;
 
     // Only call getenv() once.
     if (!debug_init) {
