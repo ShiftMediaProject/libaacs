@@ -110,8 +110,8 @@ struct config_file_t
 };
 
 /* Functions used throughout the parser */
-int keydbcfg_parse_config(config_file *cfgfile, const char *path) AACS_PRIVATE;
-config_file *keydbcfg_new_config_file() AACS_PRIVATE;
-int keydbcfg_config_file_close(config_file *cfgfile) AACS_PRIVATE;
+AACS_PRIVATE int keydbcfg_parse_config(config_file *cfgfile, const char *path);
+AACS_PRIVATE config_file *keydbcfg_new_config_file();
+AACS_PRIVATE int keydbcfg_config_file_close(config_file *cfgfile);
 
 #endif
