@@ -433,46 +433,38 @@ static uint32_t _find_config_entry(AACS *aacs, const char *path)
 }
 
 #define ALIGNED_UNIT_LEN 6144
-static int _decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t curr_uk)
+static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, uint32_t curr_uk)
 {
     gcry_cipher_hd_t gcry_h;
-    uint8_t *tmp_buf = malloc(ALIGNED_UNIT_LEN);
-
-    memcpy(tmp_buf, buf, ALIGNED_UNIT_LEN);
-
     int a;
     uint8_t key[16], iv[] = "\x0b\xa0\xf8\xdd\xfe\xa6\x1f\xb3"
                             "\xd8\xdf\x9f\x56\x6a\x05\x0f\x78";
 
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
     gcry_cipher_setkey(gcry_h, aacs->uks + curr_uk * 16, 16);
-    gcry_cipher_encrypt(gcry_h, key, 16, tmp_buf, 16);
+    gcry_cipher_encrypt(gcry_h, key, 16, in_buf, 16);
     gcry_cipher_close(gcry_h);
 
     for (a = 0; a < 16; a++) {
-        key[a] ^= tmp_buf[a];
+        key[a] ^= in_buf[a];
     }
+
+    memcpy(out_buf, in_buf, 16); /* first 16 bytes are plain */
 
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
     gcry_cipher_setkey(gcry_h, key, 16);
     gcry_cipher_setiv(gcry_h, iv, 16);
-    gcry_cipher_decrypt(gcry_h, tmp_buf + 16, ALIGNED_UNIT_LEN - 16, tmp_buf + 16, ALIGNED_UNIT_LEN - 16);
+    gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
     gcry_cipher_close(gcry_h);
 
-    if (_verify_ts(tmp_buf, ALIGNED_UNIT_LEN)) {
-        DEBUG(DBG_AACS, "Decrypted aligned unit [6144 bytes] (%p)\n", aacs);
-
-        memcpy(buf, tmp_buf, ALIGNED_UNIT_LEN);
-
-        X_FREE(tmp_buf);
+    if (_verify_ts(out_buf, ALIGNED_UNIT_LEN)) {
+        DEBUG(DBG_AACS, "Decrypted unit [6144 bytes] (%p)\n", aacs);
 
         return 1;
     }
 
-    X_FREE(tmp_buf);
-
     if (curr_uk < aacs->num_uks - 1) {
-        return _decrypt_unit(aacs, buf, curr_uk++);
+        return _decrypt_unit(aacs, out_buf, in_buf, curr_uk++);
     }
 
     return 0;
@@ -565,16 +557,23 @@ void aacs_close(AACS *aacs)
 
 int aacs_decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset)
 {
-    if (len != 6144) {
+    uint8_t out_buf[ALIGNED_UNIT_LEN];
+
+    if (len != ALIGNED_UNIT_LEN) {
         DEBUG(DBG_AACS, "aacs_decrypt_unit(): len != 6144 ! (%p)\n", aacs);
         return 0;
     }
-    if (offset % 6144) {
+    if (offset % ALIGNED_UNIT_LEN) {
         DEBUG(DBG_AACS, "aacs_decrypt_unit(): offset inside block ! (%p)\n", aacs);
         return 0;
     }
 
-    return _decrypt_unit(aacs, buf, 0);
+    if (_decrypt_unit(aacs, out_buf, buf, 0)) {
+        memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
+        return 1;
+    }
+
+    return 0;
 }
 
 uint8_t *aacs_get_vid(AACS *aacs)
