@@ -458,8 +458,6 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
     gcry_cipher_close(gcry_h);
 
     if (_verify_ts(out_buf, ALIGNED_UNIT_LEN)) {
-        DEBUG(DBG_AACS, "Decrypted unit [6144 bytes] (%p)\n", aacs);
-
         return 1;
     }
 
@@ -572,6 +570,8 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset)
         memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
         return 1;
     }
+
+    DEBUG(DBG_AACS, "Failed decrypting unit [6144 bytes] at %"PRIu64" (%p)\n", offset, aacs);
 
     return 0;
 }
