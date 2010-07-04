@@ -47,18 +47,16 @@ HEXSTRING               (0[Xx][0-9a-fA-F]+)
 DISC_TITLE              ([^\n|\\]*)
 DIGIT                   ([0-9]+)
 
-KEYWORD_BEGIN           ([Bb][Ee][Gg][Ii][Nn][ \t]+)
-KEYWORD_END             ([Ee][Nn][Dd][ \t]+)
-KEYWORD_DK_ENTRY        ([Dd][Kk]_[Ee][Nn][Tt][Rr][Yy])
 KEYWORD_DEVICE_KEY      ([Dd][Ee][Vv][Ii][Cc][Ee]_[Kk][Ee][Yy])
 KEYWORD_DEVICE_NODE     ([Dd][Ee][Vv][Ii][Cc][Ee]_[Nn][Oo][Dd][Ee])
-KEYWORD_PROCESSING_KEY  ([Pp][Rr][Oo][Cc][Ee][Ss][Ss][Ii][Nn][Gg]_[Kk][Ee][Yy][ \t]+)
-KEYWORD_HOST_CERT_ENTRY ([Hh][Oo][Ss][Tt]_[Cc][Ee][Rr][Tt]_[Ee][Nn][Tt][Rr][Yy])
 KEYWORD_HOST_PRIV_KEY   ([Hh][Oo][Ss][Tt]_[Pp][Rr][Ii][Vv]_[Kk][Ee][Yy][ \t]+)
 KEYWORD_HOST_CERT       ([Hh][Oo][Ss][Tt]_[Cc][Ee][Rr][Tt][ \t]+)
 KEYWORD_HOST_NONCE      ([Hh][Oo][Ss][Tt]_[Nn][Oo][Nn][Cc][Ee][ \t]+)
 KEYWORD_HOST_KEY_POINT  ([Hh][Oo][Ss][Tt]_[Kk][Ee][Yy]_[Pp][Oo][Ii][Nn][Tt][ \t]+)
 
+ENTRY_ID_DK             (\|[\t ]*[Dd][Kk][\t ]*\|)
+ENTRY_ID_PK             (\|[\t ]*[Pp][Kk][\t ]*\|)
+ENTRY_ID_HC             (\|[\t ]*[Hh][Cc][\t ]*\|)
 ENTRY_ID_DATE           (\|[\t ]*[Dd][\t ]*\|)
 ENTRY_ID_MEK            (\|[\t ]*[Mm][\t ]*\|)
 ENTRY_ID_VID            (\|[\t ]*[Ii][\t ]*\|)
@@ -101,18 +99,16 @@ BAD_ENTRY               ([^\n])
                             return DIGIT;
                           }
 
-{KEYWORD_BEGIN}           { return KEYWORD_BEGIN; }
-{KEYWORD_END}             { return KEYWORD_END; }
-{KEYWORD_DK_ENTRY}        { return KEYWORD_DK_ENTRY; }
 {KEYWORD_DEVICE_KEY}      { return KEYWORD_DEVICE_KEY; }
 {KEYWORD_DEVICE_NODE}     { return KEYWORD_DEVICE_NODE; }
-{KEYWORD_PROCESSING_KEY}  { return KEYWORD_PROCESSING_KEY; }
-{KEYWORD_HOST_CERT_ENTRY} { return KEYWORD_HOST_CERT_ENTRY; }
 {KEYWORD_HOST_PRIV_KEY}   { return KEYWORD_HOST_PRIV_KEY; }
 {KEYWORD_HOST_CERT}       { return KEYWORD_HOST_CERT; }
 {KEYWORD_HOST_NONCE}      { return KEYWORD_HOST_NONCE; }
 {KEYWORD_HOST_KEY_POINT}  { return KEYWORD_HOST_KEY_POINT; }
 
+{ENTRY_ID_DK}             { return ENTRY_ID_DK; }
+{ENTRY_ID_PK}             { return ENTRY_ID_PK; }
+{ENTRY_ID_HC}             { return ENTRY_ID_HC; }
 {ENTRY_ID_DATE}           { return ENTRY_ID_DATE; }
 {ENTRY_ID_MEK}            { return ENTRY_ID_MEK; }
 {ENTRY_ID_VID}            { return ENTRY_ID_VID; }

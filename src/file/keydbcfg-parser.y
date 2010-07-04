@@ -47,7 +47,7 @@
   }                                      \
 } while (0);
 
-/* enum used in certain functions to add proper entry */
+/* enum used in certain functions to add proper title entry */
 enum
 {
   ENTRY_TYPE_DISCID,
@@ -112,13 +112,8 @@ extern int yyget_lineno  (void *scanner);
 %token <string> DISC_TITLE
 %token <digit> DIGIT
 
-%token KEYWORD_BEGIN
-%token KEYWORD_END
-%token KEYWORD_DK_ENTRY
 %token KEYWORD_DEVICE_KEY
 %token KEYWORD_DEVICE_NODE
-%token KEYWORD_PROCESSING_KEY
-%token KEYWORD_HOST_CERT_ENTRY
 %token KEYWORD_HOST_PRIV_KEY
 %token KEYWORD_HOST_CERT
 %token KEYWORD_HOST_NONCE
@@ -128,6 +123,9 @@ extern int yyget_lineno  (void *scanner);
 %token PUNCT_VERTICAL_BAR
 %token PUNCT_HYPHEN
 
+%token ENTRY_ID_DK
+%token ENTRY_ID_PK
+%token ENTRY_ID_HC
 %token ENTRY_ID_DATE
 %token ENTRY_ID_MEK
 %token ENTRY_ID_VID
@@ -157,9 +155,9 @@ config_entry_list
   ;
 
 config_entry
-  : dk_entry_block
+  : dk_entry
   | pk_entry
-  | host_cert_entry_block
+  | host_cert_entry
   | title_entry
   | error NEWLINE
     {
@@ -169,98 +167,66 @@ config_entry
     }
   ;
 
-dk_entry_block
-  : dk_entry_start dk_entry dk_entry_end
-  ;
-
-dk_entry_start
-  : newline_list KEYWORD_BEGIN KEYWORD_DK_ENTRY NEWLINE
-  | KEYWORD_BEGIN KEYWORD_DK_ENTRY NEWLINE
-  ;
-
-dk_entry_end
-  : newline_list KEYWORD_END KEYWORD_DK_ENTRY NEWLINE
-  | KEYWORD_END KEYWORD_DK_ENTRY NEWLINE
-  ;
-
 dk_entry
-  : device_key device_node
+  : newline_list ENTRY_ID_DK device_key PUNCT_VERTICAL_BAR device_node NEWLINE
     {
-      dklist = add_dk_list_entry(dklist, $1, $2);
+      dklist = add_dk_list_entry(dklist, $3, $5);
+    }
+  | ENTRY_ID_DK device_key PUNCT_VERTICAL_BAR device_node NEWLINE
+    {
+      dklist = add_dk_list_entry(dklist, $2, $4);
     }
   ;
 
 device_key
-  : newline_list KEYWORD_DEVICE_KEY hexstring_list NEWLINE
-    { $$ = $3; }
-  | KEYWORD_DEVICE_KEY hexstring_list NEWLINE
+  : KEYWORD_DEVICE_KEY hexstring_list
     { $$ = $2; }
   ;
 
 device_node
-  : newline_list KEYWORD_DEVICE_NODE hexstring_list NEWLINE
-    { $$ = $3; }
-  | KEYWORD_DEVICE_NODE hexstring_list NEWLINE
+  : KEYWORD_DEVICE_NODE hexstring_list
     { $$ = $2; }
   ;
 
 pk_entry
-  : newline_list KEYWORD_PROCESSING_KEY hexstring_list NEWLINE
+  : newline_list ENTRY_ID_PK hexstring_list NEWLINE
     {
       pklist = add_pk_list_entry(pklist, $3);
     }
-  | KEYWORD_PROCESSING_KEY hexstring_list NEWLINE
+  | ENTRY_ID_PK hexstring_list NEWLINE
     {
       pklist = add_pk_list_entry(pklist, $2);
     }
   ;
 
-host_cert_entry_block
-  : host_cert_entry_start host_cert_entry host_cert_entry_end
-  ;
-
-host_cert_entry_start
-  : newline_list KEYWORD_BEGIN KEYWORD_HOST_CERT_ENTRY NEWLINE
-  | KEYWORD_BEGIN KEYWORD_HOST_CERT_ENTRY NEWLINE
-  ;
-
-host_cert_entry_end
-  : newline_list KEYWORD_END KEYWORD_HOST_CERT_ENTRY NEWLINE
-  | KEYWORD_END KEYWORD_HOST_CERT_ENTRY NEWLINE
-  ;
-
 host_cert_entry
-  : host_priv_key host_cert host_nonce host_key_point
+  : newline_list ENTRY_ID_HC host_priv_key PUNCT_VERTICAL_BAR host_cert PUNCT_VERTICAL_BAR host_nonce PUNCT_VERTICAL_BAR host_key_point NEWLINE
     {
-      clist = add_cert_list(clist, $1, $2, $3, $4);
+      clist = add_cert_list(clist, $3, $5, $7, $9);
+    }
+  | ENTRY_ID_HC host_priv_key PUNCT_VERTICAL_BAR host_cert PUNCT_VERTICAL_BAR host_nonce PUNCT_VERTICAL_BAR host_key_point NEWLINE
+    {
+      clist = add_cert_list(clist, $2, $4, $6, $8);
     }
   ;
 
 host_priv_key
-  : newline_list KEYWORD_HOST_PRIV_KEY hexstring_list NEWLINE
-    { $$ = $3; }
-  | KEYWORD_HOST_PRIV_KEY hexstring_list NEWLINE
+  : KEYWORD_HOST_PRIV_KEY hexstring_list
     { $$ = $2; }
   ;
 
 host_cert
-  : newline_list KEYWORD_HOST_CERT hexstring_list NEWLINE
-    { $$ = $3; }
-  | KEYWORD_HOST_CERT hexstring_list NEWLINE
+  : KEYWORD_HOST_CERT hexstring_list
     { $$ = $2; }
   ;
 
 host_nonce
-  : newline_list KEYWORD_HOST_NONCE hexstring_list NEWLINE
-    { $$ = $3; }
-  | KEYWORD_HOST_NONCE hexstring_list NEWLINE
+  : KEYWORD_HOST_NONCE hexstring_list
     { $$ = $2; }
   ;
 
 host_key_point
-  : newline_list KEYWORD_HOST_KEY_POINT hexstring_list NEWLINE
-    { $$ = $3; }
-  | KEYWORD_HOST_KEY_POINT hexstring_list NEWLINE
+  : KEYWORD_HOST_KEY_POINT hexstring_list
     { $$ = $2; }
   ;
 
