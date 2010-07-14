@@ -39,6 +39,10 @@ struct aacs {
     uint32_t num_uks;
     struct config_file_t *cf;
     struct title_entry_list_t *ce;
+
+    uint32_t num_titles;
+    uint16_t current_cps_unit;
+    uint16_t *cps_units;  /* [0] = first play ; [1] = top menu ; [2] = title 1 ... */
 };
 
 static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -209,6 +213,55 @@ static int _calc_vuk(AACS *aacs, const char *path)
     return 0;
 }
 
+static uint16_t _read_u16(AACS_FILE_H *fp)
+{
+  uint8_t data[2];
+
+  file_read(fp, data, sizeof(uint16_t));
+
+  return MKINT_BE16(data);
+}
+
+static void _read_uks_map(AACS *aacs, AACS_FILE_H *fp)
+{
+    uint16_t first_play, top_menu;
+    unsigned i;
+
+    DEBUG(DBG_AACS, "Assigning CPS units to titles ...\n");
+
+    X_FREE(aacs->cps_units);
+    aacs->current_cps_unit = 0;
+
+    file_seek(fp, 16 + 4, SEEK_SET);
+
+    first_play = _read_u16(fp);
+    top_menu   = _read_u16(fp);
+
+    DEBUG(DBG_AACS, "Title FP : CPS unit %d\n", first_play);
+    DEBUG(DBG_AACS, "Title TM : CPS unit %d\n", top_menu);
+
+    aacs->num_titles   = _read_u16(fp);
+    aacs->cps_units    = calloc(sizeof(uint16_t), aacs->num_titles + 2);
+    aacs->cps_units[0] = first_play;
+    aacs->cps_units[1] = top_menu;
+
+    for (i = 2; i < aacs->num_titles + 2; i++) {
+        _read_u16(fp); /* reserved */
+        aacs->cps_units[i] = _read_u16(fp);
+        DEBUG(DBG_AACS, "Title %02d : CPS unit %d\n", i - 1, aacs->cps_units[i]);
+    }
+
+    /* validate */
+    for (i = 0; i < aacs->num_titles + 2; i++) {
+        if (aacs->cps_units[i])
+            aacs->cps_units[i]--; /* number [1...N] --> index [0...N-1] */
+        if (aacs->cps_units[i] >= aacs->num_uks) {
+            DEBUG(DBG_AACS, " *** Invalid CPS unit for title %d: %d !\n", (int) i - 1, aacs->cps_units[i]);
+            aacs->cps_units[i] = 0;
+        }
+    }
+}
+
 static int _calc_uks(AACS *aacs, const char *path)
 {
     AACS_FILE_H *fp = NULL;
@@ -272,6 +325,8 @@ static int _calc_uks(AACS *aacs, const char *path)
                 DEBUG(DBG_AACS, "Unit key %d: %s\n", i,
                       print_hex(str, aacs->uks + 16*i, 16));
             }
+
+            _read_uks_map(aacs, fp);
 
             file_close(fp);
 
@@ -578,6 +633,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 void aacs_close(AACS *aacs)
 {
     X_FREE(aacs->uks);
+    X_FREE(aacs->cps_units);
 
     DEBUG(DBG_AACS, "AACS destroyed! (%p)\n", aacs);
 
@@ -593,7 +649,7 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
         return 1;
     }
 
-    if (_decrypt_unit(aacs, out_buf, buf, 0)) {
+    if (_decrypt_unit(aacs, out_buf, buf, aacs->current_cps_unit)) {
         memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
 
         // Clear copy_permission_indicator bits
@@ -613,4 +669,31 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
 uint8_t *aacs_get_vid(AACS *aacs)
 {
     return aacs->vid;
+}
+
+void aacs_select_title(AACS *aacs, uint32_t title)
+{
+    if (!aacs) {
+        return;
+    }
+
+    if (!aacs->cps_units) {
+        DEBUG(DBG_AACS|DBG_CRIT, "aacs_select_title(): CPS units not read ! (%p)\n", aacs);
+        return;
+    }
+
+    if (title == 0xffff) {
+        /* first play */
+        aacs->current_cps_unit = aacs->cps_units[0];
+        DEBUG(DBG_AACS, "aacs_set_title(first_play): CPS unit %d (%p)\n", aacs->current_cps_unit, aacs);
+        return;
+    }
+
+    if (title <= aacs->num_titles) {
+        aacs->current_cps_unit = aacs->cps_units[title + 1];
+        DEBUG(DBG_AACS, "aacs_set_title(%d): CPS unit %d (%p)\n", title, aacs->current_cps_unit, aacs);
+        return;
+    }
+
+    DEBUG(DBG_AACS|DBG_CRIT, "aacs_set_title(%d): invalid title ! (%p)\n", title, aacs);
 }
