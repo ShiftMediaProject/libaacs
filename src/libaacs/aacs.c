@@ -556,25 +556,16 @@ void aacs_close(AACS *aacs)
     X_FREE(aacs);
 }
 
-int aacs_decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset)
+int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
 {
     uint8_t out_buf[ALIGNED_UNIT_LEN];
-
-    if (len != ALIGNED_UNIT_LEN) {
-        DEBUG(DBG_AACS, "aacs_decrypt_unit(): len != 6144 ! (%p)\n", aacs);
-        return 0;
-    }
-    if (offset % ALIGNED_UNIT_LEN) {
-        DEBUG(DBG_AACS, "aacs_decrypt_unit(): offset inside block ! (%p)\n", aacs);
-        return 0;
-    }
 
     if (_decrypt_unit(aacs, out_buf, buf, 0)) {
         memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
         return 1;
     }
 
-    DEBUG(DBG_AACS, "Failed decrypting unit [6144 bytes] at %"PRIu64" (%p)\n", offset, aacs);
+    DEBUG(DBG_AACS, "Failed decrypting unit [6144 bytes] (%p)\n", aacs);
 
     return 0;
 }

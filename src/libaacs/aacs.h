@@ -30,7 +30,7 @@ typedef struct aacs AACS;
 
 AACS_PUBLIC AACS *aacs_open(const char *path, const char *keyfile_path);
 AACS_PUBLIC void aacs_close(AACS *aacs);
-AACS_PUBLIC int  aacs_decrypt_unit(AACS *aacs, uint8_t *buf, uint32_t len, uint64_t offset);
+AACS_PUBLIC int  aacs_decrypt_unit(AACS *aacs, uint8_t *buf);
 AACS_PUBLIC uint8_t *aacs_get_vid(AACS *aacs);
 
 #endif /* AACS_H_ */
