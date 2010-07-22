@@ -560,8 +560,20 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
 {
     uint8_t out_buf[ALIGNED_UNIT_LEN];
 
+    if (!(buf[0] & 0xc0)) {
+        // TP_extra_header Copy_permission_indicator == 0, unit is not encrypted
+        return 1;
+    }
+
     if (_decrypt_unit(aacs, out_buf, buf, 0)) {
         memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
+
+        // Clear copy_permission_indicator bits
+        int i;
+        for (i = 0; i < 6144; i += 192) {
+            buf[i] &= ~0xc0;
+        }
+
         return 1;
     }
 
