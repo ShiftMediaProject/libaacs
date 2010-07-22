@@ -481,6 +481,36 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
     return 0;
 }
 
+static char *_find_cfg_file(void)
+{
+    static const char cfg_file_user[]   = "/.libaacs/KEYDB.cfg";
+    static const char cfg_file_system[] = "/etc/libaacs/KEYDB.cfg";
+
+    const char *userhome = getenv("HOME");
+    char *cfg_file;
+
+    cfg_file = (char*)malloc(strlen(userhome) + sizeof(cfg_file_user) + 1);
+    strcpy(cfg_file, userhome);
+    strcat(cfg_file, cfg_file_user);
+
+    FILE *fp = fopen(cfg_file, "r");
+    if (!fp) {
+
+        cfg_file = (char*)realloc(cfg_file, sizeof(cfg_file_system));
+        strcpy(cfg_file, cfg_file_system);
+
+        fp = fopen(cfg_file, "r");
+        if (!fp) {
+            DEBUG(DBG_AACS, "No configfile found!\n");
+            X_FREE(cfg_file);
+            return NULL;
+        }
+    }
+    fclose(fp);
+
+    return cfg_file;
+}
+
 AACS *aacs_open(const char *path, const char *configfile_path)
 {
     DEBUG(DBG_AACS, "libaacs [%zd]\n", sizeof(AACS));
@@ -500,24 +530,11 @@ AACS *aacs_open(const char *path, const char *configfile_path)
         /* If no configfile path given, check for configfiles in user's home or
          * under /etc.
          */
-        char *userhome = getenv("HOME");
-        cfgfile = (char*)malloc(strlen(userhome) +
-            sizeof("/.libaacs/KEYDB.cfg") + 1);
-        strcpy(cfgfile,userhome);
-        strcat(cfgfile,"/.libaacs/KEYDB.cfg");
-        FILE *fp = fopen(cfgfile, "r");
-        if (!fp) {
-            cfgfile = (char*)realloc(cfgfile, sizeof("/etc/libaacs/KEYDB.cfg"));
-            strcpy(cfgfile, "/etc/libaacs/KEYDB.cfg");
-            fp = fopen(cfgfile, "r");
-            if (!fp) {
-                DEBUG(DBG_AACS, "No configfile found!\n");
-                X_FREE(cfgfile);
-                return NULL;
-            }
+        cfgfile = _find_cfg_file();
+        if (!cfgfile) {
+            DEBUG(DBG_AACS, "No configfile found!\n");
+            return NULL;
         }
-        fclose(fp);
-        fp = NULL;
     }
 
     AACS *aacs = calloc(1, sizeof(AACS));
