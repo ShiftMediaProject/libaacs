@@ -511,6 +511,8 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 
     aacs->cf = keydbcfg_new_config_file();
     if (keydbcfg_parse_config(aacs->cf, cfgfile)) {
+        X_FREE(cfgfile);
+
         DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
         if(_find_config_entry(aacs, path)) {
             if (_calc_uks(aacs, path)) {
@@ -539,6 +541,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 
     DEBUG(DBG_AACS, "Failed to initialize AACS! (%p)\n", aacs);
 
+    X_FREE(cfgfile);
     aacs_close(aacs);
 
     return NULL;
