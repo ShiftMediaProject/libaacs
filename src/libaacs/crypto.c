@@ -140,21 +140,7 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
     char str_Q[sizeof(Q)*2];
     hex_array_to_hexstring(str_Q, Q, sizeof(Q));
 
-    char *strfmt = (char*)malloc(
-      sizeof("(private-key") +
-      sizeof("(ecdsa") +
-      sizeof("(p #9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DF#)") +
-      sizeof("(a #9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DC#)") +
-      sizeof("(b #402DAD3EC1CBCD165248D68E1245E0C4DAACB1D8#)") +
-      sizeof("(g #04") +
-          sizeof("2E64FC22578351E6F4CCA7EB81D0A4BDC54CCEC6") +
-          sizeof("0914A25DD05442889DB455C7F23C9A0707F5CBB9") +
-          sizeof("#)") +
-      sizeof("(n #9DC9D81355ECCEB560BDC44F54817B2C7F5AB017#)") +
-      sizeof("(q #") + sizeof(str_Q) + sizeof("#)") +
-      sizeof("(d %%m)))") + 1);
-
-    sprintf(strfmt,
+    char *strfmt = str_printf(
       "(private-key"
       "(ecdsa"
       "(p #9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DF#)"
