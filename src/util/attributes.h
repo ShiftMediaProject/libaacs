@@ -1,6 +1,6 @@
 /*
  * This file is part of libaacs
- * Copyright (C) 2009-2010  Obliter0n
+ * Copyright (C) 2009-2010  hpi1
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,14 +21,14 @@
 #define LIBBLURAY_ATTRIBUTES_H_
 
 #if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3 ))
-#    define BD_ATTR_FORMAT_PRINTF(format,var) \
+#    define AACS_ATTR_FORMAT_PRINTF(format,var) \
             __attribute__((__format__(__printf__,format,var)))
-#    define BD_ATTR_MALLOC __attribute__((__malloc__))
-#    define BD_ATTR_PACKED __attribute__((packed))
+#    define AACS_ATTR_MALLOC __attribute__((__malloc__))
+#    define AACS_ATTR_PACKED __attribute__((packed))
 #else
-#    define BD_ATTR_FORMAT_PRINTF(format,var)
-#    define BD_ATTR_MALLOC
-#    define BD_ATTR_PACKED
+#    define AACS_ATTR_FORMAT_PRINTF(format,var)
+#    define AACS_ATTR_MALLOC
+#    define AACS_ATTR_PACKED
 #endif
 
 #if defined(__GNUC__) && __GNUC__ >= 4
