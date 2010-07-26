@@ -1,6 +1,7 @@
 /*
  * This file is part of libbluray
  * Copyright (C) 2009-2010  gates
+ * Copyright (C) 2009-2010  Obliter0n
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +23,9 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
+
 
 /* Function to assigns proper hex value of character to uint8_t pointer */
 static int _hexstring_to_unsigned_char(uint8_t *value, char c)
@@ -152,5 +156,40 @@ int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size)
   }
 
   return 1;
+}
+
+char *str_printf(const char *fmt, ...)
+{
+    /* Guess we need no more than 100 bytes. */
+    va_list ap;
+    int     len;
+    int     size = 100;
+    char   *tmp, *str;
+
+    str = malloc(size);
+    while (1)
+    {
+        /* Try to print in the allocated space. */
+        va_start(ap, fmt);
+        len = vsnprintf(str, size, fmt, ap);
+        va_end(ap);
+
+        /* If that worked, return the string. */
+        if (len > -1 && len < size) {
+            return str;
+        }
+
+        /* Else try again with more space. */
+        if (len > -1)    /* glibc 2.1 */
+            size = len+1; /* precisely what is needed */
+        else           /* glibc 2.0 */
+            size *= 2;  /* twice the old size */
+
+        tmp = realloc(str, size);
+        if (tmp == NULL) {
+            return str;
+        }
+        str = tmp;
+    }
 }
 
