@@ -487,11 +487,8 @@ static char *_find_cfg_file(void)
     static const char cfg_file_system[] = "/etc/libaacs/KEYDB.cfg";
 
     const char *userhome = getenv("HOME");
-    char *cfg_file;
 
-    cfg_file = (char*)malloc(strlen(userhome) + sizeof(cfg_file_user) + 1);
-    strcpy(cfg_file, userhome);
-    strcat(cfg_file, cfg_file_user);
+    char *cfg_file = str_printf("%s%s", userhome, cfg_file_user);
 
     FILE *fp = fopen(cfg_file, "r");
     if (!fp) {
@@ -506,6 +503,7 @@ static char *_find_cfg_file(void)
             return NULL;
         }
     }
+
     fclose(fp);
 
     return cfg_file;
