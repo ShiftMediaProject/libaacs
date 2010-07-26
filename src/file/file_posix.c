@@ -50,12 +50,12 @@ static int file_eof_linux(AACS_FILE_H *file)
     return feof((FILE *)file->internal);
 }
 
-static int file_read_linux(AACS_FILE_H *file, uint8_t *buf, int64_t size)
+static int64_t file_read_linux(AACS_FILE_H *file, uint8_t *buf, int64_t size)
 {
     return fread(buf, 1, size, (FILE *)file->internal);
 }
 
-static int file_write_linux(AACS_FILE_H *file, const uint8_t *buf, int64_t size)
+static int64_t file_write_linux(AACS_FILE_H *file, const uint8_t *buf, int64_t size)
 {
     return fwrite(buf, 1, size, (FILE *)file->internal);
 }
