@@ -211,8 +211,8 @@ static int _calc_vuk(AACS *aacs, const char *path)
 
 static int _calc_uks(AACS *aacs, const char *path)
 {
+    AACS_FILE_H *fp = NULL;
     char    *f_name;
-    FILE_H  *fp = NULL;
     uint8_t  buf[16];
     uint64_t f_pos;
     unsigned int i;
@@ -288,9 +288,9 @@ static int _calc_uks(AACS *aacs, const char *path)
 
 static int _calc_title_hash(const char *path, uint8_t *title_hash)
 {
+    AACS_FILE_H *fp = NULL;
     uint8_t *ukf_buf;
     char     str[48];
-    FILE_H  *fp = NULL;
     int64_t  f_size;
     char    *f_name;
 

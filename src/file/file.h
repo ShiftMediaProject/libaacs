@@ -20,12 +20,13 @@
 #ifndef FILE_H_
 #define FILE_H_
 
+#include "filesystem.h"
+
 #include <util/attributes.h>
 
 #include <stdint.h>
 
 //#ifdef __LINUX__
-#define file_open file_open_linux
 #define DIR_SEP "/"
 //#endif
 
@@ -36,18 +37,8 @@
 #define file_read(X,Y,Z) X->read(X,Y,Z)
 #define file_write(X,Y,Z) X->write(X,Y,Z)
 
-typedef struct file FILE_H;
-struct file
-{
-    void* internal;
-    void (*close)(FILE_H *file);
-    int64_t (*seek)(FILE_H *file, int64_t offset, int32_t origin);
-    int64_t (*tell)(FILE_H *file);
-    int (*eof)(FILE_H *file);
-    int (*read)(FILE_H *file, uint8_t *buf, int64_t size);
-    int (*write)(FILE_H *file, const uint8_t *buf, int64_t size);
-};
 
-AACS_PRIVATE FILE_H *file_open_linux(const char* filename, const char *mode);
+AACS_PRIVATE AACS_FILE_H *(*file_open)(const char* filename, const char *mode);
+
 
 #endif /* FILE_H_ */

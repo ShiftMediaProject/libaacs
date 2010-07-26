@@ -28,6 +28,7 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	libaacs/crypto.h \
 	libaacs/mkb.c \
 	file/file.h \
+	file/filesystem.h \
 	file/file_posix.c \
 	file/keydbcfg.h \
 	file/keydbcfg-parser.y \
@@ -39,7 +40,7 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	util/strutl.c \
 	util/strutl.h
 libaacs_ladir= $(includedir)/libaacs
-libaacs_la_HEADERS= libaacs/aacs.h
+libaacs_la_HEADERS= libaacs/aacs.h util/filesystem.h
 libaacs_la_LDFLAGS= -version-info $(LIB_VERSION_INFO)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libaacs.pc

@@ -56,7 +56,7 @@ static uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
 
 MKB *mkb_open(const char *path)
 {
-    FILE_H *fp = NULL;
+    AACS_FILE_H *fp = NULL;
     char   *f_name;
     MKB *mkb = malloc(sizeof(MKB));
 
