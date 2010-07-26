@@ -284,7 +284,48 @@ static int _calc_uks(AACS *aacs, const char *path)
     return 0;
 }
 
+static int _calc_title_hash(const char *path, uint8_t *title_hash)
+{
+    uint8_t *ukf_buf;
+    char     str[48];
+    FILE_H  *fp = NULL;
+    int64_t  f_size;
+    char    *f_name;
 
+    f_name = str_printf("/%s/AACS/Unit_Key_RO.inf", path);
+
+    if (!(fp = file_open(f_name, "rb"))) {
+        DEBUG(DBG_AACS, "Failed to open unit key file: %s!\n", f_name);
+        X_FREE(f_name);
+        return 0;
+    }
+
+    X_FREE(f_name);
+
+    file_seek(fp, 0, SEEK_END);
+    f_size = file_tell(fp);
+    file_seek(fp, 0, SEEK_SET);
+
+    ukf_buf = malloc(f_size);
+
+    if ((file_read(fp, ukf_buf, f_size)) != f_size) {
+
+        DEBUG(DBG_AACS, "Failed to read %"PRIu64" bytes from unit key file!\n", f_size);
+
+        file_close(fp);
+        X_FREE(ukf_buf);
+
+        return 0;
+    }
+
+    crypto_aacs_title_hash(ukf_buf, f_size, title_hash);
+    DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(str, title_hash, 20));
+
+    file_close(fp);
+    X_FREE(ukf_buf);
+
+    return 1;
+}
 
 static int _verify_ts(uint8_t *buf, size_t size)
 {
@@ -320,45 +361,15 @@ static int _verify_ts(uint8_t *buf, size_t size)
 /* Function that collects keys from keydb config entry */
 static uint32_t _find_config_entry(AACS *aacs, const char *path)
 {
-    uint8_t hash[20], discid[20], *ukf_buf;
-    FILE_H *fp = NULL;
-    int64_t f_size;
-    char f_name[100];
+    uint8_t hash[20], discid[20];
     char str[48];
     uint32_t retval = 0;
     aacs->uks = NULL;
     aacs->num_uks = 0;
 
-    snprintf(f_name , 100, "/%s/AACS/Unit_Key_RO.inf", path);
-
-    if ((fp = file_open(f_name, "rb"))) {
-        file_seek(fp, 0, SEEK_END);
-        f_size = file_tell(fp);
-        file_seek(fp, 0, SEEK_SET);
-
-        ukf_buf = malloc(f_size);
-
-        if ((file_read(fp, ukf_buf, f_size)) == f_size) {
-
-        } else {
-            DEBUG(DBG_AACS,
-                  "Failed to read %"PRIu64" bytes from unit key file!\n",
-                  f_size);
-            file_close(fp);
-            X_FREE(ukf_buf);
-            return 0;
-        }
-    } else {
-        DEBUG(DBG_AACS, "Failed to open unit key file: %s!\n", f_name);
+    if (!_calc_title_hash(path, hash)) {
         return 0;
     }
-
-    file_close(fp);
-
-    crypto_aacs_title_hash(ukf_buf, f_size, hash);
-    DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(str, hash, 20));
-
-    X_FREE(ukf_buf);
 
     if (aacs->cf) {
         aacs->ce = aacs->cf->list;
@@ -427,7 +438,7 @@ static uint32_t _find_config_entry(AACS *aacs, const char *path)
     }
 
     if (aacs->num_uks)
-      retval = aacs->num_uks;
+        retval = aacs->num_uks;
 
     return retval;
 }
