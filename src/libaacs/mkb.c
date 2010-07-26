@@ -21,6 +21,7 @@
 #include "file/file.h"
 #include "util/macro.h"
 #include "util/logging.h"
+#include "util/strutl.h"
 
 #include <stdio.h>
 
@@ -56,13 +57,17 @@ static uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
 MKB *mkb_open(const char *path)
 {
     FILE_H *fp = NULL;
-    char f_name[100];
+    char   *f_name;
     MKB *mkb = malloc(sizeof(MKB));
 
-    snprintf(f_name, 100, "%s/AACS/MKB_RO.inf", path);
-    DEBUG(DBG_MKB, "Opening MKB %s... (%p)\n", f_name, mkb);
+    f_name = str_printf("%s/AACS/MKB_RO.inf", path);
 
-    if ((fp = file_open(f_name, "rb"))) {
+    DEBUG(DBG_MKB, "Opening MKB %s... (%p)\n", f_name, mkb);
+    fp = file_open(f_name, "rb");
+
+    X_FREE(f_name);
+
+    if (fp) {
         file_seek(fp, 0, SEEK_END);
         mkb->size = file_tell(fp);
         file_seek(fp, 0, SEEK_SET);

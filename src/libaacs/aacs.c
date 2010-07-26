@@ -211,25 +211,27 @@ static int _calc_vuk(AACS *aacs, const char *path)
 
 static int _calc_uks(AACS *aacs, const char *path)
 {
-    FILE_H *fp = NULL;
-    uint8_t buf[16];
-    char f_name[100];
+    char    *f_name;
+    FILE_H  *fp = NULL;
+    uint8_t  buf[16];
     uint64_t f_pos;
     unsigned int i;
 
     /* Skip if retrieved from config file */
     if (aacs->uks)
-      return 1;
+        return 1;
 
     /* Fail if we don't have a volume unique key */
     if (!memcmp(aacs->vuk, empty_key, 16))
-      return 0;
+        return 0;
 
     DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
-    snprintf(f_name , 100, "/%s/AACS/Unit_Key_RO.inf", path);
+    f_name = str_printf("/%s/AACS/Unit_Key_RO.inf", path);
+    fp = file_open(f_name, "rb");
+    X_FREE(f_name);
 
-    if ((fp = file_open(f_name, "rb"))) {
+    if (fp) {
         if ((file_read(fp, buf, 4)) == 4) {
             f_pos = MKINT_BE32(buf);
 
