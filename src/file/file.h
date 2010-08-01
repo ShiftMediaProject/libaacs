@@ -38,7 +38,7 @@
 #define file_write(X,Y,Z) X->write(X,Y,Z)
 
 
-AACS_PRIVATE AACS_FILE_H *(*file_open)(const char* filename, const char *mode);
+AACS_PRIVATE extern AACS_FILE_H *(*file_open)(const char* filename, const char *mode);
 
 
 #endif /* FILE_H_ */
