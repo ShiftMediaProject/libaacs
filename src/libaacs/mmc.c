@@ -264,7 +264,7 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
               const uint8_t *host_cert, const uint8_t *host_nonce,
               const uint8_t *host_key_point)
 {
-#ifdef HAVE_LINUX_CDROM_H
+#ifdef HAVE_MNTENT_H
     char *file_path = (char*)malloc(strlen(path) + 1);
     strcpy(file_path, path);
     int   path_len  = strlen(file_path);
