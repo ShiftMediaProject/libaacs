@@ -32,7 +32,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <string.h>
-#if HAVE_LINUX_CDROM_H
+#ifdef HAVE_LINUX_CDROM_H
 #include <linux/cdrom.h>
 #endif
 
@@ -51,7 +51,7 @@ struct mmc {
 static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
                          size_t rx)
 {
-#if HAVE_LINUX_CDROM_H
+#ifdef HAVE_LINUX_CDROM_H
     if (mmc->fd >= 0) {
         struct cdrom_generic_command cgc;
         struct request_sense sense;
@@ -262,7 +262,7 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
               const uint8_t *host_cert, const uint8_t *host_nonce,
               const uint8_t *host_key_point)
 {
-#if HAVE_LINUX_CDROM_H
+#ifdef HAVE_LINUX_CDROM_H
     char *file_path = (char*)malloc(strlen(path) + 1);
     strcpy(file_path, path);
     int   path_len  = strlen(file_path);
