@@ -46,3 +46,6 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libaacs.pc
 
 BUILT_SOURCES = keydbcfg-parser.h keydbcfg-parser.c keydbcfg-lexer.c
+
+clean-lex-yacc:
+	-rm -f $(BUILT_SOURCES)
