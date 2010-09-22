@@ -17,6 +17,15 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if defined(__MINGW32__)
+/* ftello64() and fseeko64() prototypes from stdio.h */
+#   undef __STRICT_ANSI__
+#endif
+
 #include "file.h"
 #include "util/macro.h"
 #include "util/logging.h"
@@ -37,12 +46,20 @@ static void file_close_linux(AACS_FILE_H *file)
 
 static int64_t file_seek_linux(AACS_FILE_H *file, int64_t offset, int32_t origin)
 {
+#if defined(__MINGW32__)
+    return fseeko64((FILE *)file->internal, offset, origin);
+#else
     return fseeko((FILE *)file->internal, offset, origin);
+#endif
 }
 
 static int64_t file_tell_linux(AACS_FILE_H *file)
 {
+#if defined(__MINGW32__)
+    return ftello64((FILE *)file->internal);
+#else
     return ftello((FILE *)file->internal);
+#endif
 }
 
 static int file_eof_linux(AACS_FILE_H *file)
