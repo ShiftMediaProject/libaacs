@@ -17,15 +17,23 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "crypto.h"
 #include "util/strutl.h"
 #include "util/macro.h"
 
 #include <string.h>
 #include <stdio.h>
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 #include <gcrypt.h>
 #include <pthread.h>
 #include <errno.h>
+
 
 /* Set this in CFLAGS to debug gcrypt MPIs and S-expressions */
 #ifndef GCRYPT_DEBUG

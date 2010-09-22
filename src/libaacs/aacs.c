@@ -17,6 +17,10 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <util/attributes.h>
 
 #include "aacs.h"
@@ -32,7 +36,11 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdio.h>
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 #include <gcrypt.h>
+
 
 struct aacs {
     uint8_t pk[16], mk[16], vuk[16], vid[16], *uks;
