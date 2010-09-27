@@ -31,7 +31,15 @@
 #    define AACS_ATTR_PACKED
 #endif
 
-#if defined(__GNUC__) && __GNUC__ >= 4
+#if defined(_WIN32)
+#    if defined(__GNUC__)
+#        define AACS_PUBLIC  __attribute__((dllexport))
+#        define AACS_PRIVATE
+#    else
+#        define AACS_PUBLIC  __declspec(dllexport)
+#        define AACS_PRIVATE
+#    endif
+#elif defined(__GNUC__) && __GNUC__ >= 4
 #    define AACS_PUBLIC  __attribute__((visibility("default")))
 #    define AACS_PRIVATE __attribute__((visibility("hidden")))
 #else
