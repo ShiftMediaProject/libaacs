@@ -262,17 +262,20 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
               const uint8_t *host_cert, const uint8_t *host_nonce,
               const uint8_t *host_key_point)
 {
-#ifdef HAVE_MNTENT_H
-    char *file_path = (char*)malloc(strlen(path) + 1);
-    strcpy(file_path, path);
-    int   path_len  = strlen(file_path);
-    FILE *proc_mounts;
     MMC *mmc = malloc(sizeof(MMC));
 
     if (host_priv_key) memcpy(mmc->host_priv_key, host_priv_key, 20);
     if (host_cert) memcpy(mmc->host_cert, host_cert, 92);
     if (host_nonce) memcpy(mmc->host_nonce, host_nonce, 20);
     if (host_key_point) memcpy(mmc->host_key_point, host_key_point, 40);
+
+#ifdef HAVE_MNTENT_H
+
+    char *file_path = (char*)malloc(strlen(path) + 1);
+    strcpy(file_path, path);
+    int   path_len  = strlen(file_path);
+    FILE *proc_mounts;
+
     mmc->fd = -1;
 
     // strip trailing '/'s
@@ -308,10 +311,14 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
         X_FREE(mmc);
     }
 
-    return mmc;
+#else
+
+    DEBUG(DBG_MMC, "No MMC drive support !\n");
+    X_FREE(mmc);
+
 #endif
 
-    return NULL;
+    return mmc;
 }
 
 void mmc_close(MMC *mmc)
