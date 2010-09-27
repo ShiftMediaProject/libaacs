@@ -323,12 +323,16 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
 
 void mmc_close(MMC *mmc)
 {
-    if (mmc->fd >= 0)
-        close(mmc->fd);
+    if (mmc) {
 
-    DEBUG(DBG_MMC, "Closed MMC drive (%p)\n", mmc);
+        if (mmc->fd >= 0) {
+            close(mmc->fd);
+        }
 
-    X_FREE(mmc);
+        DEBUG(DBG_MMC, "Closed MMC drive (%p)\n", mmc);
+
+        X_FREE(mmc);
+    }
 }
 
 int mmc_read_vid(MMC *mmc, uint8_t *vid)
