@@ -41,13 +41,22 @@
 #include <linux/cdrom.h>
 #endif
 
+#if defined(_WIN32)
+#include <windows.h>
+#include <winsock.h>
+#endif
+
 /* define in CFLAGS to skip drive certificate checks */
 #ifndef PATCHED_DRIVE
 #define PATCHED_DRIVE 0
 #endif
 
 struct mmc {
-    int fd;
+#if defined(_WIN32)
+    HANDLE fd;
+#else
+    int    fd;
+#endif
     uint8_t host_priv_key[20], host_cert[92], host_nonce[20];
     uint8_t host_key_point[40];
 };
@@ -269,7 +278,7 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
     if (host_nonce) memcpy(mmc->host_nonce, host_nonce, 20);
     if (host_key_point) memcpy(mmc->host_key_point, host_key_point, 40);
 
-#ifdef HAVE_MNTENT_H
+#if defined(HAVE_MNTENT_H)
 
     char *file_path = (char*)malloc(strlen(path) + 1);
     strcpy(file_path, path);
@@ -311,6 +320,36 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
         X_FREE(mmc);
     }
 
+#elif defined(_WIN32)
+    char drive[] = { path[0], ':', '\\', 0 };
+    char volume[] = {'\\', '\\', '.', '\\', path[0], ':', 0};
+
+    DEBUG(DBG_MMC, "Opening Windows MMC drive %s... (%p)\n", drive, mmc);
+
+    UINT type = GetDriveType(drive);
+
+    if (type != DRIVE_CDROM) {
+        DEBUG(DBG_MMC, "Drive %s is not CD/DVD drive !\n", drive);
+        X_FREE(mmc);
+        return NULL;
+    }
+
+    mmc->fd = CreateFile(volume, GENERIC_READ | GENERIC_WRITE,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (mmc->fd == INVALID_HANDLE_VALUE) {
+        mmc->fd = CreateFile(volume, GENERIC_READ,
+                             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (mmc->fd == INVALID_HANDLE_VALUE) {
+            DEBUG(DBG_MMC, "Failed opening Windows MMC drive %s (%p)\n", volume, mmc);
+            X_FREE(mmc);
+            return NULL;
+        }
+    }
+
+    DEBUG(DBG_MMC, "Windows MMC drive %s opened (%p)\n", volume, mmc);
+
 #else
 
     DEBUG(DBG_MMC, "No MMC drive support !\n");
@@ -325,9 +364,16 @@ void mmc_close(MMC *mmc)
 {
     if (mmc) {
 
+#if defined(HAVE_LINUX_CDROM_H)
         if (mmc->fd >= 0) {
             close(mmc->fd);
         }
+
+#elif defined(_WIN32)
+        if (mmc->fd != INVALID_HANDLE_VALUE) {
+            CloseHandle(mmc->fd);
+        }
+#endif
 
         DEBUG(DBG_MMC, "Closed MMC drive (%p)\n", mmc);
 
