@@ -2,9 +2,30 @@
 AC_INIT([libaacs],[0.1], [http://bd.videolan.org/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
+AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([foreign])
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
+
+case "${host_os}" in
+  "")
+    SYS=unknown
+    ;;
+  *mingw32* | *cygwin* | *wince* | *mingwce*)
+    case "${host_os}" in
+      *wince* | *mingwce* | *mingw32ce*)
+        SYS=mingwce
+        ;;
+      *mingw32*)
+        SYS=mingw32
+        AC_DEFINE([_WIN32_WINNT], 0x0501, [Define to '0x0500' for Windows XP APIs.])
+        ;;
+    esac
+    ;;
+  *)
+    SYS="${host_os}"
+    ;;
+esac
 
 # messages
 library_not_found="Could not find required library!"
@@ -58,9 +79,11 @@ AC_SYS_LARGEFILE
 # required functions
 AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
-# pthread check
-AC_CHECK_LIB([pthread], [pthread_mutex_init],,
-  [AC_MSG_ERROR($library_not_found)])
+# pthread check (not on win32)
+if test "${SYS}" != "mingw32" ; then
+  AC_CHECK_LIB([pthread], [pthread_mutex_init],,
+    [AC_MSG_ERROR($library_not_found)])
+fi
 
 # gcrypt check
 AC_PATH_PROG(LIBGCRYPT_CONFIG, libgcrypt-config, no)
