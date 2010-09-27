@@ -290,12 +290,10 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
 
         while ((mount_entry = getmntent(proc_mounts)) != NULL) {
             if (strcmp(mount_entry->mnt_dir, file_path) == 0) {
-                int a = open(mount_entry->mnt_fsname, O_RDONLY | O_NONBLOCK);
-                if (a >= 0) {
-                    mmc->fd = a;
-
-                    DEBUG(DBG_MMC, "LINUX MMC drive opened - fd: %d (%p)\n", a,
-                          mmc);
+                mmc->fd = open(mount_entry->mnt_fsname, O_RDONLY | O_NONBLOCK);
+                if (mmc->fd >= 0) {
+                    DEBUG(DBG_MMC, "LINUX MMC drive opened - fd: %d (%p)\n",
+                          mmc->fd, mmc);
                     break;
                 }
 
