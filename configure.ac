@@ -63,8 +63,16 @@ AC_CHECK_LIB([pthread], [pthread_mutex_init],,
   [AC_MSG_ERROR($library_not_found)])
 
 # gcrypt check
-AC_CHECK_LIB([gcrypt], [gcry_check_version],,
-  [AC_MSG_ERROR($library_not_found)])
+AC_PATH_PROG(LIBGCRYPT_CONFIG, libgcrypt-config, no)
+if test x"$LIBGCRYPT_CONFIG" = xno; then
+  AC_MSG_ERROR([libgcrypt not found on system])
+else
+  LIBGCRYPT_CFLAGS=`$LIBGCRYPT_CONFIG --cflags`
+  LIBGCRYPT_LIBS=`$LIBGCRYPT_CONFIG --libs`
+  LIBGCRYPT_LIBS+= -lgpg-error
+  AC_SUBST(LIBGCRYPT_CFLAGS)
+  AC_SUBST(LIBGCRYPT_LIBS)
+fi
 
 # function testing for supported compiler options
 check_cc_options()

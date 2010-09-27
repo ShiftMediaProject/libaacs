@@ -14,7 +14,7 @@ SET_DEBUG_OPTS = @SET_DEBUG_OPTS@
 SET_INCLUDES = -I$(top_srcdir) -Ifile
 
 AM_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_WARNINGS) $(SET_OPTIMIZATIONS) \
-	$(SET_DEBUG_OPTS) $(SET_INCLUDES)
+	$(SET_DEBUG_OPTS) $(SET_INCLUDES) $(LIBGCRYPT_CFLAGS)
 AM_YFLAGS = -d
 CFLAGS=$(shell test -z "$$CFLAGS" || echo "$$CFLAGS")
 
@@ -41,7 +41,7 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	util/strutl.h
 libaacs_ladir= $(includedir)/libaacs
 libaacs_la_HEADERS= libaacs/aacs.h file/filesystem.h
-libaacs_la_LDFLAGS= -version-info $(LIB_VERSION_INFO)
+libaacs_la_LDFLAGS= $(LIBGCRYPT_LIBS) -version-info $(LIB_VERSION_INFO)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libaacs.pc
 
