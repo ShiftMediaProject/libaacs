@@ -48,7 +48,6 @@
 
 struct mmc {
     int fd;
-    uint8_t sk, asc, ascq;
     uint8_t host_priv_key[20], host_cert[92], host_nonce[20];
     uint8_t host_key_point[40];
 };
@@ -92,10 +91,6 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
         } else {
             DEBUG(DBG_MMC, "  Buffer: %s <- (%p)\n", print_hex(str, buf, rx), mmc);
         }
-
-        mmc->sk = sense.sense_key & 0x0f;
-        mmc->asc = sense.asc;
-        mmc->ascq = sense.ascq;
 
         if (a >= 0) {
             DEBUG(DBG_MMC, "  Send succeeded! [%d] (%p)\n", a, mmc);
