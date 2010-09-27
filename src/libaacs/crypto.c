@@ -31,7 +31,9 @@
 #include <sys/select.h>
 #endif
 #include <gcrypt.h>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <errno.h>
 
 
@@ -41,7 +43,9 @@
 #endif
 
 /* Use pthread in libgcrypt */
+#ifdef HAVE_PTHREAD_H
 GCRY_THREAD_OPTION_PTHREAD_IMPL;
+#endif
 
 static void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 {
@@ -69,7 +73,9 @@ int crypto_init()
   if (!crypto_init_check)
   {
     crypto_init_check = 1;
+#ifdef HAVE_PTHREAD_H
     gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+#endif
     if (!gcry_check_version(GCRYPT_VERSION))
     {
       crypto_init_check = 0;
