@@ -95,6 +95,7 @@ else
   AC_SUBST(LIBGCRYPT_CFLAGS)
   AC_SUBST(LIBGCRYPT_LIBS)
 fi
+AC_FUNC_STRERROR_R
 
 # function testing for supported compiler options
 check_cc_options()
