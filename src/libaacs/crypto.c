@@ -24,6 +24,7 @@
 #include "crypto.h"
 #include "util/strutl.h"
 #include "util/macro.h"
+#include "util/logging.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -100,6 +101,19 @@ void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
     }
 }
 
+static void _log_gcry_error(gcry_error_t err)
+{
+#ifdef HAVE_STRERROR_R
+    char errstr[100] = {0};
+
+    gpg_strerror_r(err, errstr, sizeof(errstr));
+
+    DEBUG(DBG_AACS|DBG_CRIT, "crypto_aacs_sign(): error was: %s\n", errstr);
+#else
+    DEBUG(DBG_AACS|DBG_CRIT, "crypto_aacs_sign(): error was: %s\n", gcry_strerror(err));
+#endif
+}
+
 void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
                       uint8_t *n, const uint8_t *dhp)
 {
@@ -107,7 +121,6 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
     gcry_sexp_t sexp_key, sexp_data, sexp_sig, sexp_r, sexp_s;
     unsigned char Q[41], block[60], md[20], *r = NULL, *s = NULL;
     gcry_error_t err;
-    char errstr[100];
 
     /* Assign MPI values for ECDSA parameters Q and d.
      * Values are:
@@ -175,9 +188,7 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
 
     if (err)
     {
-      memset(errstr, 0, sizeof(errstr));
-      gpg_strerror_r(err, errstr, sizeof(errstr));
-      printf("error was: %s\n", errstr);
+      _log_gcry_error(err);
       return;
     }
 
@@ -220,9 +231,7 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
 
     if (err)
     {
-      memset(errstr, 0, sizeof(errstr));
-      gpg_strerror_r(err, errstr, sizeof(errstr));
-      printf("error was: %s\n", errstr);
+      _log_gcry_error(err);
       return;
     }
 
