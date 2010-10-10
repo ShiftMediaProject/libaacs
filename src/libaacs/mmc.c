@@ -51,20 +51,50 @@
 #define PATCHED_DRIVE 0
 #endif
 
+#if defined(_WIN32)
+/*
+ * from ntddscsi.h, Windows DDK
+ */
+#   define SCSI_IOCTL_DATA_OUT             0
+#   define SCSI_IOCTL_DATA_IN              1
+#   define SCSI_IOCTL_DATA_UNSPECIFIED     2
+#   define IOCTL_SCSI_PASS_THROUGH_DIRECT  0x4D014
+#   define MAX_SENSE_LEN                   18
+
+typedef struct _SCSI_PASS_THROUGH_DIRECT {
+    USHORT Length;
+    UCHAR  ScsiStatus;
+    UCHAR  PathId;
+    UCHAR  TargetId;
+    UCHAR  Lun;
+    UCHAR  CdbLength;
+    UCHAR  SenseInfoLength;
+    UCHAR  DataIn;
+    ULONG  DataTransferLength;
+    ULONG  TimeOutValue;
+    PVOID  DataBuffer;
+    ULONG  SenseInfoOffset;
+    UCHAR  Cdb[16];
+} SCSI_PASS_THROUGH_DIRECT, *PSCSI_PASS_THROUGH_DIRECT;
+
+#endif // defined(_WIN32)
+
+
 struct mmc {
 #if defined(_WIN32)
     HANDLE fd;
 #else
     int    fd;
 #endif
-    uint8_t host_priv_key[20], host_cert[92], host_nonce[20];
+    uint8_t host_priv_key[20], host_cert[92];
+    uint8_t host_nonce[20];
     uint8_t host_key_point[40];
 };
 
 static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
                          size_t rx)
 {
-#ifdef HAVE_LINUX_CDROM_H
+#if defined(HAVE_LINUX_CDROM_H)
     if (mmc->fd >= 0) {
         struct cdrom_generic_command cgc;
         struct request_sense sense;
@@ -109,6 +139,63 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
         DEBUG(DBG_MMC, "  Send failed! [%d] %s (%p)\n", a, strerror(errno),
               mmc);
     }
+
+#elif defined(_WIN32)
+
+    DWORD dwBytesReturned;
+
+    struct {
+        SCSI_PASS_THROUGH_DIRECT sptd;
+        UCHAR                    SenseBuf[MAX_SENSE_LEN];
+    } sptd_sb;
+
+    if (mmc->fd == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+
+    sptd_sb.sptd.Length          = sizeof(SCSI_PASS_THROUGH_DIRECT);
+    sptd_sb.sptd.PathId          = 0;
+    sptd_sb.sptd.TargetId        = 0;
+    sptd_sb.sptd.Lun             = 0;
+    sptd_sb.sptd.CdbLength       = 12;
+    sptd_sb.sptd.SenseInfoLength = MAX_SENSE_LEN;
+    sptd_sb.sptd.TimeOutValue    = 5;
+    sptd_sb.sptd.SenseInfoOffset = sizeof(SCSI_PASS_THROUGH_DIRECT);
+
+    if (buf) {
+        if (tx) {
+            sptd_sb.sptd.DataIn = SCSI_IOCTL_DATA_OUT;
+            sptd_sb.sptd.DataTransferLength = tx;
+            sptd_sb.sptd.DataBuffer = buf;
+        } else if (rx) {
+            sptd_sb.sptd.DataIn = SCSI_IOCTL_DATA_IN;
+            sptd_sb.sptd.DataTransferLength = rx;
+            sptd_sb.sptd.DataBuffer = buf;
+        }
+    } else {
+        sptd_sb.sptd.DataIn = SCSI_IOCTL_DATA_UNSPECIFIED;
+        sptd_sb.sptd.DataTransferLength = 0;
+        sptd_sb.sptd.DataBuffer = NULL;
+    }
+
+    memcpy(sptd_sb.sptd.Cdb, cmd, 16);
+
+    ZeroMemory(sptd_sb.SenseBuf, MAX_SENSE_LEN);
+
+    if (DeviceIoControl(mmc->fd,
+			IOCTL_SCSI_PASS_THROUGH_DIRECT,
+                        (void*)&sptd_sb, sizeof(sptd_sb),
+                        (void*)&sptd_sb, sizeof(sptd_sb),
+                        &dwBytesReturned, NULL)) {
+
+        if (sptd_sb.sptd.ScsiStatus == 0 /* STATUS_GOOD */) {
+            DEBUG(DBG_MMC, "  Send succeeded! (%p)\n", mmc);
+            return 1;
+        }
+    }
+
+    DEBUG(DBG_MMC, "  Send failed! (%p)\n", mmc);
+
 #endif
 
     return 0;
