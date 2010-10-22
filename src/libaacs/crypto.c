@@ -275,3 +275,13 @@ void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
 {
     gcry_md_hash_buffer(GCRY_MD_SHA1, hash, ukf, len);
 }
+
+void crypto_randomize(uint8_t *buf, size_t len)
+{
+    gcry_randomize(buf, len, 1);
+}
+
+void crypto_create_nonce(uint8_t *buf, size_t len)
+{
+    gcry_create_nonce(buf, len);
+}

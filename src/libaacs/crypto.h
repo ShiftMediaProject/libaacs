@@ -22,6 +22,7 @@
 
 #include <util/attributes.h>
 
+#include <stdlib.h>
 #include <stdint.h>
 
 AACS_PRIVATE int  crypto_init(void);
@@ -30,5 +31,8 @@ AACS_PRIVATE void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk,
 AACS_PRIVATE void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
                                    uint8_t *n, const uint8_t *dhp);
 AACS_PRIVATE void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash);
+
+AACS_PRIVATE void crypto_randomize(uint8_t *buf, size_t len);
+AACS_PRIVATE void crypto_create_nonce(uint8_t *buf, size_t len);
 
 #endif /* CRYPTO_H_ */
