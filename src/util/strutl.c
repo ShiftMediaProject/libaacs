@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 
 /* Function to assigns proper hex value of character to uint8_t pointer */
@@ -193,3 +194,51 @@ char *str_printf(const char *fmt, ...)
     }
 }
 
+const char *str_next_line(const char *p)
+{
+    while (*p && *p != '\r' && *p != '\n') {
+        p++;
+    }
+    while (*p && (*p == '\r' || *p == '\n')) {
+        p++;
+    }
+
+    return p;
+}
+
+static int _str_is_hex_string(const char *str, int len)
+{
+    int ii;
+
+    for (ii = 0; ii < len; ii++) {
+        if (!isxdigit(str[ii])) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static const char *_str_skip_space(const char *p)
+{
+    while (*p && (*p == ' ' || *p == '\r' || *p == '\n' || *p == '\t')) {
+        p++;
+    }
+
+    return p;
+}
+
+char *str_get_hex_string(const char *p, int n)
+{
+    p = _str_skip_space(p);
+
+    if (!_str_is_hex_string(p, n)) {
+        return NULL;
+    }
+
+    char *s = malloc(n + 1);
+    memcpy(s, p, n);
+    s[n] = 0;
+
+    return s;
+}

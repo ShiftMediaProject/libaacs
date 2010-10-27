@@ -30,4 +30,7 @@ AACS_PRIVATE int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uin
 
 AACS_PRIVATE char *str_printf(const char *fmt, ...) AACS_ATTR_FORMAT_PRINTF(1,2) AACS_ATTR_MALLOC;
 
+AACS_PRIVATE const char * str_next_line     (const char *str);
+AACS_PRIVATE char *       str_get_hex_string(const char *str, int len) AACS_ATTR_MALLOC;
+
 #endif // STRUTL_H_
