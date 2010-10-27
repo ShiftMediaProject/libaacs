@@ -674,7 +674,7 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
     return 0;
 }
 
-uint8_t *aacs_get_vid(AACS *aacs)
+const uint8_t *aacs_get_vid(AACS *aacs)
 {
     return aacs->vid;
 }
