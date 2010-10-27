@@ -164,7 +164,7 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
     /* Points are currently only supported in standard format, so get a
      * hexstring out of Q.
      */
-    char str_Q[sizeof(Q)*2];
+    char str_Q[sizeof(Q)*2 + 1];
     hex_array_to_hexstring(str_Q, Q, sizeof(Q));
 
     char *strfmt = str_printf(
