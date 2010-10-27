@@ -12,6 +12,10 @@ AACS_LIB = $(top_builddir)/src/libaacs.la
 
 PARSER_TEST_DEPENDENCIES=../keydbcfg-lexer.c ../keydbcfg-parser.c
 
-noinst_PROGRAMS=parser_test
+noinst_PROGRAMS=parser_test libaacs_test
+
 parser_test_SOURCE=parser_test.c
 parser_test_LDADD = $(AACS_LIB) $(PARSER_TEST_DEPENDENCIES)
+
+libaacs_test_SOURCE=libaacs_test.c
+libaacs_test_LDADD = $(AACS_LIB)
