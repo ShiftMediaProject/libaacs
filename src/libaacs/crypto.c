@@ -112,8 +112,9 @@ static void _log_gcry_error(gcry_error_t err)
 #endif
 }
 
-void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
-                      uint8_t *n, const uint8_t *dhp)
+void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
+                      uint8_t *signature,
+                      const uint8_t *nonce, const uint8_t *point)
 {
     gcry_mpi_t mpi_d, mpi_md;
     gcry_sexp_t sexp_key, sexp_data, sexp_sig, sexp_r, sexp_s;
@@ -129,15 +130,15 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
      * Note: The MPI values for Q are in the form "<format>||Q.x||Q.y".
      */
     memcpy(&Q[0], "\x04", 1);   // format
-    memcpy(&Q[1], c + 12, 20);  // Q.x
-    memcpy(&Q[21], c + 32, 20); // Q.y
-    gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, privk, 20, NULL);
+    memcpy(&Q[1], cert + 12, 20);  // Q.x
+    memcpy(&Q[21], cert + 32, 20); // Q.y
+    gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, priv_key, 20, NULL);
 
     /* Show the values of the MPIs Q.x, Q.y, and d when debugging */
     if (GCRYPT_DEBUG) {
         gcry_mpi_t mpi_Q_x, mpi_Q_y;
-        gcry_mpi_scan(&mpi_Q_x, GCRYMPI_FMT_USG, c + 12, 20, NULL);
-        gcry_mpi_scan(&mpi_Q_y, GCRYMPI_FMT_USG, c + 32, 20, NULL);
+        gcry_mpi_scan(&mpi_Q_x, GCRYMPI_FMT_USG, cert + 12, 20, NULL);
+        gcry_mpi_scan(&mpi_Q_y, GCRYMPI_FMT_USG, cert + 32, 20, NULL);
         gcry_mpi_dump(mpi_Q_x);
         printf("\n");
         gcry_mpi_dump(mpi_Q_y);
@@ -196,8 +197,8 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
     /* Calculate the sha1 hash from the nonce and host key point and covert
      * the hash into an MPI.
      */
-    memcpy(&block, n, 20);
-    memcpy(&block[20], dhp, 40);
+    memcpy(&block, nonce, 20);
+    memcpy(&block[20], point, 40);
     gcry_md_hash_buffer(GCRY_MD_SHA1, md, block, sizeof(block));
     gcry_mpi_scan(&mpi_md, GCRYMPI_FMT_USG, md, sizeof(md), NULL);
 
@@ -253,8 +254,8 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
     s = (unsigned char*)gcry_sexp_nth_string(sexp_s, 1);
 
     /* Finally concatenate 'r' and 's' to get the ECDSA signature */
-    memcpy(sig, r, 20);
-    memcpy(sig + 20, s, 20);
+    memcpy(signature, r, 20);
+    memcpy(signature + 20, s, 20);
 
     /* Free allocated memory */
     gcry_mpi_release(mpi_d);
