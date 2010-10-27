@@ -69,21 +69,19 @@ static void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 /* Initializes libgcrypt */
 int crypto_init()
 {
-  static int crypto_init_check = 0;
+    static int crypto_init_check = 0;
 
-  if (!crypto_init_check)
-  {
-    crypto_init_check = 1;
+    if (!crypto_init_check) {
+        crypto_init_check = 1;
 #ifdef HAVE_PTHREAD_H
-    gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+        gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
 #endif
-    if (!gcry_check_version(GCRYPT_VERSION))
-    {
-      crypto_init_check = 0;
+        if (!gcry_check_version(GCRYPT_VERSION)) {
+            crypto_init_check = 0;
+        }
     }
-  }
 
-  return crypto_init_check;
+    return crypto_init_check;
 }
 
 void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
@@ -136,17 +134,16 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
     gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, privk, 20, NULL);
 
     /* Show the values of the MPIs Q.x, Q.y, and d when debugging */
-    if (GCRYPT_DEBUG)
-    {
-      gcry_mpi_t mpi_Q_x, mpi_Q_y;
-      gcry_mpi_scan(&mpi_Q_x, GCRYMPI_FMT_USG, c + 12, 20, NULL);
-      gcry_mpi_scan(&mpi_Q_y, GCRYMPI_FMT_USG, c + 32, 20, NULL);
-      gcry_mpi_dump(mpi_Q_x);
-      printf("\n");
-      gcry_mpi_dump(mpi_Q_y);
-      printf("\n");
-      gcry_mpi_dump(mpi_d);
-      printf("\n");
+    if (GCRYPT_DEBUG) {
+        gcry_mpi_t mpi_Q_x, mpi_Q_y;
+        gcry_mpi_scan(&mpi_Q_x, GCRYMPI_FMT_USG, c + 12, 20, NULL);
+        gcry_mpi_scan(&mpi_Q_y, GCRYMPI_FMT_USG, c + 32, 20, NULL);
+        gcry_mpi_dump(mpi_Q_x);
+        printf("\n");
+        gcry_mpi_dump(mpi_Q_y);
+        printf("\n");
+        gcry_mpi_dump(mpi_d);
+        printf("\n");
     }
 
     /* Build the s-expression for the ecdsa private key
@@ -186,15 +183,15 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
     /* Now build the S-expression */
     err = gcry_sexp_build(&sexp_key, NULL, strfmt, mpi_d);
 
-    if (err)
-    {
-      _log_gcry_error(err);
-      return;
+    if (err) {
+        _log_gcry_error(err);
+        return;
     }
 
     /* Dump information about the key s-expression when debugging */
-    if (GCRYPT_DEBUG)
-      gcry_sexp_dump(sexp_key);
+    if (GCRYPT_DEBUG) {
+        gcry_sexp_dump(sexp_key);
+    }
 
     /* Calculate the sha1 hash from the nonce and host key point and covert
      * the hash into an MPI.
@@ -205,8 +202,9 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
     gcry_mpi_scan(&mpi_md, GCRYMPI_FMT_USG, md, sizeof(md), NULL);
 
     /* Dump information about the md MPI when debugging */
-    if (GCRYPT_DEBUG)
-      gcry_mpi_dump(mpi_md);
+    if (GCRYPT_DEBUG) {
+        gcry_mpi_dump(mpi_md);
+    }
 
     /* Build an s-expression for the hash */
     gcry_sexp_build(&sexp_data, NULL,
@@ -217,8 +215,9 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
                     );
 
     /* Dump information about the data s-expression when debugging */
-    if (GCRYPT_DEBUG)
-      gcry_sexp_dump(sexp_data);
+    if (GCRYPT_DEBUG) {
+        gcry_sexp_dump(sexp_data);
+    }
 
     /* Sign the hash with the ECDSA key. The resulting s-expression should be
      * in the form:
@@ -229,25 +228,24 @@ void crypto_aacs_sign(const uint8_t *c, const uint8_t *privk, uint8_t *sig,
      */
     err = gcry_pk_sign(&sexp_sig, sexp_data, sexp_key);
 
-    if (err)
-    {
-      _log_gcry_error(err);
-      return;
+    if (err) {
+        _log_gcry_error(err);
+        return;
     }
 
     /* Dump information about the signature s-expression when debugging */
-    if (GCRYPT_DEBUG)
-      gcry_sexp_dump(sexp_sig);
+    if (GCRYPT_DEBUG) {
+        gcry_sexp_dump(sexp_sig);
+    }
 
     /* Get the resulting s-expressions for 'r' and 's' */
     sexp_r = gcry_sexp_find_token(sexp_sig, "r", 0);
     sexp_s = gcry_sexp_find_token(sexp_sig, "s", 0);
 
     /* Dump information about 'r' and 's' values when debugging */
-    if (GCRYPT_DEBUG)
-    {
-      gcry_sexp_dump(sexp_r);
-      gcry_sexp_dump(sexp_s);
+    if (GCRYPT_DEBUG) {
+        gcry_sexp_dump(sexp_r);
+        gcry_sexp_dump(sexp_s);
     }
 
     /* Convert the data for 'r' and 's' into unsigned char form */
