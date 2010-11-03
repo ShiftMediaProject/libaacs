@@ -37,6 +37,13 @@
 #endif
 #include <errno.h>
 
+/* elliptic curve from AACS specs */
+#define AACS_EC_p   "9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DF"
+#define AACS_EC_a   "9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DC"
+#define AACS_EC_b   "402DAD3EC1CBCD165248D68E1245E0C4DAACB1D8"
+#define AACS_EC_n   "9DC9D81355ECCEB560BDC44F54817B2C7F5AB017"
+#define AACS_EC_G_x "2E64FC22578351E6F4CCA7EB81D0A4BDC54CCEC6"
+#define AACS_EC_G_y "0914A25DD05442889DB455C7F23C9A0707F5CBB9"
 
 /* Set this in CFLAGS to debug gcrypt MPIs and S-expressions */
 #ifndef GCRYPT_DEBUG
@@ -168,14 +175,14 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
     char *strfmt = str_printf(
       "(private-key"
       "(ecdsa"
-      "(p #9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DF#)"
-      "(a #9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DC#)"
-      "(b #402DAD3EC1CBCD165248D68E1245E0C4DAACB1D8#)"
+      "(p #"AACS_EC_p"#)"
+      "(a #"AACS_EC_a"#)"
+      "(b #"AACS_EC_b"#)"
       "(g #04"
-          "2E64FC22578351E6F4CCA7EB81D0A4BDC54CCEC6"
-          "0914A25DD05442889DB455C7F23C9A0707F5CBB9"
+          AACS_EC_G_x
+          AACS_EC_G_y
           "#)"
-      "(n #9DC9D81355ECCEB560BDC44F54817B2C7F5AB017#)"
+      "(n #"AACS_EC_n"#)"
       "(q #%s#)"
       "(d %%m)))",
       str_Q
