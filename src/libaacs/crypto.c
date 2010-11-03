@@ -197,7 +197,7 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
     /* Calculate the sha1 hash from the nonce and host key point and covert
      * the hash into an MPI.
      */
-    memcpy(&block, nonce, 20);
+    memcpy(&block[0], nonce, 20);
     memcpy(&block[20], point, 40);
     gcry_md_hash_buffer(GCRY_MD_SHA1, md, block, sizeof(block));
     gcry_mpi_scan(&mpi_md, GCRYMPI_FMT_USG, md, sizeof(md), NULL);
