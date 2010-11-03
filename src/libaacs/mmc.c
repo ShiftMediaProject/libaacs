@@ -388,24 +388,27 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
             if (strcmp(mount_entry->mnt_dir, file_path) == 0) {
                 mmc->fd = open(mount_entry->mnt_fsname, O_RDONLY | O_NONBLOCK);
                 if (mmc->fd >= 0) {
-                    DEBUG(DBG_MMC, "LINUX MMC drive opened - fd: %d (%p)\n",
-                          mmc->fd, mmc);
+                    DEBUG(DBG_MMC, "LINUX MMC drive %s opened - fd: %d (%p)\n",
+                          mount_entry->mnt_fsname, mmc->fd, mmc);
                     break;
                 }
 
-                DEBUG(DBG_MMC, "Failed opening LINUX MMC drive %s (%p)\n",
-                      file_path, mmc);
+                DEBUG(DBG_MMC, "Failed opening LINUX MMC drive %s mounted to %s (%p)\n",
+                      mount_entry->mnt_fsname, file_path, mmc);
             }
         }
 
         endmntent(proc_mounts);
+    } else {
+        DEBUG(DBG_MMC, "Error opening /proc/mounts (%p)\n", mmc);
+    }
+
+    if (mmc->fd < 0) {
+        DEBUG(DBG_MMC, "Error opening LINUX MMC drive mounted to %s (%p)\n", file_path, mmc);
+        X_FREE(mmc);
     }
 
     X_FREE(file_path);
-
-    if (mmc->fd < 0) {
-        X_FREE(mmc);
-    }
 
 #elif defined(_WIN32)
     char drive[] = { path[0], ':', '\\', 0 };
