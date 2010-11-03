@@ -544,34 +544,6 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
     return 0;
 }
 
-static char *_find_cfg_file(void)
-{
-    static const char cfg_file_user[]   = "/.libaacs/KEYDB.cfg";
-    static const char cfg_file_system[] = "/etc/libaacs/KEYDB.cfg";
-
-    const char *userhome = getenv("HOME");
-
-    char *cfg_file = str_printf("%s%s", userhome, cfg_file_user);
-
-    FILE *fp = fopen(cfg_file, "r");
-    if (!fp) {
-
-        cfg_file = (char*)realloc(cfg_file, sizeof(cfg_file_system));
-        strcpy(cfg_file, cfg_file_system);
-
-        fp = fopen(cfg_file, "r");
-        if (!fp) {
-            DEBUG(DBG_AACS, "No configfile found!\n");
-            X_FREE(cfg_file);
-            return NULL;
-        }
-    }
-
-    fclose(fp);
-
-    return cfg_file;
-}
-
 AACS *aacs_open(const char *path, const char *configfile_path)
 {
     DEBUG(DBG_AACS, "libaacs [%zd]\n", sizeof(AACS));
@@ -591,7 +563,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
         /* If no configfile path given, check for configfiles in user's home or
          * under /etc.
          */
-        cfgfile = _find_cfg_file();
+        cfgfile = keydbcfg_find_config_file();
         if (!cfgfile) {
             DEBUG(DBG_AACS, "No configfile found!\n");
             return NULL;
