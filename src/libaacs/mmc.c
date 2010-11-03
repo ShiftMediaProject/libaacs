@@ -362,8 +362,18 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
 
     if (host_priv_key) memcpy(mmc->host_priv_key, host_priv_key, 20);
     if (host_cert) memcpy(mmc->host_cert, host_cert, 92);
-    if (host_nonce) memcpy(mmc->host_nonce, host_nonce, 20);
     if (host_key_point) memcpy(mmc->host_key_point, host_key_point, 40);
+
+    if (host_nonce) {
+        memcpy(mmc->host_nonce, host_nonce, 20);
+
+    } else {
+        crypto_create_nonce(mmc->host_nonce, sizeof(mmc->host_nonce));
+
+        char str[sizeof(mmc->host_nonce)*2 + 1];
+        DEBUG(DBG_MMC, "Created host nonce (Hn): %s\n",
+              print_hex(str, mmc->host_nonce, sizeof(mmc->host_nonce)));
+    }
 
 #if defined(HAVE_MNTENT_H)
 
