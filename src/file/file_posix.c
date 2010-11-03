@@ -96,7 +96,7 @@ static AACS_FILE_H *file_open_linux(const char* filename, const char *mode)
         return file;
     }
 
-    DEBUG(DBG_FILE, "Error opening file! (%p)\n", file);
+    DEBUG(DBG_FILE, "Error opening file %s ! (%p)\n", filename, file);
 
     X_FREE(file);
 
