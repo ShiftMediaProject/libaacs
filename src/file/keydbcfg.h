@@ -117,6 +117,8 @@ AACS_PRIVATE int keydbcfg_config_file_close(config_file *cfgfile);
 /* */
 
 AACS_PRIVATE char *keydbcfg_find_config_file(void);
+AACS_PRIVATE int   keydbcfg_load_cert_file(config_file *cf);
+AACS_PRIVATE int   keydbcfg_load_pk_file(config_file *cf);
 
 
 #endif

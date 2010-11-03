@@ -32,7 +32,168 @@
 #define SYSTEM_CFG_DIR "/etc/libaacs/"
 
 #define CFG_FILE_NAME  "KEYDB.cfg"
+#define CERT_FILE_NAME "HostKeyCertificate.txt"
+#define PK_FILE_NAME   "ProcessingDeviceKeysSimple.txt"
 
+#define MIN_FILE_SIZE  20
+#define MAX_FILE_SIZE  65535
+
+
+static char *_load_file(FILE *fp)
+{
+    char *data = NULL;
+    long file_size, read_size;
+
+    fseek(fp, 0, SEEK_END);
+    file_size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    if (file_size < MIN_FILE_SIZE || file_size > MAX_FILE_SIZE) {
+        DEBUG(DBG_FILE, "Invalid file size\n");
+        return NULL;
+    }
+
+    data      = malloc(file_size + 1);
+    read_size = fread(data, 1, file_size, fp);
+
+    if (read_size != file_size) {
+        DEBUG(DBG_FILE, "Error reading file\n");
+        X_FREE(data);
+	return NULL;
+    }
+
+    data[file_size] = 0;
+
+    return data;
+}
+
+static FILE *_open_cfg_file(const char *file_name, int user)
+{
+    char *cfg_file = NULL;
+
+    if (user) {
+        const char *userhome = getenv("HOME");
+        cfg_file = str_printf("%s%s%s", userhome, USER_CFG_DIR, file_name);
+
+    } else {
+        cfg_file = str_printf("%s%s", SYSTEM_CFG_DIR, file_name);
+    }
+
+    FILE *fp = fopen(cfg_file, "r");
+
+    DEBUG(DBG_FILE, fp ? "Reading %s\n" : "%s not found\n", cfg_file);
+
+    X_FREE(cfg_file);
+
+    return fp;
+}
+
+static int _parse_pk_file(config_file *cf, FILE *fp)
+{
+    char *data   = _load_file(fp);
+    int   result = 0;
+
+    if (data) {
+        const char *p = data;
+
+        while (*p) {
+            char *str = str_get_hex_string(p, 2*16);
+
+            if (str) {
+                DEBUG(DBG_FILE, "Found processing key %s\n", str);
+
+                pk_list *e = calloc(1, sizeof(pk_list));
+
+                e->key  = str;
+		e->next = cf->pkl;
+
+                cf->pkl = e;
+
+                result++;
+            }
+
+            p = str_next_line(p);
+        }
+
+        X_FREE(data);
+    }
+
+    return result;
+}
+
+static int _parse_cert_file(config_file *cf, FILE *fp)
+{
+    char *data   = _load_file(fp);
+    int   result = 0;
+
+    if (data) {
+        const char *p = data;
+        cert_list  *e = calloc(1, sizeof(cert_list));
+
+        e->host_priv_key = str_get_hex_string(p, 2*20);
+        p = str_next_line(p);
+        e->host_cert = str_get_hex_string(p, 2*92);
+
+        X_FREE(data);
+
+        if (!e->host_priv_key || !e->host_cert) {
+            DEBUG(DBG_FILE, "Invalid file\n");
+            X_FREE(e->host_priv_key);
+            X_FREE(e->host_cert);
+            X_FREE(e);
+
+        } else {
+            DEBUG(DBG_FILE, "Found certificate: %s %s\n", e->host_priv_key, e->host_cert);
+            e->next = cf->host_cert_list;
+            cf->host_cert_list = e;
+            result = 1;
+        }
+    }
+
+    return result;
+}
+
+int keydbcfg_load_pk_file(config_file *cf)
+{
+    static const char pk_file_name[] = PK_FILE_NAME;
+    FILE *fp;
+    int result = 0;
+
+    fp = _open_cfg_file(pk_file_name, 0);
+    if (fp) {
+        result += _parse_pk_file(cf, fp);
+        fclose(fp);
+    }
+
+    fp = _open_cfg_file(pk_file_name, 1);
+    if (fp) {
+        result += _parse_pk_file(cf, fp);
+        fclose(fp);
+    }
+
+    return result;
+}
+
+int keydbcfg_load_cert_file(config_file *cf)
+{
+    static const char cert_file_name[] = CERT_FILE_NAME;
+    FILE *fp;
+    int result = 0;
+
+    fp = _open_cfg_file(cert_file_name, 0);
+    if (fp) {
+        result += _parse_cert_file(cf, fp);
+        fclose(fp);
+    }
+
+    fp = _open_cfg_file(cert_file_name, 1);
+    if (fp) {
+        result += _parse_cert_file(cf, fp);
+        fclose(fp);
+    }
+
+    return result;
+}
 
 char *keydbcfg_find_config_file(void)
 {
