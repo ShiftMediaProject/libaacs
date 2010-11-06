@@ -1,0 +1,97 @@
+/*
+ * This file is part of libaacs
+ * Copyright (C) 2010  npzacs
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see
+ * <http://www.gnu.org/licenses/>.
+ */
+
+#include "xdg.h"
+
+#include "util/strutl.h"
+#include "util/logging.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/*
+ * Based on XDG Base Directory Specification
+ * http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+ */
+
+#define USER_CFG_DIR   ".config"
+#define SYSTEM_CFG_DIR "/etc/xdg"
+
+
+const char *xdg_get_config_home(void)
+{
+    static char *dir       = NULL;
+    static int   init_done = 0;
+
+    if (!init_done) {
+        init_done = 1;
+
+        const char *xdg_home = getenv("XDG_CONFIG_HOME");
+        if (xdg_home && *xdg_home) {
+            return dir = str_printf("%s", xdg_home);
+        }
+
+        const char *user_home = getenv("HOME");
+        if (user_home && *user_home) {
+            return dir = str_printf("%s/%s", user_home, USER_CFG_DIR);
+        }
+
+        DEBUG(DBG_FILE, "Can't find user home directory ($HOME) !\n");
+    }
+
+    return dir;
+}
+
+const char *xdg_get_config_system(const char *dir)
+{
+    static char *dirs = NULL; // "dir1\0dir2\0...\0dirN\0\0"
+
+    if (!dirs) {
+        const char *xdg_sys = getenv("XDG_CONFIG_DIRS");
+
+        if (xdg_sys && *xdg_sys) {
+
+            dirs = calloc(1, strlen(xdg_sys) + 2);
+            strcpy(dirs, xdg_sys);
+
+            char *pt = dirs;
+            while (NULL != (pt = strchr(pt, ':'))) {
+                *pt++ = 0;
+            }
+
+        } else {
+            dirs = str_printf("%s%c%c", SYSTEM_CFG_DIR, 0, 0);
+        }
+    }
+
+    if (!dir) {
+        // first call
+        dir = dirs;
+    } else {
+        // next call
+        dir += strlen(dir) + 1;
+        if (!*dir) {
+            // end of list
+            dir = NULL;
+        }
+    }
+
+    return dir;
+}

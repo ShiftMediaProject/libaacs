@@ -30,6 +30,8 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	file/file.h \
 	file/filesystem.h \
 	file/file_posix.c \
+	file/xdg.c \
+	file/xdg.h \
 	file/keydbcfg.c \
 	file/keydbcfg.h \
 	file/keydbcfg-parser.y \
