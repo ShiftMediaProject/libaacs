@@ -183,7 +183,7 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
     ZeroMemory(sptd_sb.SenseBuf, MAX_SENSE_LEN);
 
     if (DeviceIoControl(mmc->fd,
-			IOCTL_SCSI_PASS_THROUGH_DIRECT,
+                        IOCTL_SCSI_PASS_THROUGH_DIRECT,
                         (void*)&sptd_sb, sizeof(sptd_sb),
                         (void*)&sptd_sb, sizeof(sptd_sb),
                         &dwBytesReturned, NULL)) {
