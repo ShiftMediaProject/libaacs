@@ -30,7 +30,7 @@ struct mkb {
     uint8_t *buf;   // file contents
 };
 
-static uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
+static const uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
 {
     size_t pos = 0, len = 0;
 
@@ -96,58 +96,58 @@ void mkb_close(MKB *mkb)
 
 uint8_t mkb_type(MKB *mkb)
 {
-    uint8_t *rec = _record(mkb, 0x10, NULL);
+    const uint8_t *rec = _record(mkb, 0x10, NULL);
 
     return MKINT_BE32(rec + 4);
 }
 
 uint32_t mkb_version(MKB *mkb)
 {
-    uint8_t *rec = _record(mkb, 0x10, NULL);
+    const uint8_t *rec = _record(mkb, 0x10, NULL);
 
     return MKINT_BE32(rec + 8);
 }
 
-uint8_t *mkb_host_revokation_entries(MKB *mkb, size_t *len)
+const uint8_t *mkb_host_revokation_entries(MKB *mkb, size_t *len)
 {
-    uint8_t *rec = _record(mkb, 0x21, len);
+    const uint8_t *rec = _record(mkb, 0x21, len);
     *len -= 4;
 
     return rec + 4;
 }
 
-uint8_t *mkb_drive_revokation_entries(MKB *mkb, size_t *len)
+const uint8_t *mkb_drive_revokation_entries(MKB *mkb, size_t *len)
 {
-    uint8_t *rec = _record(mkb, 0x20, len);
+    const uint8_t *rec = _record(mkb, 0x20, len);
     *len -= 4;
 
     return rec + 4;
 }
 
-uint8_t *mkb_subdiff_records(MKB *mkb, size_t *len)
+const uint8_t *mkb_subdiff_records(MKB *mkb, size_t *len)
 {
-    uint8_t *rec = _record(mkb, 0x04, len) + 4;
+    const uint8_t *rec = _record(mkb, 0x04, len) + 4;
     *len -= 4;
 
     return rec;
 }
 
-uint8_t *mkb_cvalues(MKB *mkb, size_t *len)
+const uint8_t *mkb_cvalues(MKB *mkb, size_t *len)
 {
-    uint8_t *rec = _record(mkb, 0x05, len) + 4;
+    const uint8_t *rec = _record(mkb, 0x05, len) + 4;
     *len -= 4;
 
     return rec;
 }
 
-uint8_t *mkb_mk_dv(MKB *mkb)
+const uint8_t *mkb_mk_dv(MKB *mkb)
 {
     return _record(mkb, 0x81, NULL) + 4;
 }
 
-uint8_t *mkb_signature(MKB *mkb, size_t *len)
+const uint8_t *mkb_signature(MKB *mkb, size_t *len)
 {
-    uint8_t *rec = _record(mkb, 0x02, len);
+    const uint8_t *rec = _record(mkb, 0x02, len);
     *len -= 4;
 
     return rec + 4;

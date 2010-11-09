@@ -56,7 +56,8 @@ struct aacs {
 static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
                                    "\x00\x00\x00\x00\x00\x00\x00\x00";
 
-static int _validate_pk(uint8_t *pk, uint8_t *cvalue, uint8_t *uv, uint8_t *vd,
+static int _validate_pk(const uint8_t *pk,
+                        const uint8_t *cvalue, const uint8_t *uv, const uint8_t *vd,
                         uint8_t *mk)
 {
     gcry_cipher_hd_t gcry_h;
@@ -94,8 +95,9 @@ static int _calc_mk(AACS *aacs, const char *path)
 {
     int a, num_uvs = 0;
     size_t len;
-    uint8_t *buf = NULL, *rec, *uvs;
+    uint8_t *buf = NULL;
     MKB *mkb = NULL;
+    const uint8_t *rec, *uvs;
 
     /* Skip if retrieved from config file */
     if (memcmp(aacs->mk, empty_key, 16))
