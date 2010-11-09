@@ -290,7 +290,7 @@ static int _calc_uks(AACS *aacs, const char *path)
 
     DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
-    f_name = str_printf("/%s/AACS/Unit_Key_RO.inf", path);
+    f_name = str_printf("%s/AACS/Unit_Key_RO.inf", path);
     fp = file_open(f_name, "rb");
     X_FREE(f_name);
 
@@ -359,7 +359,7 @@ static int _calc_title_hash(const char *path, uint8_t *title_hash)
     int64_t  f_size;
     char    *f_name;
 
-    f_name = str_printf("/%s/AACS/Unit_Key_RO.inf", path);
+    f_name = str_printf("%s/AACS/Unit_Key_RO.inf", path);
 
     if (!(fp = file_open(f_name, "rb"))) {
         DEBUG(DBG_AACS, "Failed to open unit key file: %s!\n", f_name);
