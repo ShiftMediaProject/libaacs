@@ -206,7 +206,7 @@ static int _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr,
                            uint16_t len)
 {
     uint8_t cmd[16];
-    memset(cmd, 0, 16);
+    memset(cmd, 0, sizeof(cmd));
     memset(buf, 0, len);
 
     DEBUG(DBG_MMC, "MMC report key... (%p)\n", mmc);
@@ -230,7 +230,7 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
 {
     uint8_t cmd[16];
     char str[512];
-    memset(cmd, 0, 16);
+    memset(cmd, 0, sizeof(cmd));
 
     DEBUG(DBG_MMC, "MMC send key [%d] %s... (%p)\n", len, print_hex(str, buf, len),
           mmc);
@@ -322,7 +322,7 @@ static int _mmc_send_host_key(MMC *mmc, uint8_t agid,
                               const uint8_t *host_key_signature)
 {
     uint8_t buf[84];
-    memset(buf, 0, 84);
+    memset(buf, 0, sizeof(buf));
 
     buf[1] = 0x52;
     memcpy(buf + 4,  host_key_point,     40);
@@ -336,7 +336,7 @@ static int _mmc_read_vid(MMC *mmc, uint8_t agid, uint8_t *volume_id,
 {
     uint8_t buf[36];
     uint8_t cmd[16];
-    memset(cmd, 0, 16);
+    memset(cmd, 0, sizeof(cmd));
     memset(buf, 0, 36);
 
     cmd[0] = 0xad;
@@ -486,7 +486,7 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40], mac[16];
     char str[512];
 
-    memset(hks, 0, 40);
+    memset(hks, 0, sizeof(hks));
 
     DEBUG(DBG_MMC, "Reading VID from drive... (%p)\n", mmc);
 
