@@ -110,18 +110,18 @@ uint32_t mkb_version(MKB *mkb)
 
 uint8_t *mkb_host_revokation_entries(MKB *mkb, size_t *len)
 {
-  uint8_t *rec = _record(mkb, 0x21, len);
-  *len -= 4;
+    uint8_t *rec = _record(mkb, 0x21, len);
+    *len -= 4;
 
-  return rec + 4;
+    return rec + 4;
 }
 
 uint8_t *mkb_drive_revokation_entries(MKB *mkb, size_t *len)
 {
-  uint8_t *rec = _record(mkb, 0x20, len);
-  *len -= 4;
+    uint8_t *rec = _record(mkb, 0x20, len);
+    *len -= 4;
 
-  return rec + 4;
+    return rec + 4;
 }
 
 uint8_t *mkb_subdiff_records(MKB *mkb, size_t *len)
