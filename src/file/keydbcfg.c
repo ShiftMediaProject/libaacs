@@ -19,6 +19,8 @@
 
 #include "keydbcfg.h"
 
+#include "xdg.h"
+
 #include "util/strutl.h"
 #include "util/logging.h"
 #include "util/macro.h"
@@ -30,6 +32,7 @@
 
 #define USER_CFG_DIR   "/.libaacs/"
 #define SYSTEM_CFG_DIR "/etc/libaacs/"
+#define CFG_DIR        "aacs"
 
 #define CFG_FILE_NAME  "KEYDB.cfg"
 #define CERT_FILE_NAME "HostKeyCertificate.txt"
@@ -67,25 +70,43 @@ static char *_load_file(FILE *fp)
     return data;
 }
 
-static FILE *_open_cfg_file(const char *file_name, int user)
+static FILE *_open_cfg_file_user(const char *file_name)
 {
-    char *cfg_file = NULL;
+    const char *cfg_dir = xdg_get_config_home();
 
-    if (user) {
-        const char *userhome = getenv("HOME");
-        cfg_file = str_printf("%s%s%s", userhome, USER_CFG_DIR, file_name);
-
-    } else {
-        cfg_file = str_printf("%s%s", SYSTEM_CFG_DIR, file_name);
+    if (!cfg_dir) {
+        return NULL;
     }
 
-    FILE *fp = fopen(cfg_file, "r");
+    char *cfg_file = str_printf("%s/%s/%s", cfg_dir, CFG_DIR, file_name);
+    FILE *fp       = fopen(cfg_file, "r");
 
     DEBUG(DBG_FILE, fp ? "Reading %s\n" : "%s not found\n", cfg_file);
-
     X_FREE(cfg_file);
 
     return fp;
+}
+
+static FILE *_open_cfg_file_system(const char *file_name)
+{
+    const char *dir = NULL;
+
+    while (NULL != (dir = xdg_get_config_system(dir))) {
+
+        char *cfg_file = str_printf("%s/%s/%s", dir, CFG_DIR, file_name);
+
+        FILE *fp = fopen(cfg_file, "r");
+        if (fp) {
+            DEBUG(DBG_FILE, "Reading %s\n", cfg_file);
+            X_FREE(cfg_file);
+            return fp;
+        }
+
+        DEBUG(DBG_FILE, "%s not found\n", cfg_file);
+        X_FREE(cfg_file);
+    }
+
+    return NULL;
 }
 
 static int _parse_pk_file(config_file *cf, FILE *fp)
@@ -159,13 +180,13 @@ int keydbcfg_load_pk_file(config_file *cf)
     FILE *fp;
     int result = 0;
 
-    fp = _open_cfg_file(pk_file_name, 0);
+    fp = _open_cfg_file_user(pk_file_name);
     if (fp) {
         result += _parse_pk_file(cf, fp);
         fclose(fp);
     }
 
-    fp = _open_cfg_file(pk_file_name, 1);
+    fp = _open_cfg_file_system(pk_file_name);
     if (fp) {
         result += _parse_pk_file(cf, fp);
         fclose(fp);
@@ -180,13 +201,13 @@ int keydbcfg_load_cert_file(config_file *cf)
     FILE *fp;
     int result = 0;
 
-    fp = _open_cfg_file(cert_file_name, 0);
+    fp = _open_cfg_file_user(cert_file_name);
     if (fp) {
         result += _parse_cert_file(cf, fp);
         fclose(fp);
     }
 
-    fp = _open_cfg_file(cert_file_name, 1);
+    fp = _open_cfg_file_system(cert_file_name);
     if (fp) {
         result += _parse_cert_file(cf, fp);
         fclose(fp);
