@@ -1,6 +1,7 @@
 /*
  * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
+ * Copyright (C) 2010       npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -54,6 +55,50 @@
 #ifdef HAVE_PTHREAD_H
 GCRY_THREAD_OPTION_PTHREAD_IMPL;
 #endif
+
+/* include some elliptic curve utils from libgcrypt */
+#include "ec.c"
+
+typedef struct {
+    gcry_mpi_t  p, a, b, n;
+    mpi_point_t G;
+} elliptic_curve_t;
+
+static void _aacs_curve_init(elliptic_curve_t *c)
+{
+    /* elliptic curve from AACS specs */
+    const uint8_t p[20]   = { 0x9D,0xC9,0xD8,0x13,0x55,0xEC,0xCE,0xB5,0x60,0xBD,
+                              0xB0,0x9E,0xF9,0xEA,0xE7,0xC4,0x79,0xA7,0xD7,0xDF };
+    const uint8_t a[20]   = { 0x9D,0xC9,0xD8,0x13,0x55,0xEC,0xCE,0xB5,0x60,0xBD,
+                              0xB0,0x9E,0xF9,0xEA,0xE7,0xC4,0x79,0xA7,0xD7,0xDC };
+    const uint8_t b[20]   = { 0x40,0x2D,0xAD,0x3E,0xC1,0xCB,0xCD,0x16,0x52,0x48,
+                              0xD6,0x8E,0x12,0x45,0xE0,0xC4,0xDA,0xAC,0xB1,0xD8 };
+    const uint8_t n[20]   = { 0x9D,0xC9,0xD8,0x13,0x55,0xEC,0xCE,0xB5,0x60,0xBD,
+                              0xC4,0x4F,0x54,0x81,0x7B,0x2C,0x7F,0x5A,0xB0,0x17 };
+    const uint8_t G_x[20] = { 0x2E,0x64,0xFC,0x22,0x57,0x83,0x51,0xE6,0xF4,0xCC,
+                              0xA7,0xEB,0x81,0xD0,0xA4,0xBD,0xC5,0x4C,0xCE,0xC6 };
+    const uint8_t G_y[20] = { 0x09,0x14,0xA2,0x5D,0xD0,0x54,0x42,0x88,0x9D,0xB4,
+                              0x55,0xC7,0xF2,0x3C,0x9A,0x07,0x07,0xF5,0xCB,0xB9 };
+
+    memset(c, 0, sizeof(*c));
+
+    gcry_mpi_scan (&c->p,   GCRYMPI_FMT_USG, p,   20, NULL);
+    gcry_mpi_scan (&c->a,   GCRYMPI_FMT_USG, a,   20, NULL);
+    gcry_mpi_scan (&c->b,   GCRYMPI_FMT_USG, b,   20, NULL);
+    gcry_mpi_scan (&c->n,   GCRYMPI_FMT_USG, n,   20, NULL);
+    gcry_mpi_scan (&c->G.x, GCRYMPI_FMT_USG, G_x, 20, NULL);
+    gcry_mpi_scan (&c->G.y, GCRYMPI_FMT_USG, G_y, 20, NULL);
+    c->G.z = mpi_alloc_set_ui(1);
+}
+
+static void _curve_free(elliptic_curve_t *c)
+{
+    gcry_mpi_release(c->p); c->p = NULL;
+    gcry_mpi_release(c->a); c->a = NULL;
+    gcry_mpi_release(c->b); c->b = NULL;
+    gcry_mpi_release(c->n); c->n = NULL;
+    point_free(&c->G);
+}
 
 static void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 {
@@ -282,12 +327,54 @@ void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
     gcry_md_hash_buffer(GCRY_MD_SHA1, hash, ukf, len);
 }
 
-void crypto_randomize(uint8_t *buf, size_t len)
-{
-    gcry_randomize(buf, len, 1);
-}
-
 void crypto_create_nonce(uint8_t *buf, size_t len)
 {
     gcry_create_nonce(buf, len);
+}
+
+void crypto_create_host_key_pair(uint8_t *host_key, uint8_t *host_key_point)
+{
+    /*
+     * AACS spec, section 4.3, steps 23-24
+     */
+
+    /* generate random number Hk (host_key) */
+
+    gcry_mpi_t d;
+    gcry_randomize(host_key, 20, 1);
+    gcry_mpi_scan(&d, GCRYMPI_FMT_USG, host_key, 20, NULL);
+
+    /* init AACS curve */
+
+    elliptic_curve_t ec;
+    _aacs_curve_init(&ec);
+
+    /* init ec context */
+
+    mpi_ec_t ctx = _gcry_mpi_ec_init (ec.p, ec.a);
+
+    /* Compute point (Q) */
+
+    mpi_point_t Q;
+    point_init (&Q);
+    _gcry_mpi_ec_mul_point (&Q, d, &ec.G, ctx);
+
+    /* get affine coordinates (Hv) */
+
+    gcry_mpi_t q_x = mpi_new(0);
+    gcry_mpi_t q_y = mpi_new(0);
+    _gcry_mpi_ec_get_affine (q_x, q_y, &Q, ctx);
+
+    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point,      0, NULL, q_x);
+    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point + 20, 0, NULL, q_y);
+
+    /* cleanup */
+
+    _gcry_mpi_ec_free (ctx);
+    _curve_free(&ec);
+
+    mpi_free(d);
+    mpi_free(q_x);
+    mpi_free(q_y);
+    point_free(&Q);
 }

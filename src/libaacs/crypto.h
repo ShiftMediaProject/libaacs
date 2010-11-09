@@ -33,7 +33,7 @@ AACS_PRIVATE void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
                                    const uint8_t *nonce, const uint8_t *point);
 AACS_PRIVATE void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash);
 
-AACS_PRIVATE void crypto_randomize(uint8_t *buf, size_t len);
+AACS_PRIVATE void crypto_create_host_key_pair(uint8_t *key, uint8_t *key_point);
 AACS_PRIVATE void crypto_create_nonce(uint8_t *buf, size_t len);
 
 #endif /* CRYPTO_H_ */
