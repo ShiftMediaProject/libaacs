@@ -59,7 +59,7 @@ static char *_load_file(FILE *fp)
     if (read_size != file_size) {
         DEBUG(DBG_FILE, "Error reading file\n");
         X_FREE(data);
-	return NULL;
+        return NULL;
     }
 
     data[file_size] = 0;
@@ -105,7 +105,7 @@ static int _parse_pk_file(config_file *cf, FILE *fp)
                 pk_list *e = calloc(1, sizeof(pk_list));
 
                 e->key  = str;
-		e->next = cf->pkl;
+                e->next = cf->pkl;
 
                 cf->pkl = e;
 
