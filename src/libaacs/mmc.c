@@ -1,6 +1,7 @@
 /*
  * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
+ * Copyright (C) 2010       npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -88,6 +89,7 @@ struct mmc {
 #endif
     uint8_t host_priv_key[20], host_cert[92];
     uint8_t host_nonce[20];
+    uint8_t host_key[20];
     uint8_t host_key_point[40];
 };
 
@@ -362,7 +364,6 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
 
     if (host_priv_key) memcpy(mmc->host_priv_key, host_priv_key, 20);
     if (host_cert) memcpy(mmc->host_cert, host_cert, 92);
-    if (host_key_point) memcpy(mmc->host_key_point, host_key_point, 40);
 
     if (host_nonce) {
         memcpy(mmc->host_nonce, host_nonce, 20);
@@ -373,6 +374,19 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
         char str[sizeof(mmc->host_nonce)*2 + 1];
         DEBUG(DBG_MMC, "Created host nonce (Hn): %s\n",
               print_hex(str, mmc->host_nonce, sizeof(mmc->host_nonce)));
+    }
+
+    if (host_key_point) {
+        memcpy(mmc->host_key_point, host_key_point, 40);
+
+    } else {
+        crypto_create_host_key_pair(mmc->host_key, mmc->host_key_point);
+
+        char    str[sizeof(mmc->host_key_point)*2 + 1];
+        DEBUG(DBG_MMC, "Created host key (Hk): %s\n",
+              print_hex(str, mmc->host_key, sizeof(mmc->host_key)));
+        DEBUG(DBG_MMC, "Created host key point (Hv): %s\n",
+              print_hex(str, mmc->host_key_point, sizeof(mmc->host_key_point)));
     }
 
 #if defined(HAVE_MNTENT_H)
