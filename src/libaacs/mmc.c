@@ -358,7 +358,7 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
               const uint8_t *host_cert, const uint8_t *host_nonce,
               const uint8_t *host_key_point)
 {
-    MMC *mmc = malloc(sizeof(MMC));
+    MMC *mmc = calloc(1, sizeof(MMC));
 
     if (host_priv_key) memcpy(mmc->host_priv_key, host_priv_key, 20);
     if (host_cert) memcpy(mmc->host_cert, host_cert, 92);
