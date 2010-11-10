@@ -30,8 +30,6 @@
 #include <string.h>
 
 
-#define USER_CFG_DIR   "/.libaacs/"
-#define SYSTEM_CFG_DIR "/etc/libaacs/"
 #define CFG_DIR        "aacs"
 
 #define CFG_FILE_NAME  "KEYDB.cfg"
@@ -70,7 +68,7 @@ static char *_load_file(FILE *fp)
     return data;
 }
 
-static FILE *_open_cfg_file_user(const char *file_name)
+static FILE *_open_cfg_file_user(const char *file_name, char **path)
 {
     const char *cfg_dir = xdg_get_config_home();
 
@@ -82,12 +80,17 @@ static FILE *_open_cfg_file_user(const char *file_name)
     FILE *fp       = fopen(cfg_file, "r");
 
     DEBUG(DBG_FILE, fp ? "Reading %s\n" : "%s not found\n", cfg_file);
-    X_FREE(cfg_file);
+
+    if (fp && path) {
+        *path = cfg_file;
+    } else {
+        X_FREE(cfg_file);
+    }
 
     return fp;
 }
 
-static FILE *_open_cfg_file_system(const char *file_name)
+static FILE *_open_cfg_file_system(const char *file_name, char **path)
 {
     const char *dir = NULL;
 
@@ -98,7 +101,13 @@ static FILE *_open_cfg_file_system(const char *file_name)
         FILE *fp = fopen(cfg_file, "r");
         if (fp) {
             DEBUG(DBG_FILE, "Reading %s\n", cfg_file);
-            X_FREE(cfg_file);
+
+            if (path) {
+                *path = cfg_file;
+            } else {
+                X_FREE(cfg_file);
+            }
+
             return fp;
         }
 
@@ -180,13 +189,13 @@ int keydbcfg_load_pk_file(config_file *cf)
     FILE *fp;
     int result = 0;
 
-    fp = _open_cfg_file_user(pk_file_name);
+    fp = _open_cfg_file_user(pk_file_name, NULL);
     if (fp) {
         result += _parse_pk_file(cf, fp);
         fclose(fp);
     }
 
-    fp = _open_cfg_file_system(pk_file_name);
+    fp = _open_cfg_file_system(pk_file_name, NULL);
     if (fp) {
         result += _parse_pk_file(cf, fp);
         fclose(fp);
@@ -201,13 +210,13 @@ int keydbcfg_load_cert_file(config_file *cf)
     FILE *fp;
     int result = 0;
 
-    fp = _open_cfg_file_user(cert_file_name);
+    fp = _open_cfg_file_user(cert_file_name, NULL);
     if (fp) {
         result += _parse_cert_file(cf, fp);
         fclose(fp);
     }
 
-    fp = _open_cfg_file_system(cert_file_name);
+    fp = _open_cfg_file_system(cert_file_name, NULL);
     if (fp) {
         result += _parse_cert_file(cf, fp);
         fclose(fp);
@@ -218,30 +227,21 @@ int keydbcfg_load_cert_file(config_file *cf)
 
 char *keydbcfg_find_config_file(void)
 {
-    static const char cfg_file_user[]   = USER_CFG_DIR   CFG_FILE_NAME;
-    static const char cfg_file_system[] = SYSTEM_CFG_DIR CFG_FILE_NAME;
+    static const char cfg_file_name[] = CFG_FILE_NAME;
 
-    const char *userhome = getenv("HOME");
+    char       *cfg_file = NULL;
+    FILE       *fp       = NULL;
 
-    char *cfg_file = str_printf("%s%s", userhome, cfg_file_user);
-
-    FILE *fp = fopen(cfg_file, "r");
+    fp = _open_cfg_file_user(cfg_file_name, &cfg_file);
     if (!fp) {
-
-        cfg_file = (char*)realloc(cfg_file, sizeof(cfg_file_system));
-        strcpy(cfg_file, cfg_file_system);
-
-        fp = fopen(cfg_file, "r");
-        if (!fp) {
-            DEBUG(DBG_FILE, "No config file found!\n");
-            X_FREE(cfg_file);
-            return NULL;
-        }
+        fp = _open_cfg_file_system(cfg_file_name, &cfg_file);
     }
 
-    fclose(fp);
+    if (fp) {
+        DEBUG(DBG_FILE, "found config file: %s\n", cfg_file);
+        fclose(fp);
+    }
 
-    DEBUG(DBG_FILE, "found config file: %s\n", cfg_file);
     return cfg_file;
 }
 
