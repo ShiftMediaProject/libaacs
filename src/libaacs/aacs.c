@@ -181,7 +181,7 @@ static int _calc_vuk(AACS *aacs, const char *path)
     }
 
     cert_list *hccursor = aacs->cf->host_cert_list;
-    while (hccursor && hccursor->host_priv_key) {
+    while (hccursor && hccursor->host_priv_key && hccursor->host_cert) {
         uint8_t priv_key[20], cert[92], nonce[20], key_point[40];
         hexstring_to_hex_array(priv_key, sizeof(priv_key),
                                hccursor->host_priv_key);
