@@ -357,18 +357,14 @@ static int _mmc_read_vid(MMC *mmc, uint8_t agid, uint8_t *volume_id,
 }
 
 MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
-              const uint8_t *host_cert, const uint8_t *host_nonce,
-              const uint8_t *host_key_point)
+              const uint8_t *host_cert)
 {
     MMC *mmc = calloc(1, sizeof(MMC));
 
     if (host_priv_key) memcpy(mmc->host_priv_key, host_priv_key, 20);
     if (host_cert) memcpy(mmc->host_cert, host_cert, 92);
 
-    if (host_nonce) {
-        memcpy(mmc->host_nonce, host_nonce, 20);
-
-    } else {
+    {
         crypto_create_nonce(mmc->host_nonce, sizeof(mmc->host_nonce));
 
         char str[sizeof(mmc->host_nonce)*2 + 1];
@@ -376,10 +372,7 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
               print_hex(str, mmc->host_nonce, sizeof(mmc->host_nonce)));
     }
 
-    if (host_key_point) {
-        memcpy(mmc->host_key_point, host_key_point, 40);
-
-    } else {
+    {
         crypto_create_host_key_pair(mmc->host_key, mmc->host_key_point);
 
         char    str[sizeof(mmc->host_key_point)*2 + 1];

@@ -182,15 +182,12 @@ static int _calc_vuk(AACS *aacs, const char *path)
 
     cert_list *hccursor = aacs->cf->host_cert_list;
     while (hccursor && hccursor->host_priv_key && hccursor->host_cert) {
-        uint8_t priv_key[20], cert[92], nonce[20], key_point[40];
+        uint8_t priv_key[20], cert[92];
         hexstring_to_hex_array(priv_key, sizeof(priv_key),
                                hccursor->host_priv_key);
         hexstring_to_hex_array(cert, sizeof(cert), hccursor->host_cert);
-        hexstring_to_hex_array(nonce, sizeof(nonce), hccursor->host_nonce);
-        hexstring_to_hex_array(key_point, sizeof(key_point),
-                               hccursor->host_key_point);
 
-        if ((mmc = mmc_open(path, priv_key, cert, nonce, key_point))) {
+        if ((mmc = mmc_open(path, priv_key, cert))) {
             if (mmc_read_vid(mmc, aacs->vid)) {
                 gcry_cipher_hd_t gcry_h;
                 gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES,
