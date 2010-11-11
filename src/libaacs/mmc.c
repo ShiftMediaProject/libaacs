@@ -52,6 +52,10 @@
 #define PATCHED_DRIVE 0
 #endif
 
+#ifndef DEBUG_KEYS
+#define DEBUG_KEYS 0
+#endif
+
 #if defined(_WIN32)
 /*
  * from ntddscsi.h, Windows DDK
@@ -364,17 +368,17 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
     if (host_priv_key) memcpy(mmc->host_priv_key, host_priv_key, 20);
     if (host_cert) memcpy(mmc->host_cert, host_cert, 92);
 
-    {
-        crypto_create_nonce(mmc->host_nonce, sizeof(mmc->host_nonce));
+    crypto_create_nonce(mmc->host_nonce, sizeof(mmc->host_nonce));
 
+    if (DEBUG_KEYS) {
         char str[sizeof(mmc->host_nonce)*2 + 1];
         DEBUG(DBG_MMC, "Created host nonce (Hn): %s\n",
               print_hex(str, mmc->host_nonce, sizeof(mmc->host_nonce)));
     }
 
-    {
-        crypto_create_host_key_pair(mmc->host_key, mmc->host_key_point);
+    crypto_create_host_key_pair(mmc->host_key, mmc->host_key_point);
 
+    if (DEBUG_KEYS) {
         char    str[sizeof(mmc->host_key_point)*2 + 1];
         DEBUG(DBG_MMC, "Created host key (Hk): %s\n",
               print_hex(str, mmc->host_key, sizeof(mmc->host_key)));
@@ -521,10 +525,11 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
                   "Drive doesn't give its certificate (%p)\n", mmc);
             break;
         }
-        //DEBUG(DBG_MMC, "Drive certificate   : %s (%p)\n", print_hex(str, dc, 92),
-        //      mmc);
-        //DEBUG(DBG_MMC, "Drive nonce         : %s (%p)\n", print_hex(str, dn, 20),
-        //      mmc);
+
+        if (DEBUG_KEYS) {
+            DEBUG(DBG_MMC, "Drive certificate   : %s (%p)\n", print_hex(str, dc, 92), mmc);
+            DEBUG(DBG_MMC, "Drive nonce         : %s (%p)\n", print_hex(str, dn, 20), mmc);
+        }
 
         // receive mmc key
         if (!_mmc_read_drive_key(mmc, agid, dkp, dks)) {
@@ -532,10 +537,11 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
                   mmc);
             break;
         }
-        //DEBUG(DBG_MMC, "Drive key point     : %s (%p)\n", print_hex(str, dkp, 40),
-        //      mmc);
-        //DEBUG(DBG_MMC, "Drive key signature : %s (%p)\n", print_hex(str, dks, 40),
-        //      mmc);
+
+        if (DEBUG_KEYS) {
+            DEBUG(DBG_MMC, "Drive key point     : %s (%p)\n", print_hex(str, dkp, 40), mmc);
+            DEBUG(DBG_MMC, "Drive key signature : %s (%p)\n", print_hex(str, dks, 40), mmc);
+        }
 
         crypto_aacs_sign(mmc->host_cert, mmc->host_priv_key, hks, dn,
                          mmc->host_key_point);
