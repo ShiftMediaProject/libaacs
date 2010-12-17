@@ -81,7 +81,7 @@ static int add_date_entry(title_entry_list *list, unsigned int year,
 void yyerror (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist,
               title_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg);
-extern int yyget_lineno  (void *scanner);
+extern int libaacs_yyget_lineno  (void *scanner);
 
 /* uncomment the line below for debugging */
 // int yydebug = 1;
@@ -162,7 +162,7 @@ config_entry
   | error NEWLINE
     {
       fprintf(stderr, "bad entry at or around line %d\n",
-              yyget_lineno(scanner) - 1);
+              libaacs_yyget_lineno(scanner) - 1);
       yyerrok;
     }
   ;
@@ -435,11 +435,11 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   digit_key_pair_list *dkplist = NULL;
 
   void *scanner;
-  yylex_init(&scanner);
-  yyset_in(fp, scanner);
+  libaacs_yylex_init(&scanner);
+  libaacs_yyset_in(fp, scanner);
   int retval = yyparse(scanner, head_dklist, head_pklist, head_clist,
                        head_celist, dkplist);
-  yylex_destroy(scanner);
+  libaacs_yylex_destroy(scanner);
 
   cfgfile->dkl = head_dklist;
   cfgfile->pkl = head_pklist;
@@ -735,5 +735,5 @@ void yyerror (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist,
               title_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg)
 {
-  fprintf(stderr, "%s: line %d\n", msg, yyget_lineno(scanner));
+  fprintf(stderr, "%s: line %d\n", msg, libaacs_yyget_lineno(scanner));
 }

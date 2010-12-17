@@ -15,7 +15,7 @@ SET_INCLUDES = -I$(top_srcdir) -Ifile
 
 AM_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_WARNINGS) $(SET_OPTIMIZATIONS) \
 	$(SET_DEBUG_OPTS) $(SET_INCLUDES) $(LIBGCRYPT_CFLAGS)
-AM_YFLAGS = -d
+AM_YFLAGS = -d -p libaacs_yy
 CFLAGS=$(shell test -z "$$CFLAGS" || echo "$$CFLAGS")
 
 lib_LTLIBRARIES = libaacs.la

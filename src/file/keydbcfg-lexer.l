@@ -38,6 +38,8 @@ static char *trim_string(const char *string);
 %option noinput
 %option nounput
 %option yylineno
+%option outfile="lex.yy.c"
+%option prefix="libaacs_yy"
 
 %s TITLE_STATE
 
