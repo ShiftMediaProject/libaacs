@@ -424,6 +424,9 @@ hexstring_list
 /* Function to parse a config file */
 int keydbcfg_parse_config(config_file *cfgfile, const char *path)
 {
+  if (!cfgfile || !path)
+    return 0;
+
   FILE * fp = fopen(path, "r");
   if (!fp)
     return 0;
