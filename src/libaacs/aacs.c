@@ -435,7 +435,7 @@ static uint32_t _find_config_entry(AACS *aacs, const char *path)
         return 0;
     }
 
-    if (aacs->cf) {
+    if (aacs->cf && aacs->cf->list) {
         aacs->ce = aacs->cf->list;
         while (aacs->ce && aacs->ce->entry.discid) {
             memset(discid, 0, sizeof(discid));
@@ -543,6 +543,38 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
     return 0;
 }
 
+static int _load_config(AACS *aacs, const char *configfile_path)
+{
+    int config_ok = 0;
+
+    aacs->cf = keydbcfg_new_config_file();
+
+    /* try to load KEYDB.cfg */
+
+    if (configfile_path) {
+        config_ok = keydbcfg_parse_config(aacs->cf, configfile_path);
+
+    } else {
+        /* If no configfile path given, check for config files in user's home or
+         * under /etc.
+         */
+        char *cfgfile = keydbcfg_find_config_file();
+        config_ok = keydbcfg_parse_config(aacs->cf, cfgfile);
+        X_FREE(cfgfile);
+    }
+
+    /* Try to load simple (aacskeys) config files */
+
+    config_ok = keydbcfg_load_pk_file(aacs->cf)   || config_ok;
+    config_ok = keydbcfg_load_cert_file(aacs->cf) || config_ok;
+
+    if (!config_ok) {
+        DEBUG(DBG_AACS, "No valid configuration files found!\n");
+    }
+
+    return config_ok;
+}
+
 AACS *aacs_open(const char *path, const char *configfile_path)
 {
     DEBUG(DBG_AACS, "libaacs [%zd]\n", sizeof(AACS));
@@ -554,27 +586,9 @@ AACS *aacs_open(const char *path, const char *configfile_path)
         return NULL;
     }
 
-    char *cfgfile = NULL;
-    if (configfile_path) {
-        cfgfile = (char*)malloc(strlen(configfile_path) + 1);
-        strcpy(cfgfile, configfile_path);
-    } else {
-        /* If no configfile path given, check for configfiles in user's home or
-         * under /etc.
-         */
-        cfgfile = keydbcfg_find_config_file();
-        if (!cfgfile) {
-            DEBUG(DBG_AACS, "No configfile found!\n");
-            return NULL;
-        }
-    }
-
     AACS *aacs = calloc(1, sizeof(AACS));
 
-    aacs->cf = keydbcfg_new_config_file();
-    if (keydbcfg_parse_config(aacs->cf, cfgfile)) {
-        X_FREE(cfgfile);
-
+    if (_load_config(aacs, configfile_path)) {
         DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
         if(_find_config_entry(aacs, path)) {
             if (_calc_uks(aacs, path)) {
@@ -603,7 +617,6 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 
     DEBUG(DBG_AACS, "Failed to initialize AACS! (%p)\n", aacs);
 
-    X_FREE(cfgfile);
     aacs_close(aacs);
 
     return NULL;
