@@ -118,6 +118,20 @@ static FILE *_open_cfg_file_system(const char *file_name, char **path)
     return NULL;
 }
 
+static int _is_duplicate_pk(pk_list *list, const char *e)
+{
+    while (list) {
+        if (list->key) {
+            if (!memcmp(list->key, e, 2*16)) {
+                return 1;
+            }
+        }
+        list = list->next;
+    }
+
+    return 0;
+}
+
 static int _parse_pk_file(config_file *cf, FILE *fp)
 {
     char *data   = _load_file(fp);
@@ -129,7 +143,11 @@ static int _parse_pk_file(config_file *cf, FILE *fp)
         while (*p) {
             char *str = str_get_hex_string(p, 2*16);
 
-            if (str) {
+            if (str && _is_duplicate_pk(cf->pkl, str)) {
+                DEBUG(DBG_FILE, "Skipping duplicate processing key %s\n", str);
+                X_FREE(str);
+
+            } else if (str) {
                 DEBUG(DBG_FILE, "Found processing key %s\n", str);
 
                 pk_list *e = calloc(1, sizeof(pk_list));
@@ -151,6 +169,30 @@ static int _parse_pk_file(config_file *cf, FILE *fp)
     return result;
 }
 
+static int _is_duplicate_cert(cert_list *list, cert_list *e)
+{
+    while (list) {
+        if (list->host_priv_key && list->host_cert) {
+
+            if (!memcmp(list->host_priv_key, e->host_priv_key, 2*20) &&
+                !memcmp(list->host_cert,     e->host_cert,     2*92)) {
+
+                return 1;
+            }
+        }
+        list = list->next;
+    }
+
+  return 0;
+}
+
+static void _free_cert_entry(cert_list *e)
+{
+    X_FREE(e->host_priv_key);
+    X_FREE(e->host_cert);
+    X_FREE(e);
+}
+
 static int _parse_cert_file(config_file *cf, FILE *fp)
 {
     char *data   = _load_file(fp);
@@ -168,9 +210,11 @@ static int _parse_cert_file(config_file *cf, FILE *fp)
 
         if (!e->host_priv_key || !e->host_cert) {
             DEBUG(DBG_FILE, "Invalid file\n");
-            X_FREE(e->host_priv_key);
-            X_FREE(e->host_cert);
-            X_FREE(e);
+            _free_cert_entry(e);
+
+        } else if (_is_duplicate_cert(cf->host_cert_list, e)) {
+            DEBUG(DBG_FILE, "Skipping duplicate certificate entry %s %s\n", e->host_priv_key, e->host_cert);
+            _free_cert_entry(e);
 
         } else {
             DEBUG(DBG_FILE, "Found certificate: %s %s\n", e->host_priv_key, e->host_cert);
