@@ -264,6 +264,44 @@ error:
     return err;
 }
 
+static gcry_error_t _aacs_sexp_sha1(gcry_sexp_t *p_sexp_data,
+                                    const uint8_t *block, uint32_t len)
+{
+    gcry_mpi_t   mpi_md = NULL;
+    uint8_t      md[20];
+    gcry_error_t err;
+
+    gcry_md_hash_buffer(GCRY_MD_SHA1, md, block, len);
+    gcry_mpi_scan(&mpi_md, GCRYMPI_FMT_USG, md, sizeof(md), NULL);
+
+    /* Dump information about the md MPI when debugging */
+    if (GCRYPT_DEBUG) {
+        fprintf(stderr, "SHA1: ");
+        gcry_mpi_dump(mpi_md);
+        fprintf(stderr, "\n");
+    }
+
+    /* Build an s-expression for the hash */
+    GCRY_VERIFY("gcry_sexp_build",
+                gcry_sexp_build(p_sexp_data, NULL,
+                                "(data"
+                                "  (flags raw)"
+                                "  (value %m))",
+                                mpi_md
+                                ));
+
+    /* Dump information about the data s-expression when debugging */
+    if (GCRYPT_DEBUG) {
+        gcry_sexp_dump(*p_sexp_data);
+    }
+
+ error:
+
+    gcry_mpi_release(mpi_md);
+
+    return err;
+}
+
 /*
  *
  */
@@ -271,9 +309,8 @@ error:
 void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *signature,
                       const uint8_t *nonce, const uint8_t *point)
 {
-    gcry_mpi_t mpi_md = NULL;
     gcry_sexp_t sexp_key = NULL, sexp_data = NULL, sexp_sig = NULL, sexp_r = NULL, sexp_s = NULL;
-    unsigned char block[60], md[20], *r = NULL, *s = NULL;
+    unsigned char block[60], *r = NULL, *s = NULL;
     gcry_error_t err;
 
     GCRY_VERIFY("_aacs_sexp_key",
@@ -284,26 +321,9 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
      */
     memcpy(&block[0], nonce, 20);
     memcpy(&block[20], point, 40);
-    gcry_md_hash_buffer(GCRY_MD_SHA1, md, block, sizeof(block));
-    gcry_mpi_scan(&mpi_md, GCRYMPI_FMT_USG, md, sizeof(md), NULL);
 
-    /* Dump information about the md MPI when debugging */
-    if (GCRYPT_DEBUG) {
-        gcry_mpi_dump(mpi_md);
-    }
-
-    /* Build an s-expression for the hash */
-    gcry_sexp_build(&sexp_data, NULL,
-                    "(data"
-                    "  (flags raw)"
-                    "  (value %m))",
-                    mpi_md
-                    );
-
-    /* Dump information about the data s-expression when debugging */
-    if (GCRYPT_DEBUG) {
-        gcry_sexp_dump(sexp_data);
-    }
+    GCRY_VERIFY("_aacs_sexp_sha1",
+                _aacs_sexp_sha1(&sexp_data, block, sizeof(block)));
 
     /* Sign the hash with the ECDSA key. The resulting s-expression should be
      * in the form:
@@ -341,7 +361,6 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
  error:
 
     /* Free allocated memory */
-    gcry_mpi_release(mpi_md);
     gcry_sexp_release(sexp_key);
     gcry_sexp_release(sexp_data);
     gcry_sexp_release(sexp_sig);
