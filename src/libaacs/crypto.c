@@ -167,39 +167,47 @@ void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
         goto error;                                         \
     }
 
-void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
-                      uint8_t *signature,
-                      const uint8_t *nonce, const uint8_t *point)
+/*
+ * build S-expressions
+ */
+
+static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
+                                   const uint8_t *q_x, const uint8_t *q_y,
+                                   const uint8_t *priv_key)
 {
-    gcry_mpi_t mpi_d, mpi_md;
-    gcry_sexp_t sexp_key = NULL, sexp_data = NULL, sexp_sig = NULL, sexp_r = NULL, sexp_s = NULL;
-    unsigned char Q[41], block[60], md[20], *r = NULL, *s = NULL;
-    gcry_error_t err;
+    gcry_mpi_t    mpi_d = NULL;
+    unsigned char Q[41];
+    char          str_Q[sizeof(Q) * 2 + 1];
+    gcry_error_t  err;
 
     /* Assign MPI values for ECDSA parameters Q and d.
      * Values are:
      *   Q.x = c[12]..c[31]
      *   Q.y = c[32]..c[51]
-     *   d = privk
+     *   d = priv_key
      *
      * Note: The MPI values for Q are in the form "<format>||Q.x||Q.y".
      */
-    memcpy(&Q[0], "\x04", 1);   // format
-    memcpy(&Q[1], cert + 12, 20);  // Q.x
-    memcpy(&Q[21], cert + 32, 20); // Q.y
-    gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, priv_key, 20, NULL);
+    memcpy(&Q[0],  "\x04", 1); // format
+    memcpy(&Q[1],  q_x, 20);   // Q.x
+    memcpy(&Q[21], q_y, 20);   // Q.y
+    if (priv_key) {
+        gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, priv_key, 20, NULL);
+    }
 
     /* Show the values of the MPIs Q.x, Q.y, and d when debugging */
     if (GCRYPT_DEBUG) {
         gcry_mpi_t mpi_Q_x, mpi_Q_y;
-        gcry_mpi_scan(&mpi_Q_x, GCRYMPI_FMT_USG, cert + 12, 20, NULL);
-        gcry_mpi_scan(&mpi_Q_y, GCRYMPI_FMT_USG, cert + 32, 20, NULL);
+        gcry_mpi_scan(&mpi_Q_x, GCRYMPI_FMT_USG, q_x, 20, NULL);
+        gcry_mpi_scan(&mpi_Q_y, GCRYMPI_FMT_USG, q_y, 20, NULL);
         gcry_mpi_dump(mpi_Q_x);
         printf("\n");
         gcry_mpi_dump(mpi_Q_y);
         printf("\n");
-        gcry_mpi_dump(mpi_d);
-        printf("\n");
+        if (mpi_d) {
+            gcry_mpi_dump(mpi_d);
+            printf("\n");
+        }
     }
 
     /* Build the s-expression for the ecdsa private key
@@ -217,11 +225,10 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
     /* Points are currently only supported in standard format, so get a
      * hexstring out of Q.
      */
-    char str_Q[sizeof(Q)*2 + 1];
     hex_array_to_hexstring(str_Q, Q, sizeof(Q));
 
     char *strfmt = str_printf(
-      "(private-key"
+      "(%s"
       "(ecdsa"
       "(p #"AACS_EC_p"#)"
       "(a #"AACS_EC_a"#)"
@@ -232,18 +239,45 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
           "#)"
       "(n #"AACS_EC_n"#)"
       "(q #%s#)"
-      "(d %%m)))",
-      str_Q
+      "%s))",
+      mpi_d ? "private-key" : "public-key",
+      str_Q,
+      mpi_d ? "(d %m)" : ""
       );
 
     /* Now build the S-expression */
     GCRY_VERIFY("gcry_sexp_build",
-                gcry_sexp_build(&sexp_key, NULL, strfmt, mpi_d));
+                gcry_sexp_build(p_sexp_key, NULL, strfmt, mpi_d));
 
     /* Dump information about the key s-expression when debugging */
     if (GCRYPT_DEBUG) {
-        gcry_sexp_dump(sexp_key);
+        gcry_sexp_dump(*p_sexp_key);
     }
+
+error:
+    X_FREE(strfmt);
+
+    if (mpi_d) {
+        gcry_mpi_release(mpi_d);
+    }
+
+    return err;
+}
+
+/*
+ *
+ */
+
+void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *signature,
+                      const uint8_t *nonce, const uint8_t *point)
+{
+    gcry_mpi_t mpi_md = NULL;
+    gcry_sexp_t sexp_key = NULL, sexp_data = NULL, sexp_sig = NULL, sexp_r = NULL, sexp_s = NULL;
+    unsigned char block[60], md[20], *r = NULL, *s = NULL;
+    gcry_error_t err;
+
+    GCRY_VERIFY("_aacs_sexp_key",
+                _aacs_sexp_key(&sexp_key, cert + 12, cert + 32, priv_key));
 
     /* Calculate the sha1 hash from the nonce and host key point and covert
      * the hash into an MPI.
@@ -307,7 +341,6 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
  error:
 
     /* Free allocated memory */
-    gcry_mpi_release(mpi_d);
     gcry_mpi_release(mpi_md);
     gcry_sexp_release(sexp_key);
     gcry_sexp_release(sexp_data);
@@ -316,7 +349,6 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
     gcry_sexp_release(sexp_s);
     gcry_free(r);
     gcry_free(s);
-    X_FREE(strfmt);
 }
 
 void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
