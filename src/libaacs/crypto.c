@@ -151,25 +151,28 @@ void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
     }
 }
 
-static void _log_gcry_error(gcry_error_t err)
-{
 #ifdef HAVE_STRERROR_R
-    char errstr[100] = {0};
-
-    gpg_strerror_r(err, errstr, sizeof(errstr));
-
-    DEBUG(DBG_AACS|DBG_CRIT, "crypto_aacs_sign(): error was: %s\n", errstr);
+#define LOG_GCRY_ERROR(msg, func, err)                                  \
+  char errstr[100] = {0};                                               \
+  gpg_strerror_r(err, errstr, sizeof(errstr));                          \
+  DEBUG(DBG_AACS|DBG_CRIT, "%s: %s failed. error was: %s\n", func, msg, errstr);
 #else
-    DEBUG(DBG_AACS|DBG_CRIT, "crypto_aacs_sign(): error was: %s\n", gcry_strerror(err));
+#define LOG_GCRY_ERROR(msg, func, err)                                  \
+  DEBUG(DBG_AACS|DBG_CRIT, "%s: %s failed. error was: %s\n", func, msg, gcry_strerror(err));
 #endif
-}
+
+#define GCRY_VERIFY(msg, op)                                \
+    if ((err = (op))) {                                     \
+        LOG_GCRY_ERROR(msg, __PRETTY_FUNCTION__, err);      \
+        goto error;                                         \
+    }
 
 void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
                       uint8_t *signature,
                       const uint8_t *nonce, const uint8_t *point)
 {
     gcry_mpi_t mpi_d, mpi_md;
-    gcry_sexp_t sexp_key, sexp_data, sexp_sig, sexp_r, sexp_s;
+    gcry_sexp_t sexp_key = NULL, sexp_data = NULL, sexp_sig = NULL, sexp_r = NULL, sexp_s = NULL;
     unsigned char Q[41], block[60], md[20], *r = NULL, *s = NULL;
     gcry_error_t err;
 
@@ -234,12 +237,8 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
       );
 
     /* Now build the S-expression */
-    err = gcry_sexp_build(&sexp_key, NULL, strfmt, mpi_d);
-
-    if (err) {
-        _log_gcry_error(err);
-        return;
-    }
+    GCRY_VERIFY("gcry_sexp_build",
+                gcry_sexp_build(&sexp_key, NULL, strfmt, mpi_d));
 
     /* Dump information about the key s-expression when debugging */
     if (GCRYPT_DEBUG) {
@@ -279,12 +278,8 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
      *     (r r-mpi)
      *     (s s-mpi)))
      */
-    err = gcry_pk_sign(&sexp_sig, sexp_data, sexp_key);
-
-    if (err) {
-        _log_gcry_error(err);
-        return;
-    }
+    GCRY_VERIFY("gcry_pk_sign",
+                gcry_pk_sign(&sexp_sig, sexp_data, sexp_key));
 
     /* Dump information about the signature s-expression when debugging */
     if (GCRYPT_DEBUG) {
@@ -308,6 +303,8 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
     /* Finally concatenate 'r' and 's' to get the ECDSA signature */
     memcpy(signature, r, 20);
     memcpy(signature + 20, s, 20);
+
+ error:
 
     /* Free allocated memory */
     gcry_mpi_release(mpi_d);
