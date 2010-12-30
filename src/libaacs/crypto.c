@@ -302,6 +302,45 @@ static gcry_error_t _aacs_sexp_sha1(gcry_sexp_t *p_sexp_data,
     return err;
 }
 
+static gcry_error_t _aacs_sexp_signature(gcry_sexp_t *p_sexp_sign,
+                                         const uint8_t *signature)
+{
+    gcry_mpi_t   mpi_r = NULL;
+    gcry_mpi_t   mpi_s = NULL;
+    gcry_error_t err;
+
+    gcry_mpi_scan(&mpi_r, GCRYMPI_FMT_USG, signature,      20, NULL);
+    gcry_mpi_scan(&mpi_s, GCRYMPI_FMT_USG, signature + 20, 20, NULL);
+
+    /* Dump information about the md MPI when debugging */
+    if (GCRYPT_DEBUG) {
+        fprintf(stderr, "signature: ");
+        gcry_mpi_dump(mpi_r);
+        gcry_mpi_dump(mpi_s);
+        fprintf(stderr, "\n");
+    }
+
+    /* Build an s-expression for the signature */
+    GCRY_VERIFY("gcry_sexp_build",
+                gcry_sexp_build(p_sexp_sign, NULL,
+                               "(sig-val"
+                               "  (ecdsa"
+                               "    (r %m) (s %m)))",
+                               mpi_r, mpi_s));
+
+    /* Dump information about the data s-expression when debugging */
+    if (GCRYPT_DEBUG) {
+        gcry_sexp_dump(*p_sexp_sign);
+    }
+
+error:
+
+    gcry_mpi_release(mpi_r);
+    gcry_mpi_release(mpi_s);
+
+    return err;
+}
+
 /*
  *
  */
@@ -368,6 +407,55 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     gcry_sexp_release(sexp_s);
     gcry_free(r);
     gcry_free(s);
+}
+
+static int _aacs_verify(const uint8_t *signature,
+                        const uint8_t *q_x, const uint8_t *q_y,
+                        const uint8_t *data, uint32_t len)
+{
+    gcry_sexp_t  sexp_key  = NULL;
+    gcry_sexp_t  sexp_sig  = NULL;
+    gcry_sexp_t  sexp_data = NULL;
+    gcry_error_t err;
+
+    GCRY_VERIFY("_aacs_sexp_key",
+                _aacs_sexp_key(&sexp_key, q_x, q_y, NULL));
+
+    GCRY_VERIFY("_aacs_sexp_sha1",
+                _aacs_sexp_sha1(&sexp_data, data, len));
+
+    GCRY_VERIFY("_aacs_sexp_signature",
+                _aacs_sexp_signature(&sexp_sig, signature));
+
+    GCRY_VERIFY("gcry_pk_verify",
+                gcry_pk_verify(sexp_sig, sexp_data, sexp_key));
+
+ error:
+    gcry_sexp_release(sexp_sig);
+    gcry_sexp_release(sexp_data);
+    gcry_sexp_release(sexp_key);
+
+    return err;
+}
+
+int crypto_aacs_verify(const uint8_t *cert, const uint8_t *signature, const uint8_t *data, uint32_t len)
+{
+    return !_aacs_verify(signature, cert + 12, cert + 32, data, len);
+}
+
+int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, uint32_t len)
+{
+    static const uint8_t aacs_la_pubkey_x[] = {0x63, 0xC2, 0x1D, 0xFF, 0xB2, 0xB2, 0x79, 0x8A, 0x13, 0xB5,
+                                               0x8D, 0x61, 0x16, 0x6C, 0x4E, 0x4A, 0xAC, 0x8A, 0x07, 0x72 };
+    static const uint8_t aacs_la_pubkey_y[] = {0x13, 0x7E, 0xC6, 0x38, 0x81, 0x8F, 0xD9, 0x8F, 0xA4, 0xC3,
+                                               0x0B, 0x99, 0x67, 0x28, 0xBF, 0x4B, 0x91, 0x7F, 0x6A, 0x27 };
+
+    return !_aacs_verify(signature, aacs_la_pubkey_x, aacs_la_pubkey_y, data, len);
+}
+
+int crypto_aacs_verify_cert(const uint8_t *cert)
+{
+    return crypto_aacs_verify_aacsla(cert + 52, cert, 52);
 }
 
 void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
