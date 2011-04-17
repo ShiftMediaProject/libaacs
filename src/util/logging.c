@@ -47,11 +47,11 @@ void aacs_debug(const char *file, int line, uint32_t mask, const char *format, .
         logfile = stderr;
 
         char *env = NULL;
-        if ((env = getenv("BD_DEBUG_MASK")))
+        if ((env = getenv("AACS_DEBUG_MASK")))
             debug_mask = strtol(env, NULL, 0);
 
         // Send DEBUG to file?
-        if ((env = getenv("BD_DEBUG_FILE"))) {
+        if ((env = getenv("AACS_DEBUG_FILE"))) {
             FILE *fp = fopen(env, "wb");
             if (fp) {
                 logfile = fp;
