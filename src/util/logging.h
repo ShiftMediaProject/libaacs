@@ -27,20 +27,19 @@
 #define DEBUG(X,Y,...) aacs_debug(__FILE__,__LINE__,X,Y,##__VA_ARGS__)
 
 enum debug_mask_enum {
-    DBG_RESERVED = 1,
-    DBG_CONFIGFILE = 2,
-    DBG_FILE = 4,
-    DBG_AACS = 8,
-    DBG_MKB = 16,
-    DBG_MMC = 32,
-    DBG_BLURAY = 64,
-    DBG_DIR = 128,
-    DBG_NAV = 256,
-    DBG_BDPLUS = 512,
-    DBG_DLX = 1024,
-    DBG_CRIT = 2048, // this is the default debug mask so use this if you want to
-                     // display critical info
-    DBG_HDMV = 4096,
+    DBG_RESERVED   = 0x0001,
+    DBG_CONFIGFILE = 0x0002,
+    DBG_FILE       = 0x0004,
+    DBG_AACS       = 0x0008,
+    DBG_MKB        = 0x0010,
+    DBG_MMC        = 0x0020,
+  //DBG_BLURAY     = 0x0040,
+    DBG_DIR        = 0x0080,
+  //DBG_NAV        = 0x0100,
+  //DBG_BDPLUS     = 0x0200,
+    DBG_DLX        = 0x0400,
+    DBG_CRIT       = 0x0800, /* this is the default debug mask so use this if you want to display critical info */
+  //DBG_HDMV       = 0x1000,
 };
 
 typedef enum debug_mask_enum debug_mask_t;
