@@ -34,6 +34,8 @@ AACS_PRIVATE void mkb_close(MKB *mkb);           // free MKB
 AACS_PRIVATE uint8_t mkb_type(MKB *mkb);
 // returns version
 AACS_PRIVATE uint32_t mkb_version(MKB *mkb);
+// returns type and version record (required to verify signatures)
+AACS_PRIVATE const uint8_t *mkb_type_and_version_record(MKB *mkb);
 // returns list of revoked host entries
 AACS_PRIVATE const uint8_t *mkb_host_revokation_entries(MKB *mkb, size_t *len);
 // returns list of revoked drive entries

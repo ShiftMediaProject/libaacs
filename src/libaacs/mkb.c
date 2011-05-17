@@ -108,6 +108,14 @@ uint32_t mkb_version(MKB *mkb)
     return MKINT_BE32(rec + 8);
 }
 
+const uint8_t *mkb_type_and_version_record(MKB *mkb)
+{
+    const uint8_t *rec = _record(mkb, 0x10, NULL);
+
+    return rec;
+}
+
+
 const uint8_t *mkb_host_revokation_entries(MKB *mkb, size_t *len)
 {
     const uint8_t *rec = _record(mkb, 0x21, len);
