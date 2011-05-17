@@ -501,8 +501,8 @@ void crypto_create_host_key_pair(uint8_t *host_key, uint8_t *host_key_point)
     gcry_mpi_t q_y = mpi_new(0);
     _gcry_mpi_ec_get_affine (q_x, q_y, &Q, ctx);
 
-    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point,      0, NULL, q_x);
-    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point + 20, 0, NULL, q_y);
+    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point,      20, NULL, q_x);
+    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point + 20, 20, NULL, q_y);
 
     /* cleanup */
 
