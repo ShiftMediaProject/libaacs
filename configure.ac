@@ -68,7 +68,7 @@ AC_TYPE_SIGNAL
 # required headers
 AC_CHECK_HEADERS([stdarg.h sys/types.h dirent.h errno.h libgen.h malloc.h])
 AC_CHECK_HEADERS([stdlib.h mntent.h linux/cdrom.h inttypes.h])
-AC_CHECK_HEADERS([sys/time.h time.h pthread.h sys/select.h])
+AC_CHECK_HEADERS([sys/time.h time.h sys/select.h])
 
 # required structures
 AC_STRUCT_DIRENT_D_TYPE
@@ -81,6 +81,7 @@ AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
 # pthread check (not on win32)
 if test "${SYS}" != "mingw32" ; then
+  AC_CHECK_HEADERS([pthread.h])
   AC_CHECK_LIB([pthread], [pthread_mutex_init],,
     [AC_MSG_ERROR($library_not_found)])
 fi
