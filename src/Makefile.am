@@ -30,8 +30,6 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	file/file.h \
 	file/filesystem.h \
 	file/file_posix.c \
-	file/xdg.c \
-	file/xdg.h \
 	file/keydbcfg.c \
 	file/keydbcfg.h \
 	file/keydbcfg-parser.y \
@@ -42,6 +40,17 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	util/logging.h \
 	util/strutl.c \
 	util/strutl.h
+
+if HAVE_WIN32
+libaacs_la_SOURCES+= \
+	file/win32.c \
+	file/win32.h
+else
+libaacs_la_SOURCES+= \
+	file/xdg.c \
+	file/xdg.h
+endif
+
 libaacs_ladir= $(includedir)/libaacs
 libaacs_la_HEADERS= libaacs/aacs.h file/filesystem.h
 libaacs_la_LDFLAGS= $(LIBGCRYPT_LIBS) -version-info $(LIB_VERSION_INFO)

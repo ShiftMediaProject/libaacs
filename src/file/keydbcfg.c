@@ -19,7 +19,15 @@
 
 #include "keydbcfg.h"
 
-#include "xdg.h"
+#ifndef _WIN32
+# include "xdg.h"
+# define get_config_home xdg_get_config_home
+# define get_config_system xdg_get_config_system
+#else
+# include "win32.h"
+# define get_config_home win32_get_config_home
+# define get_config_system win32_get_config_system
+#endif
 
 #include "util/strutl.h"
 #include "util/logging.h"
@@ -70,7 +78,7 @@ static char *_load_file(FILE *fp)
 
 static FILE *_open_cfg_file_user(const char *file_name, char **path)
 {
-    const char *cfg_dir = xdg_get_config_home();
+    const char *cfg_dir = get_config_home();
 
     if (!cfg_dir) {
         return NULL;
@@ -94,7 +102,7 @@ static FILE *_open_cfg_file_system(const char *file_name, char **path)
 {
     const char *dir = NULL;
 
-    while (NULL != (dir = xdg_get_config_system(dir))) {
+    while (NULL != (dir = get_config_system(dir))) {
 
         char *cfg_file = str_printf("%s/%s/%s", dir, CFG_DIR, file_name);
 
