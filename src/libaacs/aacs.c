@@ -161,6 +161,11 @@ static int _calc_vuk(AACS *aacs, const char *path)
     if (memcmp(aacs->vuk, empty_key, 16))
       return 1;
 
+    /* make sure we have media key */
+    if (!_calc_mk(aacs, path)) {
+        return 0;
+    }
+
     DEBUG(DBG_AACS, "Calculate volume unique key...\n");
 
     /* Use VID given in config file if available */
@@ -297,9 +302,10 @@ static int _calc_uks(AACS *aacs, const char *path)
     if (aacs->uks)
         return 1;
 
-    /* Fail if we don't have a volume unique key */
-    if (!memcmp(aacs->vuk, empty_key, 16))
+    /* Make sure we have VUK */
+    if (!_calc_vuk(aacs, path)) {
         return 0;
+    }
 
     DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
@@ -617,14 +623,9 @@ AACS *aacs_open(const char *path, const char *configfile_path)
         }
 
         DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
-        //_calc_pk(aacs);
-        if (_calc_mk(aacs, path)) {
-           if (_calc_vuk(aacs, path)) {
-                if (_calc_uks(aacs, path)) {
-                    DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
-                    return aacs;
-                }
-            }
+        if (_calc_uks(aacs, path)) {
+            DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
+            return aacs;
         }
 
         keydbcfg_config_file_close(aacs->cf);
