@@ -455,6 +455,12 @@ int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, ui
 
 int crypto_aacs_verify_cert(const uint8_t *cert)
 {
+    if (MKINT_BE16(cert+2) != 0x5c) {
+        DEBUG(DBG_AACS|DBG_CRIT, "Certificate length is invalid (0x%04x), expected 0x005c\n",
+              MKINT_BE16(cert+2));
+        return 0;
+    }
+
     return crypto_aacs_verify_aacsla(cert + 52, cert, 52);
 }
 
