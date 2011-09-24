@@ -349,7 +349,8 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
                       const uint8_t *nonce, const uint8_t *point)
 {
     gcry_sexp_t sexp_key = NULL, sexp_data = NULL, sexp_sig = NULL, sexp_r = NULL, sexp_s = NULL;
-    unsigned char block[60], *r = NULL, *s = NULL;
+    gcry_mpi_t mpi_r = NULL, mpi_s = NULL;
+    unsigned char block[60];
     gcry_error_t err;
 
     GCRY_VERIFY("_aacs_sexp_key",
@@ -389,13 +390,11 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
         gcry_sexp_dump(sexp_s);
     }
 
-    /* Convert the data for 'r' and 's' into unsigned char form */
-    r = (unsigned char*)gcry_sexp_nth_string(sexp_r, 1);
-    s = (unsigned char*)gcry_sexp_nth_string(sexp_s, 1);
-
     /* Finally concatenate 'r' and 's' to get the ECDSA signature */
-    memcpy(signature, r, 20);
-    memcpy(signature + 20, s, 20);
+    mpi_r = gcry_sexp_nth_mpi (sexp_r, 1, GCRYMPI_FMT_USG);
+    mpi_s = gcry_sexp_nth_mpi (sexp_s, 1, GCRYMPI_FMT_USG);
+    gcry_mpi_print (GCRYMPI_FMT_USG, signature,      20, NULL, mpi_r);
+    gcry_mpi_print (GCRYMPI_FMT_USG, signature + 20, 20, NULL, mpi_s);
 
  error:
 
@@ -405,8 +404,8 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     gcry_sexp_release(sexp_sig);
     gcry_sexp_release(sexp_r);
     gcry_sexp_release(sexp_s);
-    gcry_free(r);
-    gcry_free(s);
+    gcry_mpi_release(mpi_r);
+    gcry_mpi_release(mpi_s);
 }
 
 static int _aacs_verify(const uint8_t *signature,
