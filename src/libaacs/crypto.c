@@ -456,12 +456,42 @@ int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, ui
 int crypto_aacs_verify_cert(const uint8_t *cert)
 {
     if (MKINT_BE16(cert+2) != 0x5c) {
-        DEBUG(DBG_AACS|DBG_CRIT, "Certificate length is invalid (0x%04x), expected 0x005c\n",
+        DEBUG(DBG_AACS, "Certificate length is invalid (0x%04x), expected 0x005c\n",
               MKINT_BE16(cert+2));
         return 0;
     }
 
     return crypto_aacs_verify_aacsla(cert + 52, cert, 52);
+}
+
+int crypto_aacs_verify_host_cert(const uint8_t *cert)
+{
+    if (cert[0] != 0x02) {
+        DEBUG(DBG_AACS, "Host certificate type is invalid (0x%02x), expected 0x01\n", cert[0]);
+        return 0;
+    }
+
+    if (!crypto_aacs_verify_cert(cert)) {
+        DEBUG(DBG_AACS, "Host certificate signature is invalid\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+int crypto_aacs_verify_drive_cert(const uint8_t *cert)
+{
+    if (cert[0] != 0x01) {
+        DEBUG(DBG_AACS, "Drive certificate type is invalid (0x%02x), expected 0x01\n", cert[0]);
+        return 0;
+    }
+
+    if (!crypto_aacs_verify_cert(cert)) {
+        DEBUG(DBG_AACS, "Drive certificate signature is invalid\n");
+        return 0;
+    }
+
+    return 1;
 }
 
 void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
