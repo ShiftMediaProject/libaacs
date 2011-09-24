@@ -190,6 +190,19 @@ static int _calc_vuk(AACS *aacs, const char *path)
                                hccursor->host_priv_key);
         hexstring_to_hex_array(cert, sizeof(cert), hccursor->host_cert);
 
+        if (!crypto_aacs_verify_host_cert(cert)) {
+	    char str[2*92+1];
+	    DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
+		  print_hex(str, cert, 92));
+
+	    hccursor = hccursor->next;
+	    continue;
+	}
+
+        char id_str[20];
+        DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
+              print_hex(id_str, cert + 4, 6));
+
         if ((mmc = mmc_open(path, priv_key, cert))) {
             if (mmc_read_vid(mmc, aacs->vid)) {
                 gcry_cipher_hd_t gcry_h;
