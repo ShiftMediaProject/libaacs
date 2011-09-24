@@ -44,7 +44,7 @@
 
 
 struct aacs {
-    uint8_t pk[16], mk[16], vuk[16], vid[16], *uks;
+    uint8_t pk[16], mk[16], vuk[16], vid[16], disc_id[20], *uks;
     uint32_t num_uks;
     struct config_file_t *cf;
     struct title_entry_list_t *ce;
@@ -441,13 +441,13 @@ static int _verify_ts(uint8_t *buf, size_t size)
 /* Function that collects keys from keydb config entry */
 static uint32_t _find_config_entry(AACS *aacs, const char *path)
 {
-    uint8_t hash[20], discid[20];
+    uint8_t discid[20];
     char str[48];
     uint32_t retval = 0;
     aacs->uks = NULL;
     aacs->num_uks = 0;
 
-    if (!_calc_title_hash(path, hash)) {
+    if (!_calc_title_hash(path, aacs->disc_id)) {
         return 0;
     }
 
@@ -457,7 +457,7 @@ static uint32_t _find_config_entry(AACS *aacs, const char *path)
             memset(discid, 0, sizeof(discid));
             hexstring_to_hex_array(discid, sizeof(discid),
                                    aacs->ce->entry.discid);
-            if (!memcmp(hash, discid, 20)) {
+            if (!memcmp(aacs->disc_id, discid, 20)) {
                 DEBUG(DBG_AACS, "Found config entry for discid %s\n",
                       aacs->ce->entry.discid);
                 break;
@@ -672,6 +672,11 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
     DEBUG(DBG_AACS, "Failed decrypting unit [6144 bytes] (%p)\n", aacs);
 
     return 0;
+}
+
+const uint8_t *aacs_get_disc_id(AACS *aacs)
+{
+    return aacs->disc_id;
 }
 
 const uint8_t *aacs_get_vid(AACS *aacs)
