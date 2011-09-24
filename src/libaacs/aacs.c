@@ -1,6 +1,7 @@
 /*
  * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
+ * Copyright (C) 2009-2010  npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -84,7 +85,7 @@ static int _validate_pk(const uint8_t *pk,
     gcry_cipher_close(gcry_h);
 
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
-        DEBUG(DBG_AACS, "Processing key is valid!\n");
+        DEBUG(DBG_AACS, "Processing key %s is valid!\n", print_hex(str, pk, 16));
         ret = 1;
     }
 
@@ -145,6 +146,8 @@ static int _calc_mk(AACS *aacs, const char *path)
         mkb_close(mkb);
         X_FREE(buf);
     }
+
+    DEBUG(DBG_AACS, "Error calculating media key!\n");
 
     return 0;
 }
