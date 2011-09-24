@@ -616,6 +616,9 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 
         DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
         if (_calc_uks(aacs, path)) {
+            keydbcfg_config_file_close(aacs->cf);
+            aacs->cf = NULL;
+
             DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
             return aacs;
         }
