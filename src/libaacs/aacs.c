@@ -612,15 +612,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 
     if (_load_config(aacs, configfile_path)) {
         DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
-        if(_find_config_entry(aacs, path)) {
-            if (_calc_uks(aacs, path)) {
-                keydbcfg_config_file_close(aacs->cf);
-                aacs->cf = NULL;
-
-                DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
-                return aacs;
-            }
-        }
+        _find_config_entry(aacs, path);
 
         DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
         if (_calc_uks(aacs, path)) {
