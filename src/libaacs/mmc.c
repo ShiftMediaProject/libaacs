@@ -492,6 +492,17 @@ void mmc_close(MMC *mmc)
     }
 }
 
+static int _verify_signature(const uint8_t *cert, const uint8_t *signature,
+                             const uint8_t *nonce, const uint8_t *point)
+{
+    uint8_t data[60];
+
+    memcpy(data,      nonce, 20);
+    memcpy(data + 20, point, 40);
+
+    return crypto_aacs_verify(cert, signature, data, 60);
+}
+
 int mmc_read_vid(MMC *mmc, uint8_t *vid)
 {
     uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40], mac[16];
@@ -510,6 +521,11 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     DEBUG(DBG_MMC, "Got AGID from drive: %d (%p)\n", agid, mmc);
 
     if (!PATCHED_DRIVE) do {
+
+        if (DEBUG_KEYS) {
+            DEBUG(DBG_MMC, "Host certificate   : %s (%p)\n", print_hex(str, mmc->host_cert, 92), mmc);
+            DEBUG(DBG_MMC, "Host nonce         : %s (%p)\n", print_hex(str, mmc->host_nonce, 20), mmc);
+        }
 
         // send host cert + nonce
         if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, mmc->host_cert)) {
@@ -531,6 +547,12 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
             DEBUG(DBG_MMC, "Drive nonce         : %s (%p)\n", print_hex(str, dn, 20), mmc);
         }
 
+        // verify drive certificate
+        if (!crypto_aacs_verify_drive_cert(dc)) {
+            DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid (%p)\n", mmc);
+            break;
+        }
+
         // receive mmc key
         if (!_mmc_read_drive_key(mmc, agid, dkp, dks)) {
             DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its drive key (%p)\n",
@@ -543,8 +565,21 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
             DEBUG(DBG_MMC, "Drive key signature : %s (%p)\n", print_hex(str, dks, 40), mmc);
         }
 
+        // verify drive signature
+        if (!_verify_signature(dc, dks, mmc->host_nonce, dkp)) {
+            DEBUG(DBG_MMC | DBG_CRIT, "Drive signature is invalid\n");
+            break;
+        }
+
+        // sign
         crypto_aacs_sign(mmc->host_cert, mmc->host_priv_key, hks, dn,
                          mmc->host_key_point);
+
+        // verify own signature
+        if (!_verify_signature(mmc->host_cert, hks, dn, mmc->host_key_point)) {
+            DEBUG(DBG_MMC | DBG_CRIT, "Created signature is invalid ?\n");
+            break;
+        }
 
         // send signed host key and point
         if (!_mmc_send_host_key(mmc, agid, mmc->host_key_point, hks)) {
