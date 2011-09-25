@@ -118,14 +118,6 @@ static int _hexstring_to_unsigned_char(uint8_t *value, char c)
 int hexstring_to_hex_array(uint8_t *hex_array, uint32_t size,
                                   const char *hexstring)
 {
-  if (strlen(hexstring) > size * 2)
-  {
-    DEBUG(DBG_AACS,
-          "hex array is not sufficiently large enough to hold value "
-          "of hex string");
-    return 0;
-  }
-
   unsigned int i = 0;
   while (i < size)
   {
