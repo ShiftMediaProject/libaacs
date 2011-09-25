@@ -24,5 +24,6 @@
 
 AACS_PRIVATE const char *xdg_get_config_home(void);
 AACS_PRIVATE const char *xdg_get_config_system(const char *dir);
+AACS_PRIVATE const char *xdg_get_cache_home(void);
 
 #endif

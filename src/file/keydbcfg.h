@@ -22,6 +22,8 @@
 
 #include <util/attributes.h>
 
+#include <stdint.h>
+
 /* struct holding a digit and key pair for <ENTRY NUMBER> - <ENTRY> entries */
 typedef struct digit_key_pair_t digit_key_pair;
 struct digit_key_pair_t
@@ -120,5 +122,9 @@ AACS_PRIVATE char *keydbcfg_find_config_file(void);
 AACS_PRIVATE int   keydbcfg_load_cert_file(config_file *cf);
 AACS_PRIVATE int   keydbcfg_load_pk_file(config_file *cf);
 
+AACS_PRIVATE int   keycache_save(const char *type, const uint8_t *disc_id,
+                                 const uint8_t *key, unsigned int len);
+AACS_PRIVATE int   keycache_find(const char *type, const uint8_t *disc_id,
+                                 uint8_t *key, unsigned int len);
 
 #endif

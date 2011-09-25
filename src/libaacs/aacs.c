@@ -161,6 +161,12 @@ static int _calc_vuk(AACS *aacs, const char *path)
     if (memcmp(aacs->vuk, empty_key, 16))
       return 1;
 
+    /* get cached vuk */
+    if (keycache_find("vuk", aacs->disc_id, aacs->vuk, 16)) {
+        DEBUG(DBG_AACS, "Using cached VUK\n");
+        return 1;
+    }
+
     /* make sure we have media key */
     if (!_calc_mk(aacs, path)) {
         return 0;
@@ -184,6 +190,9 @@ static int _calc_vuk(AACS *aacs, const char *path)
         char str[40];
         DEBUG(DBG_AACS, "Volume unique key: %s\n",
               print_hex(str, aacs->vuk, 16));
+
+        /* cache vuk */
+        keycache_save("vuk", aacs->disc_id, aacs->vuk, 16);
 
         return 1;
     }
@@ -226,6 +235,9 @@ static int _calc_vuk(AACS *aacs, const char *path)
                 char str[40];
                 DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(str, aacs->vuk,
                                                                     16));
+
+                /* cache vuk */
+                keycache_save("vuk", aacs->disc_id, aacs->vuk, 16);
 
                 return 1;
             }

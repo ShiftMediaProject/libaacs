@@ -22,10 +22,12 @@
 #ifndef _WIN32
 # include "xdg.h"
 # define get_config_home xdg_get_config_home
+# define get_cache_home xdg_get_cache_home
 # define get_config_system xdg_get_config_system
 #else
 # include "win32.h"
 # define get_config_home win32_get_config_home
+# define get_cache_home(...) NULL
 # define get_config_system win32_get_config_system
 #endif
 
@@ -36,6 +38,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 
 #define CFG_DIR        "aacs"
@@ -272,6 +278,122 @@ int keydbcfg_load_cert_file(config_file *cf)
     if (fp) {
         result += _parse_cert_file(cf, fp);
         fclose(fp);
+    }
+
+    return result;
+}
+
+static int _mkpath(const char *path)
+{
+    struct stat s;
+    int result = 1;
+    char *dir = str_printf("%s", path);
+    char *end = dir;
+
+    while (*end == '/')
+        end++;
+
+    while ((end = strchr(end, '/'))) {
+        *end = 0;
+
+        if (stat(dir, &s) != 0 || !S_ISDIR(s.st_mode)) {
+            DEBUG(DBG_FILE, "Creating directory %s\n", dir);
+
+            if (mkdir(dir, S_IRWXU|S_IRWXG|S_IRWXO) == -1) {
+                DEBUG(DBG_FILE, "Error creating directory %s\n", dir);
+                result = 0;
+                break;
+            }
+        }
+
+        *end++ = '/';
+    }
+
+    X_FREE(dir);
+
+    return result;
+}
+
+char *_keycache_file(const char *type, const uint8_t *disc_id)
+{
+    const char *cache_dir = get_cache_home();
+    char disc_id_str[41];
+
+    if (!cache_dir) {
+        return NULL;
+    }
+
+    hex_array_to_hexstring(disc_id_str, disc_id, 20);
+
+    return str_printf("%s/%s/%s/%s", cache_dir, CFG_DIR, type, disc_id_str);
+}
+
+int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, unsigned int len)
+{
+    int result = 0;
+    char *file = _keycache_file(type, disc_id);
+
+    if (file) {
+        if (_mkpath(file)) {
+            FILE *fp = fopen(file, "w");
+
+            if (fp) {
+                char *key_str = calloc(1, len*2 + 1);
+                hex_array_to_hexstring(key_str, key, len);
+
+                if (fwrite(key_str, 1, len*2, fp) == len*2) {
+                    DEBUG(DBG_FILE, "Wrote %s to %s\n", type, file);
+                    result = 1;
+
+                } else {
+                    DEBUG(DBG_FILE, "Error writing to %s\n", file);
+                }
+
+                free(key_str);
+
+                fclose(fp);
+            }
+        }
+
+        X_FREE(file);
+    }
+
+    return result;
+}
+
+int keycache_find(const char *type, const uint8_t *disc_id, uint8_t *key, unsigned int len)
+{
+    int result = 0;
+    char *file = _keycache_file(type, disc_id);
+
+    if (file) {
+        FILE *fp = fopen(file, "r");
+
+        if (fp) {
+            char *key_str = malloc(len*2);
+
+            DEBUG(DBG_FILE, "Reading %s\n", file);
+
+            if (fread(key_str, 1, len*2, fp) == len*2) {
+
+                result = hexstring_to_hex_array(key, len, key_str);
+                if (!result) {
+                    DEBUG(DBG_FILE, "Error converting %s\n", file);
+                }
+
+            } else {
+              DEBUG(DBG_FILE, "Error reading from %s\n", file);
+            }
+
+            free(key_str);
+
+            fclose(fp);
+
+        } else {
+            DEBUG(DBG_FILE, "%s not found\n", file);
+        }
+
+        X_FREE(file);
     }
 
     return result;
