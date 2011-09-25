@@ -27,7 +27,7 @@
 #else
 # include "win32.h"
 # define get_config_home win32_get_config_home
-# define get_cache_home(...) NULL
+# define get_cache_home win32_get_config_home
 # define get_config_system win32_get_config_system
 #endif
 
