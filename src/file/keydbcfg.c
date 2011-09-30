@@ -41,7 +41,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+
+#ifdef _WIN32
+# define mkdir(p,m) win32_mkdir(p)
+#endif
 
 
 #define CFG_DIR        "aacs"

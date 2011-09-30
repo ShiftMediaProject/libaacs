@@ -22,6 +22,7 @@
 
 #include <util/attributes.h>
 
+AACS_PRIVATE int         win32_mkdir(const char *dir);
 AACS_PRIVATE const char *win32_get_config_home(void);
 AACS_PRIVATE const char *win32_get_config_system(const char *dir);
 

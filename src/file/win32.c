@@ -31,6 +31,15 @@
 #include <shlobj.h>
 #include <w32api.h>
 #include <limits.h>
+#include <direct.h>
+
+int win32_mkdir(const char *dir)
+{
+    wchar_t wdir[MAX_PATH];
+
+    MultiByteToWideChar(CP_UTF8, 0, dir, -1, wdir, MAX_PATH);
+    return _wmkdir(wdir);
+}
 
 const char *win32_get_config_home(void)
 {
