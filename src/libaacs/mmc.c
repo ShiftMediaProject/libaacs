@@ -388,8 +388,13 @@ MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
 
 #if defined(HAVE_MNTENT_H)
 
+#if HAVE_REALPATH
+    char *file_path = realpath(path, NULL);
+#else
     char *file_path = (char*)malloc(strlen(path) + 1);
     strcpy(file_path, path);
+#endif
+
     int   path_len  = strlen(file_path);
     FILE *proc_mounts;
 
