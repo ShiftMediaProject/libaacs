@@ -217,8 +217,8 @@ static int _calc_vuk(AACS *aacs, const char *path)
         DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
               print_hex(id_str, cert + 4, 6));
 
-        if ((mmc = mmc_open(path, priv_key, cert))) {
-            if (mmc_read_vid(mmc, aacs->vid)) {
+        if ((mmc = mmc_open(path))) {
+            if (mmc_read_vid(mmc, priv_key, cert, aacs->vid)) {
                 gcry_cipher_hd_t gcry_h;
                 gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES,
                                  GCRY_CIPHER_MODE_ECB, 0);

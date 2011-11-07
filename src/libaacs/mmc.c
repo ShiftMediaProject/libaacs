@@ -91,7 +91,6 @@ struct mmc {
 #else
     int    fd;
 #endif
-    uint8_t host_priv_key[20], host_cert[92];
     uint8_t host_nonce[20];
     uint8_t host_key[20];
     uint8_t host_key_point[40];
@@ -360,13 +359,9 @@ static int _mmc_read_vid(MMC *mmc, uint8_t agid, uint8_t *volume_id,
     return 0;
 }
 
-MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
-              const uint8_t *host_cert)
+MMC *mmc_open(const char *path)
 {
     MMC *mmc = calloc(1, sizeof(MMC));
-
-    if (host_priv_key) memcpy(mmc->host_priv_key, host_priv_key, 20);
-    if (host_cert) memcpy(mmc->host_cert, host_cert, 92);
 
     crypto_create_nonce(mmc->host_nonce, sizeof(mmc->host_nonce));
 
@@ -508,7 +503,7 @@ static int _verify_signature(const uint8_t *cert, const uint8_t *signature,
     return crypto_aacs_verify(cert, signature, data, 60);
 }
 
-int mmc_read_vid(MMC *mmc, uint8_t *vid)
+int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *vid)
 {
     uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40], mac[16];
     char str[512];
@@ -528,12 +523,12 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
     if (!PATCHED_DRIVE) do {
 
         if (DEBUG_KEYS) {
-            DEBUG(DBG_MMC, "Host certificate   : %s (%p)\n", print_hex(str, mmc->host_cert, 92), mmc);
+            DEBUG(DBG_MMC, "Host certificate   : %s (%p)\n", print_hex(str, host_cert,       92), mmc);
             DEBUG(DBG_MMC, "Host nonce         : %s (%p)\n", print_hex(str, mmc->host_nonce, 20), mmc);
         }
 
         // send host cert + nonce
-        if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, mmc->host_cert)) {
+        if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, host_cert)) {
             DEBUG(DBG_MMC | DBG_CRIT,
                   "Host key / Certificate has been revoked by your drive ? "
                   "(%p)\n", mmc);
@@ -577,11 +572,11 @@ int mmc_read_vid(MMC *mmc, uint8_t *vid)
         }
 
         // sign
-        crypto_aacs_sign(mmc->host_cert, mmc->host_priv_key, hks, dn,
+        crypto_aacs_sign(host_cert, host_priv_key, hks, dn,
                          mmc->host_key_point);
 
         // verify own signature
-        if (!_verify_signature(mmc->host_cert, hks, dn, mmc->host_key_point)) {
+        if (!_verify_signature(host_cert, hks, dn, mmc->host_key_point)) {
             DEBUG(DBG_MMC | DBG_CRIT, "Created signature is invalid ?\n");
             break;
         }

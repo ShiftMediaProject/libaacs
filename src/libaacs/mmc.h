@@ -26,9 +26,9 @@
 
 typedef struct mmc MMC;
 
-AACS_PRIVATE MMC *mmc_open(const char *path, const uint8_t *host_priv_key,
-                           const uint8_t *host_cert);
+AACS_PRIVATE MMC *mmc_open(const char *path);
 AACS_PRIVATE void mmc_close(MMC *mmc);
-AACS_PRIVATE int mmc_read_vid(MMC *mmc, uint8_t *vid);
+AACS_PRIVATE int  mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert,
+                               uint8_t *vid);
 
 #endif /* MMC_H_ */
