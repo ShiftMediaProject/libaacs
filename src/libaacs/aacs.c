@@ -152,11 +152,53 @@ static int _calc_mk(AACS *aacs, const char *path)
     return 0;
 }
 
+static int _read_vid(AACS *aacs, const char *path)
+{
+    /* Use VID given in config file if available */
+    if (memcmp(aacs->vid, empty_key, 16)) {
+        return 1;
+    }
+
+    MMC* mmc = NULL;
+    if (!(mmc = mmc_open(path))) {
+        return 0;
+    }
+
+    cert_list *hccursor = aacs->cf->host_cert_list;
+    while (hccursor && hccursor->host_priv_key && hccursor->host_cert) {
+
+        char tmp_str[2*92+1];
+        uint8_t priv_key[20], cert[92];
+        hexstring_to_hex_array(priv_key, sizeof(priv_key), hccursor->host_priv_key);
+        hexstring_to_hex_array(cert,     sizeof(cert),     hccursor->host_cert);
+
+        if (!crypto_aacs_verify_host_cert(cert)) {
+	    DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
+		  print_hex(tmp_str, cert, 92));
+
+	    hccursor = hccursor->next;
+	    continue;
+	}
+
+        DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
+              print_hex(tmp_str, cert + 4, 6));
+
+        if (mmc_read_vid(mmc, priv_key, cert, aacs->vid)) {
+            mmc_close(mmc);
+            return 1;
+        }
+
+        hccursor = hccursor->next;
+    }
+
+    mmc_close(mmc);
+
+    DEBUG(DBG_AACS, "Error reading VID!\n");
+    return 0;
+}
+
 static int _calc_vuk(AACS *aacs, const char *path)
 {
-    int a;
-    MMC* mmc = NULL;
-
     /* Skip if retrieved from config file */
     if (memcmp(aacs->vuk, empty_key, 16))
       return 1;
@@ -174,10 +216,11 @@ static int _calc_vuk(AACS *aacs, const char *path)
 
     DEBUG(DBG_AACS, "Calculate volume unique key...\n");
 
-    /* Use VID given in config file if available */
-    if (memcmp(aacs->vid, empty_key, 16))
-    {
+    if (_read_vid(aacs, path)) {
+
+        int a;
         gcry_cipher_hd_t gcry_h;
+
         gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
         gcry_cipher_setkey(gcry_h, aacs->mk, 16);
         gcry_cipher_decrypt(gcry_h, aacs->vuk, 16, aacs->vid, 16);
@@ -188,64 +231,12 @@ static int _calc_vuk(AACS *aacs, const char *path)
         }
 
         char str[40];
-        DEBUG(DBG_AACS, "Volume unique key: %s\n",
-              print_hex(str, aacs->vuk, 16));
+        DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(str, aacs->vuk, 16));
 
         /* cache vuk */
         keycache_save("vuk", aacs->disc_id, aacs->vuk, 16);
 
         return 1;
-    }
-
-    cert_list *hccursor = aacs->cf->host_cert_list;
-    while (hccursor && hccursor->host_priv_key && hccursor->host_cert) {
-        uint8_t priv_key[20], cert[92];
-        hexstring_to_hex_array(priv_key, sizeof(priv_key),
-                               hccursor->host_priv_key);
-        hexstring_to_hex_array(cert, sizeof(cert), hccursor->host_cert);
-
-        if (!crypto_aacs_verify_host_cert(cert)) {
-	    char str[2*92+1];
-	    DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
-		  print_hex(str, cert, 92));
-
-	    hccursor = hccursor->next;
-	    continue;
-	}
-
-        char id_str[20];
-        DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
-              print_hex(id_str, cert + 4, 6));
-
-        if ((mmc = mmc_open(path))) {
-            if (mmc_read_vid(mmc, priv_key, cert, aacs->vid)) {
-                gcry_cipher_hd_t gcry_h;
-                gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES,
-                                 GCRY_CIPHER_MODE_ECB, 0);
-                gcry_cipher_setkey(gcry_h, aacs->mk, 16);
-                gcry_cipher_decrypt(gcry_h, aacs->vuk, 16, aacs->vid, 16);
-                gcry_cipher_close(gcry_h);
-
-                for (a = 0; a < 16; a++) {
-                    aacs->vuk[a] ^= aacs->vid[a];
-                }
-
-                mmc_close(mmc);
-
-                char str[40];
-                DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(str, aacs->vuk,
-                                                                    16));
-
-                /* cache vuk */
-                keycache_save("vuk", aacs->disc_id, aacs->vuk, 16);
-
-                return 1;
-            }
-
-            mmc_close(mmc);
-        }
-
-        hccursor = hccursor->next;
     }
 
     DEBUG(DBG_AACS, "Error calculating VUK!\n");
