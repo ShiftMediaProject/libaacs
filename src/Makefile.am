@@ -52,7 +52,7 @@ libaacs_la_SOURCES+= \
 endif
 
 libaacs_ladir= $(includedir)/libaacs
-libaacs_la_HEADERS= libaacs/aacs.h file/filesystem.h
+libaacs_la_HEADERS= libaacs/aacs.h file/filesystem.h libaacs/aacs-version.h
 libaacs_la_LDFLAGS= $(LIBGCRYPT_LIBS) -version-info $(LIB_VERSION_INFO)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libaacs.pc

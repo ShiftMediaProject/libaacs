@@ -24,6 +24,7 @@
 
 #include <util/attributes.h>
 
+#include "aacs-version.h"
 #include "aacs.h"
 #include "crypto.h"
 #include "mmc.h"
@@ -598,6 +599,13 @@ static int _load_config(AACS *aacs, const char *configfile_path)
     }
 
     return config_ok;
+}
+
+void aacs_get_version(int *major, int *minor, int *micro)
+{
+  *major = AACS_VERSION_MAJOR;
+  *minor = AACS_VERSION_MINOR;
+  *micro = AACS_VERSION_MICRO;
 }
 
 AACS *aacs_open(const char *path, const char *configfile_path)

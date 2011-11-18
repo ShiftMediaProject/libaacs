@@ -21,6 +21,7 @@ configure
 libtool
 .deps
 .libs
+src/libaacs/aacs-version.h
 src/examples/parser_test
 src/keydbcfg-lexer.c
 src/keydbcfg-parser.c

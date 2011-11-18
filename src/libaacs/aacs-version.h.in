@@ -1,6 +1,6 @@
 /*
  * This file is part of libaacs
- * Copyright (C) 2009-2010  Obliter0n
+ * Copyright (C) 2011 libaacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,25 +17,21 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef AACS_H_
-#define AACS_H_
+#ifndef AACS_VERSION_H_
+#define AACS_VERSION_H_
 
-#include <stdint.h>
+#define AACS_VERSION_CODE(major, minor, micro) \
+    (((major) * 10000) +                         \
+     ((minor) *   100) +                         \
+     ((micro) *     1))
 
-#ifndef AACS_PUBLIC
-#  define AACS_PUBLIC
-#endif
+#define AACS_VERSION_MAJOR @AACS_VERSION_MAJOR@
+#define AACS_VERSION_MINOR @AACS_VERSION_MINOR@
+#define AACS_VERSION_MICRO @AACS_VERSION_MICRO@
 
-typedef struct aacs AACS;
+#define AACS_VERSION_STRING "@AACS_VERSION_MAJOR@.@AACS_VERSION_MINOR@.@AACS_VERSION_MICRO@"
 
-AACS_PUBLIC void aacs_get_version(int *major, int *minor, int *micro);
+#define AACS_VERSION \
+    AACS_VERSION_CODE(AACS_VERSION_MAJOR, AACS_VERSION_MINOR, AACS_VERSION_MICRO)
 
-AACS_PUBLIC AACS *aacs_open(const char *path, const char *keyfile_path);
-AACS_PUBLIC void aacs_close(AACS *aacs);
-AACS_PUBLIC void aacs_select_title(AACS *aacs, uint32_t title); /* 0 - top menu, 0xffff - first play */
-AACS_PUBLIC int  aacs_decrypt_unit(AACS *aacs, uint8_t *buf);
-AACS_PUBLIC const uint8_t *aacs_get_disc_id(AACS *aacs);
-AACS_PUBLIC const uint8_t *aacs_get_vid(AACS *aacs);
-
-
-#endif /* AACS_H_ */
+#endif /* AACS_VERSION_H_ */

@@ -175,9 +175,17 @@ if [[ $use_debug = "yes" ]]; then
     SET_DEBUG_OPTS="$SET_DEBUG_OPTS -g"
 fi
 
+# export library version number
+AACS_VERSION_MAJOR=aacs_major()
+AC_SUBST(AACS_VERSION_MAJOR)
+AACS_VERSION_MINOR=aacs_minor()
+AC_SUBST(AACS_VERSION_MINOR)
+AACS_VERSION_MICRO=aacs_micro()
+AC_SUBST(AACS_VERSION_MICRO)
+
 # generate output files
 AC_SUBST(SET_WARNINGS)
 AC_SUBST(SET_OPTIMIZATIONS)
 AC_SUBST(SET_DEBUG_OPTS)
-AC_CONFIG_FILES([Makefile src/Makefile src/examples/Makefile src/libaacs.pc])
+AC_CONFIG_FILES([Makefile src/Makefile src/examples/Makefile src/libaacs.pc src/libaacs/aacs-version.h])
 AC_OUTPUT
