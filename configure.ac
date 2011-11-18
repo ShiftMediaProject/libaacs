@@ -4,6 +4,20 @@ m4_define([aacs_minor], 2)
 m4_define([aacs_micro], 0)
 m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 
+# library (.so) version
+#
+# update when making new release
+#
+# - If there are no ABI changes, increase revision.
+# - If ABI is changed backwards-compatible way, increase current and age. Set revision to 0.
+# - If ABI is broken, increase current and set age and revision to 0.
+#
+# Library file name will be libaacs.(current-age).age.revision
+#
+m4_define([lt_current],  0)
+m4_define([lt_age],      0)
+m4_define([lt_revision], 0)
+
 # initilization
 AC_INIT([libaacs], aacs_version, [http://bd.videolan.org/])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -182,6 +196,10 @@ AACS_VERSION_MINOR=aacs_minor()
 AC_SUBST(AACS_VERSION_MINOR)
 AACS_VERSION_MICRO=aacs_micro()
 AC_SUBST(AACS_VERSION_MICRO)
+
+# export library (.so) version
+LT_VERSION_INFO="lt_current:lt_revision:lt_age"
+AC_SUBST(LT_VERSION_INFO)
 
 # generate output files
 AC_SUBST(SET_WARNINGS)
