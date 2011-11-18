@@ -1,5 +1,11 @@
+# library version number
+m4_define([aacs_major], 0)
+m4_define([aacs_minor], 2)
+m4_define([aacs_micro], 0)
+m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
+
 # initilization
-AC_INIT([libaacs],[0.2], [http://bd.videolan.org/])
+AC_INIT([libaacs], aacs_version, [http://bd.videolan.org/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_SYSTEM
