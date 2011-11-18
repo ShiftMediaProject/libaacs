@@ -1,6 +1,6 @@
 # library version number
 m4_define([aacs_major], 0)
-m4_define([aacs_minor], 2)
+m4_define([aacs_minor], 3)
 m4_define([aacs_micro], 0)
 m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 
@@ -14,8 +14,8 @@ m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 #
 # Library file name will be libaacs.(current-age).age.revision
 #
-m4_define([lt_current],  0)
-m4_define([lt_age],      0)
+m4_define([lt_current],  1)
+m4_define([lt_age],      1)
 m4_define([lt_revision], 0)
 
 # initilization
