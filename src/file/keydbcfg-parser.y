@@ -18,7 +18,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "keydbcfg.h"
+#include "file/keydbcfg.h"
 #include "util/macro.h"
 
 #include <stdio.h>
