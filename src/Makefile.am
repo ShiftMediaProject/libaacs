@@ -36,6 +36,8 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	util/strutl.c \
 	util/strutl.h
 
+EXTRA_libaacs_la_SOURCES=libaacs/ec.c
+
 if HAVE_WIN32
 libaacs_la_SOURCES+= \
 	file/win32.c \
