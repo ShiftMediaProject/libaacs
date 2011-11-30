@@ -10,7 +10,7 @@ CFLAGS=$(shell test -z "$$CFLAGS" || echo "$$CFLAGS")
 
 AACS_LIB = $(top_builddir)/src/libaacs.la
 
-PARSER_TEST_DEPENDENCIES=../keydbcfg-lexer.c ../keydbcfg-parser.c
+PARSER_TEST_DEPENDENCIES=$(top_srcdir)/src/keydbcfg-lexer.c $(top_srcdir)/src/keydbcfg-parser.c
 
 noinst_PROGRAMS=parser_test libaacs_test
 
