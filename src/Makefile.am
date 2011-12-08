@@ -58,5 +58,7 @@ pkgconfig_DATA = libaacs.pc
 
 BUILT_SOURCES = keydbcfg-parser.h keydbcfg-parser.c keydbcfg-lexer.c
 
+CLEANFILES = $(BUILT_SOURCES)
+
 clean-lex-yacc:
 	-rm -f $(BUILT_SOURCES)
