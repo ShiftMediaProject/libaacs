@@ -14,7 +14,8 @@ AM_YFLAGS = -d -p libaacs_yy
 CFLAGS=$(shell test -z "$$CFLAGS" || echo "$$CFLAGS")
 
 lib_LTLIBRARIES = libaacs.la
-libaacs_la_SOURCES=libaacs/aacs.h \
+libaacs_la_SOURCES=\
+	libaacs/aacs.h \
 	libaacs/mmc.h \
 	libaacs/mkb.h \
 	libaacs/aacs.c \
@@ -36,7 +37,8 @@ libaacs_la_SOURCES=libaacs/aacs.h \
 	util/strutl.c \
 	util/strutl.h
 
-EXTRA_libaacs_la_SOURCES=libaacs/ec.c
+EXTRA_libaacs_la_SOURCES=\
+	libaacs/ec.c
 
 if HAVE_WIN32
 libaacs_la_SOURCES+= \
