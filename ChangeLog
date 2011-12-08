@@ -1,4 +1,5 @@
 ????-??-??:
+ - Check for libgpg-error. Link against it when needed.
  - Distribute README.txt
  - Added ChangeLog
 

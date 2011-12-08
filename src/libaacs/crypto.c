@@ -151,7 +151,7 @@ void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
     }
 }
 
-#ifdef HAVE_STRERROR_R
+#if defined(HAVE_STRERROR_R) && defined(HAVE_LIBGPG_ERROR)
 #define LOG_GCRY_ERROR(msg, func, err)                                  \
   char errstr[100] = {0};                                               \
   gpg_strerror_r(err, errstr, sizeof(errstr));                          \

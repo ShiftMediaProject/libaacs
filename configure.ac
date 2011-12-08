@@ -122,6 +122,7 @@ else
   AC_SUBST(LIBGCRYPT_LIBS)
 fi
 AC_FUNC_STRERROR_R
+AC_CHECK_LIB([gpg-error], [gpg_strerror_r])
 
 # function testing for supported compiler options
 check_cc_options()
