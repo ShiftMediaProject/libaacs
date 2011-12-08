@@ -317,7 +317,7 @@ static int _mkpath(const char *path)
     return result;
 }
 
-char *_keycache_file(const char *type, const uint8_t *disc_id)
+static char *_keycache_file(const char *type, const uint8_t *disc_id)
 {
     const char *cache_dir = get_cache_home();
     char disc_id_str[41];
