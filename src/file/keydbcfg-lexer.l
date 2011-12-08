@@ -20,11 +20,16 @@
 
 #include "keydbcfg-parser.h"
 
+#define YY_NO_UNISTD_H
+
 /* Disable some warnings triggered by generated scanner */
 #ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wredundant-decls"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC visibility push(hidden)
 #endif
+
+int isatty(int i) { return 0; }
 
 static char *trim_string(const char *string);
 %}

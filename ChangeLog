@@ -1,4 +1,5 @@
 ????-??-??:
+ - Do not export internal symbols from generated parser/lexer
  - Do not distribute generated parser files
  - Check for libgpg-error. Link against it when needed.
  - Distribute README.txt

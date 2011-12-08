@@ -30,6 +30,7 @@
 #pragma GCC diagnostic ignored "-Wredundant-decls"
 #pragma GCC diagnostic ignored "-Wimplicit-function-declaration"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC visibility push(hidden)
 #endif
 
 /* Fix some warnings trigger by -Wundef which can't be ignored */
