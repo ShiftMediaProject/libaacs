@@ -37,6 +37,10 @@
 #include <mntent.h>
 #endif
 
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+
 #ifdef HAVE_LINUX_CDROM_H
 #include <sys/ioctl.h>
 #include <linux/cdrom.h>
@@ -384,7 +388,13 @@ MMC *mmc_open(const char *path)
 #if defined(HAVE_MNTENT_H)
 
 #ifdef HAVE_REALPATH
-    char *file_path = realpath(path, NULL);
+    char *file_path = malloc(PATH_MAX);
+    if (!file_path || !realpath(path, file_path)) {
+        DEBUG(DBG_MMC, "Failed resolving path %s (%p)\n", path, mmc);
+        X_FREE(mmc);
+        X_FREE(file_path);
+        return NULL;
+    }
 #else
     char *file_path = (char*)malloc(strlen(path) + 1);
     strcpy(file_path, path);
