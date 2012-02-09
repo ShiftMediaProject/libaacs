@@ -1,4 +1,5 @@
 ????-??-??:
+ - Added configure option for libgcrypt prefix
  - Fixed building Win32 DLL
  - Fixed segfault when mount point path can't be resolved
  - Do not export internal symbols from generated parser/lexer

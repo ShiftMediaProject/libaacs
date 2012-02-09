@@ -119,6 +119,17 @@ if test "${SYS}" != "mingw32" ; then
 fi
 
 # gcrypt check
+
+AC_ARG_WITH(libgcrypt-prefix,
+            AC_HELP_STRING([--with-libgcrypt-prefix=PFX],
+                           [prefix where libgcrypt is installed (optional)]),
+     libgcrypt_config_prefix="$withval", libgcrypt_config_prefix="")
+if test x$libgcrypt_config_prefix != x ; then
+   if test x${LIBGCRYPT_CONFIG+set} != xset ; then
+      LIBGCRYPT_CONFIG=$libgcrypt_config_prefix/bin/libgcrypt-config
+   fi
+fi
+
 AC_PATH_PROG(LIBGCRYPT_CONFIG, libgcrypt-config, no)
 if test x"$LIBGCRYPT_CONFIG" = xno; then
   AC_MSG_ERROR([libgcrypt not found on system])
