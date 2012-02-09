@@ -79,9 +79,16 @@ AC_ARG_ENABLE([debug],
   [use_debug=$enableval],
   [use_debug=yes])
 
+dnl override platform specific check for dependent libraries
+dnl otherwise libtool linking of shared libraries will
+dnl fail on anything other than pass_all.
+AC_CACHE_VAL(lt_cv_deplibs_check_method,
+    [lt_cv_deplibs_check_method=pass_all])
+
 # required programs
 AC_PROG_CC
 AC_PROG_LIBTOOL
+AC_LIBTOOL_WIN32_DLL
 AM_PROG_LEX
 AC_PROG_YACC
 
