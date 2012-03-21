@@ -10,12 +10,13 @@ CFLAGS=$(shell test -z "$$CFLAGS" || echo "$$CFLAGS")
 
 AACS_LIB = $(top_builddir)/src/libaacs.la
 
-PARSER_TEST_DEPENDENCIES=$(top_srcdir)/src/keydbcfg-lexer.c $(top_srcdir)/src/keydbcfg-parser.c
-
 noinst_PROGRAMS=parser_test libaacs_test
 
-parser_test_SOURCE=parser_test.c
-parser_test_LDADD = $(AACS_LIB) $(PARSER_TEST_DEPENDENCIES)
+parser_test_SOURCES=parser_test.c \
+	$(top_builddir)/src/keydbcfg-lexer.c \
+	$(top_builddir)/src/keydbcfg-parser.c
+
+parser_test_LDADD = $(AACS_LIB)
 
 libaacs_test_SOURCE=libaacs_test.c
 libaacs_test_LDADD = $(AACS_LIB)
