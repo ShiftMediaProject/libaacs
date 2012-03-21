@@ -603,9 +603,9 @@ static int _load_config(AACS *aacs, const char *configfile_path)
 
 void aacs_get_version(int *major, int *minor, int *micro)
 {
-  *major = AACS_VERSION_MAJOR;
-  *minor = AACS_VERSION_MINOR;
-  *micro = AACS_VERSION_MICRO;
+    *major = AACS_VERSION_MAJOR;
+    *minor = AACS_VERSION_MINOR;
+    *micro = AACS_VERSION_MICRO;
 }
 
 AACS *aacs_open(const char *path, const char *configfile_path)
