@@ -248,7 +248,7 @@ static int _calc_vuk(AACS *aacs, const char *path)
 
 static uint16_t _read_u16(AACS_FILE_H *fp)
 {
-  uint8_t data[2];
+  uint8_t data[2] = {0, 0};
 
   file_read(fp, data, sizeof(uint16_t));
 
