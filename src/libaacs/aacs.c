@@ -146,10 +146,12 @@ static int _calc_mk(AACS *aacs, const char *path)
 
         mkb_close(mkb);
         X_FREE(buf);
+
+        DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key. Missing right processing key ?\n");
+        return 0;
     }
 
-    DEBUG(DBG_AACS, "Error calculating media key!\n");
-
+    DEBUG(DBG_AACS | DBG_CRIT, "Error opening %s/AACS/MKB_RO.inf\n", path);
     return 0;
 }
 
@@ -334,7 +336,7 @@ static int _calc_uks(AACS *aacs, const char *path)
 
             } else {
                 aacs->num_uks = 0;
-                DEBUG(DBG_AACS, "Error reading number of unit keys!\n");
+                DEBUG(DBG_AACS | DBG_CRIT, "Error reading number of unit keys\n");
             }
 
             // Read keys
@@ -343,7 +345,7 @@ static int _calc_uks(AACS *aacs, const char *path)
 
                 file_seek(fp, f_pos, SEEK_SET);
                 if ((file_read(fp, buf, 16)) != 16) {
-                    DEBUG(DBG_AACS, "Unit key %d: read error\n", i);
+                    DEBUG(DBG_AACS | DBG_CRIT, "Unit key %d: read error\n", i);
                     aacs->num_uks = i;
                     break;
                 }
@@ -368,10 +370,12 @@ static int _calc_uks(AACS *aacs, const char *path)
         }
 
         file_close(fp);
+
+        DEBUG(DBG_AACS | DBG_CRIT, "Error reading unit keys\n");
+        return 0;
     }
 
-    DEBUG(DBG_AACS, "Could not calculate unit keys!\n");
-
+    DEBUG(DBG_AACS | DBG_CRIT, "Error opening %s/AACS/Unit_Key_RO.inf\n", path);
     return 0;
 }
 
@@ -386,7 +390,7 @@ static int _calc_title_hash(const char *path, uint8_t *title_hash)
     f_name = str_printf("%s/AACS/Unit_Key_RO.inf", path);
 
     if (!(fp = file_open(f_name, "rb"))) {
-        DEBUG(DBG_AACS, "Failed to open unit key file: %s!\n", f_name);
+        DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file %s\n", f_name);
         X_FREE(f_name);
         return 0;
     }
@@ -401,7 +405,7 @@ static int _calc_title_hash(const char *path, uint8_t *title_hash)
 
     if ((file_read(fp, ukf_buf, f_size)) != f_size) {
 
-        DEBUG(DBG_AACS, "Failed to read %"PRIu64" bytes from unit key file!\n", f_size);
+        DEBUG(DBG_AACS | DBG_CRIT, "Failed to read %"PRIu64" bytes from unit key file %s\n", f_size, f_name);
 
         file_close(fp);
         X_FREE(ukf_buf);
@@ -581,7 +585,7 @@ static int _load_config(AACS *aacs, const char *configfile_path)
     config_ok = keydbcfg_load_cert_file(aacs->cf) || config_ok;
 
     if (!config_ok) {
-        DEBUG(DBG_AACS, "No valid configuration files found!\n");
+        DEBUG(DBG_AACS | DBG_CRIT, "No valid AACS configuration files found\n");
     }
 
     return config_ok;
@@ -601,7 +605,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
     DEBUG(DBG_AACS, "Initializing libgcrypt...\n");
     if (!crypto_init())
     {
-        DEBUG(DBG_AACS, "Failed to initialize libgcrypt\n");
+        DEBUG(DBG_AACS | DBG_CRIT, "Failed to initialize libgcrypt\n");
         return NULL;
     }
 

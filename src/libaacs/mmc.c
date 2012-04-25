@@ -390,7 +390,7 @@ MMC *mmc_open(const char *path)
 #ifdef HAVE_REALPATH
     char *file_path = malloc(PATH_MAX);
     if (!file_path || !realpath(path, file_path)) {
-        DEBUG(DBG_MMC, "Failed resolving path %s (%p)\n", path, mmc);
+        DEBUG(DBG_MMC | DBG_CRIT, "Failed resolving path %s (%p)\n", path, mmc);
         X_FREE(mmc);
         X_FREE(file_path);
         return NULL;
@@ -435,7 +435,7 @@ MMC *mmc_open(const char *path)
     }
 
     if (mmc->fd < 0) {
-        DEBUG(DBG_MMC, "Error opening LINUX MMC drive mounted to %s (%p)\n", file_path, mmc);
+        DEBUG(DBG_MMC | DBG_CRIT, "Error opening LINUX MMC drive mounted to %s (%p)\n", file_path, mmc);
         X_FREE(mmc);
     }
 
@@ -450,7 +450,7 @@ MMC *mmc_open(const char *path)
     UINT type = GetDriveType(drive);
 
     if (type != DRIVE_CDROM) {
-        DEBUG(DBG_MMC, "Drive %s is not CD/DVD drive !\n", drive);
+        DEBUG(DBG_MMC | DBG_CRIT, "Drive %s is not CD/DVD drive\n", drive);
         X_FREE(mmc);
         return NULL;
     }
@@ -473,7 +473,7 @@ MMC *mmc_open(const char *path)
 
 #else
 
-    DEBUG(DBG_MMC, "No MMC drive support !\n");
+    DEBUG(DBG_MMC | DBG_CRIT, "No MMC drive support\n");
     X_FREE(mmc);
 
 #endif
