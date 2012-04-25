@@ -450,17 +450,13 @@ static int _verify_ts(uint8_t *buf, size_t size)
 }
 
 /* Function that collects keys from keydb config entry */
-static void _find_config_entry(AACS *aacs, const char *path)
+static void _find_config_entry(AACS *aacs)
 {
     uint8_t discid[20];
     char str[48];
 
     aacs->uks = NULL;
     aacs->num_uks = 0;
-
-    if (!_calc_title_hash(path, aacs->disc_id)) {
-        return;
-    }
 
     if (aacs->cf && aacs->cf->list) {
         aacs->ce = aacs->cf->list;
@@ -611,9 +607,14 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 
     AACS *aacs = calloc(1, sizeof(AACS));
 
+    if (!_calc_title_hash(path, aacs->disc_id)) {
+        aacs_close(aacs);
+        return NULL;
+    }
+
     if (_load_config(aacs, configfile_path)) {
         DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
-        _find_config_entry(aacs, path);
+        _find_config_entry(aacs);
 
         DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
         if (_calc_uks(aacs, path)) {
