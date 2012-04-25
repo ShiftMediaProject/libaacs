@@ -26,6 +26,10 @@
 
 typedef struct mmc MMC;
 
+#define MMC_SUCCESS             0 /* no errors */
+#define MMC_ERROR              -1 /* MMC failed */
+#define MMC_ERROR_CERT_REVOKED -2 /* revoked certificate */
+
 AACS_PRIVATE MMC *mmc_open(const char *path);
 AACS_PRIVATE void mmc_close(MMC *mmc);
 AACS_PRIVATE int  mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert,

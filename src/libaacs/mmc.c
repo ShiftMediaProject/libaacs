@@ -517,6 +517,7 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
 {
     uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40], mac[16];
     char str[512];
+    int error_code = MMC_ERROR;
 
     memset(hks, 0, sizeof(hks));
 
@@ -526,7 +527,7 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
 
     if (!_mmc_report_agid(mmc, &agid)) {
         DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive (%p)\n", mmc);
-        return 0;
+        return MMC_ERROR;
     }
     DEBUG(DBG_MMC, "Got AGID from drive: %d (%p)\n", agid, mmc);
 
@@ -542,6 +543,7 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
             DEBUG(DBG_MMC | DBG_CRIT,
                   "Host key / Certificate has been revoked by your drive ? "
                   "(%p)\n", mmc);
+            error_code = MMC_ERROR_CERT_REVOKED;
             break;
         }
 
@@ -608,12 +610,12 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
 
         _mmc_invalidate_agid(mmc, agid);
 
-        return 1;
+        return MMC_SUCCESS;
     }
 
     DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive! (%p)\n", mmc);
 
     _mmc_invalidate_agid(mmc, agid);
 
-    return 0;
+    return error_code;
 }

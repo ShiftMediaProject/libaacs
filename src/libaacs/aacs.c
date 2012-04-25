@@ -184,7 +184,8 @@ static int _read_vid(AACS *aacs, const char *path)
         DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
               print_hex(tmp_str, cert + 4, 6));
 
-        if (mmc_read_vid(mmc, priv_key, cert, aacs->vid)) {
+        int mmc_result = mmc_read_vid(mmc, priv_key, cert, aacs->vid);
+        if (mmc_result == MMC_SUCCESS) {
             mmc_close(mmc);
             return 1;
         }
