@@ -450,16 +450,16 @@ static int _verify_ts(uint8_t *buf, size_t size)
 }
 
 /* Function that collects keys from keydb config entry */
-static uint32_t _find_config_entry(AACS *aacs, const char *path)
+static void _find_config_entry(AACS *aacs, const char *path)
 {
     uint8_t discid[20];
     char str[48];
-    uint32_t retval = 0;
+
     aacs->uks = NULL;
     aacs->num_uks = 0;
 
     if (!_calc_title_hash(path, aacs->disc_id)) {
-        return 0;
+        return;
     }
 
     if (aacs->cf && aacs->cf->list) {
@@ -483,8 +483,6 @@ static uint32_t _find_config_entry(AACS *aacs, const char *path)
 
             DEBUG(DBG_AACS, "Found media key for %s: %s\n",
                   aacs->ce->entry.discid, print_hex(str, aacs->mk, 16));
-
-            retval = 1;
         }
 
         if (aacs->ce->entry.vid) {
@@ -493,8 +491,6 @@ static uint32_t _find_config_entry(AACS *aacs, const char *path)
 
             DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
                   aacs->ce->entry.discid, print_hex(str, aacs->vid, 16));
-
-            retval = 1;
         }
 
         if (aacs->ce->entry.vuk) {
@@ -503,8 +499,6 @@ static uint32_t _find_config_entry(AACS *aacs, const char *path)
 
             DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
                   aacs->ce->entry.discid, print_hex(str, aacs->vuk, 16));
-
-            retval = 1;
         }
 
         if (aacs->ce && aacs->ce->entry.uk) {
@@ -527,11 +521,6 @@ static uint32_t _find_config_entry(AACS *aacs, const char *path)
             }
         }
     }
-
-    if (aacs->num_uks)
-        retval = aacs->num_uks;
-
-    return retval;
 }
 
 #define ALIGNED_UNIT_LEN 6144
