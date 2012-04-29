@@ -63,7 +63,7 @@ static int _validate_pk(const uint8_t *pk,
                         uint8_t *mk)
 {
     gcry_cipher_hd_t gcry_h;
-    int a, ret = 0;
+    int a;
     uint8_t dec_vd[16];
     char str[40];
 
@@ -87,10 +87,10 @@ static int _validate_pk(const uint8_t *pk,
 
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
         DEBUG(DBG_AACS, "Processing key %s is valid!\n", print_hex(str, pk, 16));
-        ret = 1;
+        return AACS_SUCCESS;
     }
 
-    return ret;
+    return AACS_ERROR_NO_PK;
 }
 
 static int _calc_mk(AACS *aacs, const char *path)
@@ -103,7 +103,7 @@ static int _calc_mk(AACS *aacs, const char *path)
 
     /* Skip if retrieved from config file */
     if (memcmp(aacs->mk, empty_key, 16))
-      return 1;
+      return AACS_SUCCESS;
 
     DEBUG(DBG_AACS, "Calculate media key...\n");
 
@@ -128,7 +128,7 @@ static int _calc_mk(AACS *aacs, const char *path)
                 DEBUG(DBG_AACS, "Trying processing key...\n");
 
                 for (a = 0; a < num_uvs; a++) {
-                    if (_validate_pk(aacs->pk, rec + a * 16, uvs + 1 + a * 5,
+                    if (AACS_SUCCESS == _validate_pk(aacs->pk, rec + a * 16, uvs + 1 + a * 5,
                       mkb_mk_dv(mkb), aacs->mk)) {
                         mkb_close(mkb);
                         X_FREE(buf);
@@ -136,7 +136,7 @@ static int _calc_mk(AACS *aacs, const char *path)
                         char str[40];
                         DEBUG(DBG_AACS, "Media key: %s\n", print_hex(str, aacs->mk,
                                                                      16));
-                        return 1;
+                        return AACS_SUCCESS;
                     }
                 }
 
@@ -148,24 +148,26 @@ static int _calc_mk(AACS *aacs, const char *path)
         X_FREE(buf);
 
         DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key. Missing right processing key ?\n");
-        return 0;
+        return AACS_ERROR_NO_PK;
     }
 
     DEBUG(DBG_AACS | DBG_CRIT, "Error opening %s/AACS/MKB_RO.inf\n", path);
-    return 0;
+    return AACS_ERROR_CORRUPTED_DISC;
 }
 
 static int _read_vid(AACS *aacs, const char *path)
 {
     /* Use VID given in config file if available */
     if (memcmp(aacs->vid, empty_key, 16)) {
-        return 1;
+        return AACS_SUCCESS;
     }
 
     MMC* mmc = NULL;
     if (!(mmc = mmc_open(path))) {
-        return 0;
+        return AACS_ERROR_MMC_OPEN;
     }
+
+    int error_code = AACS_ERROR_NO_CERT;
 
     cert_list *hccursor = aacs->cf->host_cert_list;
     while (hccursor && hccursor->host_priv_key && hccursor->host_cert) {
@@ -187,9 +189,17 @@ static int _read_vid(AACS *aacs, const char *path)
               print_hex(tmp_str, cert + 4, 6));
 
         int mmc_result = mmc_read_vid(mmc, priv_key, cert, aacs->vid);
-        if (mmc_result == MMC_SUCCESS) {
-            mmc_close(mmc);
-            return 1;
+        switch (mmc_result) {
+            case MMC_SUCCESS:
+                mmc_close(mmc);
+                return AACS_SUCCESS;
+            case MMC_ERROR_CERT_REVOKED:
+                error_code = AACS_ERROR_CERT_REVOKED;
+                break;
+            case MMC_ERROR:
+            default:
+                error_code = AACS_ERROR_MMC_FAILURE;
+                break;
         }
 
         hccursor = hccursor->next;
@@ -198,29 +208,36 @@ static int _read_vid(AACS *aacs, const char *path)
     mmc_close(mmc);
 
     DEBUG(DBG_AACS, "Error reading VID!\n");
-    return 0;
+    return error_code;
 }
 
 static int _calc_vuk(AACS *aacs, const char *path)
 {
+    int error_code;
+
     /* Skip if retrieved from config file */
-    if (memcmp(aacs->vuk, empty_key, 16))
-      return 1;
+    if (memcmp(aacs->vuk, empty_key, 16)) {
+        DEBUG(DBG_AACS, "Using VUK from config file\n");
+        return AACS_SUCCESS;
+    }
 
     /* get cached vuk */
     if (keycache_find("vuk", aacs->disc_id, aacs->vuk, 16)) {
         DEBUG(DBG_AACS, "Using cached VUK\n");
-        return 1;
+        return AACS_SUCCESS;
     }
 
     /* make sure we have media key */
-    if (!_calc_mk(aacs, path)) {
-        return 0;
+    error_code = _calc_mk(aacs, path);
+    if (error_code != AACS_SUCCESS) {
+        return error_code;
     }
 
-    DEBUG(DBG_AACS, "Calculate volume unique key...\n");
-
-    if (_read_vid(aacs, path)) {
+    /* acquire VID */
+    error_code = _read_vid(aacs, path);
+    if (error_code != AACS_SUCCESS) {
+        return error_code;
+    }
 
         int a;
         gcry_cipher_hd_t gcry_h;
@@ -240,12 +257,7 @@ static int _calc_vuk(AACS *aacs, const char *path)
         /* cache vuk */
         keycache_save("vuk", aacs->disc_id, aacs->vuk, 16);
 
-        return 1;
-    }
-
-    DEBUG(DBG_AACS, "Error calculating VUK!\n");
-
-    return 0;
+        return AACS_SUCCESS;
 }
 
 static uint16_t _read_u16(AACS_FILE_H *fp)
@@ -297,30 +309,47 @@ static void _read_uks_map(AACS *aacs, AACS_FILE_H *fp)
     }
 }
 
+static AACS_FILE_H *_open_unit_key_file(const char *path)
+{
+    AACS_FILE_H *fp;
+    char        *f_name;
+
+    f_name = str_printf("%s/AACS/Unit_Key_RO.inf", path);
+    fp = file_open(f_name, "rb");
+
+    if (!fp) {
+        DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file %s\n", f_name);
+    }
+
+    X_FREE(f_name);
+    return fp;
+}
+
 static int _calc_uks(AACS *aacs, const char *path)
 {
     AACS_FILE_H *fp = NULL;
-    char    *f_name;
     uint8_t  buf[16];
     uint64_t f_pos;
     unsigned int i;
+    int error_code;
 
     /* Skip if retrieved from config file */
     if (aacs->uks)
-        return 1;
+        return AACS_SUCCESS;
 
     /* Make sure we have VUK */
-    if (!_calc_vuk(aacs, path)) {
-        return 0;
+    error_code = _calc_vuk(aacs, path);
+    if (error_code != AACS_SUCCESS) {
+        return error_code;
     }
 
     DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
-    f_name = str_printf("%s/AACS/Unit_Key_RO.inf", path);
-    fp = file_open(f_name, "rb");
-    X_FREE(f_name);
+    fp = _open_unit_key_file(path);
+    if (!fp) {
+        return AACS_ERROR_CORRUPTED_DISC;
+    }
 
-    if (fp) {
         if ((file_read(fp, buf, 4)) == 4) {
             f_pos = MKINT_BE32(buf);
 
@@ -337,6 +366,7 @@ static int _calc_uks(AACS *aacs, const char *path)
             } else {
                 aacs->num_uks = 0;
                 DEBUG(DBG_AACS | DBG_CRIT, "Error reading number of unit keys\n");
+                error_code = AACS_ERROR_CORRUPTED_DISC;
             }
 
             // Read keys
@@ -345,8 +375,9 @@ static int _calc_uks(AACS *aacs, const char *path)
 
                 file_seek(fp, f_pos, SEEK_SET);
                 if ((file_read(fp, buf, 16)) != 16) {
-                    DEBUG(DBG_AACS | DBG_CRIT, "Unit key %d: read error\n", i);
+                    DEBUG(DBG_AACS, "Unit key %d: read error\n", i);
                     aacs->num_uks = i;
+                    error_code = AACS_ERROR_CORRUPTED_DISC;
                     break;
                 }
 
@@ -362,21 +393,18 @@ static int _calc_uks(AACS *aacs, const char *path)
                       print_hex(str, aacs->uks + 16*i, 16));
             }
 
+            /* failing next is not fatal, it just slows down things */
             _read_uks_map(aacs, fp);
 
             file_close(fp);
 
-            return aacs->num_uks;
+            return error_code;
         }
 
         file_close(fp);
 
         DEBUG(DBG_AACS | DBG_CRIT, "Error reading unit keys\n");
-        return 0;
-    }
-
-    DEBUG(DBG_AACS | DBG_CRIT, "Error opening %s/AACS/Unit_Key_RO.inf\n", path);
-    return 0;
+        return AACS_ERROR_CORRUPTED_DISC;
 }
 
 static int _calc_title_hash(const char *path, uint8_t *title_hash)
@@ -385,17 +413,12 @@ static int _calc_title_hash(const char *path, uint8_t *title_hash)
     uint8_t *ukf_buf;
     char     str[48];
     int64_t  f_size;
-    char    *f_name;
+    int      result = AACS_SUCCESS;
 
-    f_name = str_printf("%s/AACS/Unit_Key_RO.inf", path);
-
-    if (!(fp = file_open(f_name, "rb"))) {
-        DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file %s\n", f_name);
-        X_FREE(f_name);
-        return 0;
+    fp = _open_unit_key_file(path);
+    if (!fp) {
+        return AACS_ERROR_CORRUPTED_DISC;
     }
-
-    X_FREE(f_name);
 
     file_seek(fp, 0, SEEK_END);
     f_size = file_tell(fp);
@@ -403,23 +426,19 @@ static int _calc_title_hash(const char *path, uint8_t *title_hash)
 
     ukf_buf = malloc(f_size);
 
-    if ((file_read(fp, ukf_buf, f_size)) != f_size) {
+    if ((file_read(fp, ukf_buf, f_size)) == f_size) {
+        crypto_aacs_title_hash(ukf_buf, f_size, title_hash);
+        DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(str, title_hash, 20));
 
-        DEBUG(DBG_AACS | DBG_CRIT, "Failed to read %"PRIu64" bytes from unit key file %s\n", f_size, f_name);
-
-        file_close(fp);
-        X_FREE(ukf_buf);
-
-        return 0;
+    } else {
+        result = AACS_ERROR_CORRUPTED_DISC;
+        DEBUG(DBG_AACS | DBG_CRIT, "Failed to read %"PRIu64" bytes from unit key file %s/AACS/Unit_Key_RO.inf", f_size, path);
     }
-
-    crypto_aacs_title_hash(ukf_buf, f_size, title_hash);
-    DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(str, title_hash, 20));
 
     file_close(fp);
     X_FREE(ukf_buf);
 
-    return 1;
+    return result;
 }
 
 static int _verify_ts(uint8_t *buf, size_t size)
@@ -586,9 +605,10 @@ static int _load_config(AACS *aacs, const char *configfile_path)
 
     if (!config_ok) {
         DEBUG(DBG_AACS | DBG_CRIT, "No valid AACS configuration files found\n");
+        return AACS_ERROR_NO_CONFIG;
     }
 
-    return config_ok;
+    return AACS_SUCCESS;
 }
 
 void aacs_get_version(int *major, int *minor, int *micro)
@@ -598,50 +618,68 @@ void aacs_get_version(int *major, int *minor, int *micro)
     *micro = AACS_VERSION_MICRO;
 }
 
+/* aacs_open2() wrapper for backwards compability */
 AACS *aacs_open(const char *path, const char *configfile_path)
+{
+    int error_code;
+    AACS *aacs;
+
+    aacs = aacs_open2(path, configfile_path, &error_code);
+    if (error_code == AACS_SUCCESS) {
+        return aacs;
+    }
+
+    aacs_close(aacs);
+    return NULL;
+}
+
+AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
 {
     DEBUG(DBG_AACS, "libaacs [%zd]\n", sizeof(AACS));
 
     DEBUG(DBG_AACS, "Initializing libgcrypt...\n");
-    if (!crypto_init())
-    {
+    if (!crypto_init()) {
         DEBUG(DBG_AACS | DBG_CRIT, "Failed to initialize libgcrypt\n");
         return NULL;
     }
 
     AACS *aacs = calloc(1, sizeof(AACS));
 
-    if (!_calc_title_hash(path, aacs->disc_id)) {
+    *error_code = _load_config(aacs, configfile_path);
+    if (*error_code != AACS_SUCCESS) {
         aacs_close(aacs);
         return NULL;
     }
 
-    if (_load_config(aacs, configfile_path)) {
-        DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
-        _find_config_entry(aacs);
-
-        DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
-        if (_calc_uks(aacs, path)) {
-            keydbcfg_config_file_close(aacs->cf);
-            aacs->cf = NULL;
-
-            DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
-            return aacs;
-        }
-
-        keydbcfg_config_file_close(aacs->cf);
-        aacs->cf = NULL;
+    *error_code = _calc_title_hash(path, aacs->disc_id);
+    if (*error_code != AACS_SUCCESS) {
+        aacs_close(aacs);
+        return NULL;
     }
 
-    DEBUG(DBG_AACS, "Failed to initialize AACS! (%p)\n", aacs);
+    DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
+    _find_config_entry(aacs);
 
-    aacs_close(aacs);
+    DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
+    *error_code = _calc_uks(aacs, path);
 
-    return NULL;
+    keydbcfg_config_file_close(aacs->cf);
+    aacs->cf = NULL;
+
+    if (*error_code == AACS_SUCCESS) {
+        DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
+    } else {
+        DEBUG(DBG_AACS, "Failed to initialize AACS! (%p)\n", aacs);
+    }
+
+    return aacs;
 }
 
 void aacs_close(AACS *aacs)
 {
+    if (!aacs)
+        return;
+
     X_FREE(aacs->uks);
     X_FREE(aacs->cps_units);
 

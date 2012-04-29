@@ -39,24 +39,56 @@ static const char *_hex2str(const uint8_t *s, unsigned n)
     return str;
 }
 
+static const char *_error_str(int error_code)
+{
+  switch (error_code) {
+      case AACS_SUCCESS:
+        return "No errors";
+      case AACS_ERROR_CORRUPTED_DISC:
+        return "Corrupted BluRay disc";
+      case AACS_ERROR_NO_CONFIG:
+        return "Missing configuration file(s)";
+      case AACS_ERROR_NO_PK:
+        return "No matching processing key in configuration file(s)";
+      case AACS_ERROR_NO_CERT:
+        return "No valid certificates in configuration file(s)";
+      case AACS_ERROR_CERT_REVOKED:
+        return "All available certificates have been revoked";
+      case AACS_ERROR_MMC_OPEN:
+        return "MMC open failed";
+      case AACS_ERROR_MMC_FAILURE:
+        return "MMC authentication failed";
+  }
+  return "Unknown error";
+}
+
 int main (int argc, char **argv)
 {
+    int major, minor, micro, error_code = AACS_SUCCESS;
+
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <path-to-disc-root> [<path-to-config-file>]\n", argv[0]);
 	exit(EXIT_FAILURE);
     }
 
-    AACS *aacs = aacs_open(argv[1], argc > 2 ? argv[2] : NULL);
+    aacs_get_version(&major, &minor, &micro);
+    printf("Opening %s using libaacs %d.%d.%d ...\n", argv[1], major, minor, micro);
+
+    AACS *aacs = aacs_open2(argv[1], argc > 2 ? argv[2] : NULL, &error_code);
+    if (error_code) {
+        fprintf(stderr, "libaacs open failed: %s\n", _error_str(error_code));
+    } else {
+        printf("libaacs open succeed.\n");
+    }
 
     if (!aacs) {
-        fprintf(stderr, "libaacs open failed.\n");
 	exit(EXIT_FAILURE);
     }
 
-    printf("libaacs open succeed.\n");
-
     const uint8_t *vid = aacs_get_vid(aacs);
-    printf("VID: %s\n", vid ? _hex2str(vid, 20) : "???");
+    const uint8_t *id  = aacs_get_disc_id(aacs);
+    printf("Disc ID: %s\n", id  ? _hex2str(id,  20) : "???");
+    printf("VID    : %s\n", vid ? _hex2str(vid, 20) : "???");
 
     aacs_close(aacs);
 
