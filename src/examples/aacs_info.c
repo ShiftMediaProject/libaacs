@@ -67,7 +67,7 @@ int main (int argc, char **argv)
     int major, minor, micro, error_code = AACS_SUCCESS;
 
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <path-to-disc-root> [<path-to-config-file>]\n", argv[0]);
+        fprintf(stderr, "Usage: aacs_info <path-to-disc-root> [<path-to-config-file>]\n");
 	exit(EXIT_FAILURE);
     }
 

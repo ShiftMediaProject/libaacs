@@ -1,5 +1,6 @@
 ????-??-??: Version 0.4.0
  - Added aacs_open2() and error codes
+ - Renamed libaacs_test to aacs_info
 
 2012-03-21: Version 0.3.1
  - Added configure option for libgcrypt prefix
