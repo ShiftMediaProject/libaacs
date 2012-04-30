@@ -45,10 +45,9 @@
 
 
 struct aacs {
-    uint8_t pk[16], mk[16], vuk[16], vid[16], disc_id[20], *uks;
+    uint8_t  mk[16], vuk[16], vid[16], disc_id[20], *uks;
     uint32_t num_uks;
     struct config_file_t *cf;
-    struct title_entry_list_t *ce;
 
     uint32_t num_titles;
     uint16_t current_cps_unit;
@@ -127,12 +126,12 @@ static int _calc_mk(AACS *aacs)
         if (aacs->cf->pkl) {
             pk_list *pkcursor = aacs->cf->pkl;
             while (pkcursor && pkcursor->key) {
-                hexstring_to_hex_array(aacs->pk, sizeof(aacs->pk),
-                                       pkcursor->key);
+                uint8_t pk[16];
+                hexstring_to_hex_array(pk, sizeof(pk), pkcursor->key);
                 DEBUG(DBG_AACS, "Trying processing key...\n");
 
                 for (a = 0; a < num_uvs; a++) {
-                    if (AACS_SUCCESS == _validate_pk(aacs->pk, rec + a * 16, uvs + 1 + a * 5,
+                    if (AACS_SUCCESS == _validate_pk(pk, rec + a * 16, uvs + 1 + a * 5,
                       mkb_mk_dv(mkb), aacs->mk)) {
                         mkb_close(mkb);
                         X_FREE(buf);
@@ -486,48 +485,52 @@ static void _find_config_entry(AACS *aacs)
     aacs->num_uks = 0;
 
     if (aacs->cf && aacs->cf->list) {
-        aacs->ce = aacs->cf->list;
-        while (aacs->ce && aacs->ce->entry.discid) {
+        struct title_entry_list_t *ce;
+        ce = aacs->cf->list;
+        while (ce && ce->entry.discid) {
             memset(discid, 0, sizeof(discid));
             hexstring_to_hex_array(discid, sizeof(discid),
-                                   aacs->ce->entry.discid);
+                                   ce->entry.discid);
             if (!memcmp(aacs->disc_id, discid, 20)) {
                 DEBUG(DBG_AACS, "Found config entry for discid %s\n",
-                      aacs->ce->entry.discid);
+                      ce->entry.discid);
                 break;
             }
 
-            aacs->ce = aacs->ce->next;
+            ce = ce->next;
+        }
+        if (!ce) {
+            return;
         }
 
-        if (aacs->ce->entry.mek) {
+        if (ce->entry.mek) {
             hexstring_to_hex_array(aacs->mk, sizeof(aacs->mk),
-                                    aacs->ce->entry.mek);
+                                   ce->entry.mek);
 
             DEBUG(DBG_AACS, "Found media key for %s: %s\n",
-                  aacs->ce->entry.discid, print_hex(str, aacs->mk, 16));
+                  ce->entry.discid, print_hex(str, aacs->mk, 16));
         }
 
-        if (aacs->ce->entry.vid) {
+        if (ce->entry.vid) {
             hexstring_to_hex_array(aacs->vid, sizeof(aacs->vid),
-                                    aacs->ce->entry.vid);
+                                    ce->entry.vid);
 
             DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
-                  aacs->ce->entry.discid, print_hex(str, aacs->vid, 16));
+                  ce->entry.discid, print_hex(str, aacs->vid, 16));
         }
 
-        if (aacs->ce->entry.vuk) {
+        if (ce->entry.vuk) {
             hexstring_to_hex_array(aacs->vuk, sizeof(aacs->vuk),
-                                    aacs->ce->entry.vuk);
+                                    ce->entry.vuk);
 
             DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
-                  aacs->ce->entry.discid, print_hex(str, aacs->vuk, 16));
+                  ce->entry.discid, print_hex(str, aacs->vuk, 16));
         }
 
-        if (aacs->ce && aacs->ce->entry.uk) {
+        if (ce->entry.uk) {
             DEBUG(DBG_AACS, "Acquire CPS unit keys from keydb config file...\n");
 
-            digit_key_pair_list *ukcursor = aacs->ce->entry.uk;
+            digit_key_pair_list *ukcursor = ce->entry.uk;
             while (ukcursor && ukcursor->key_pair.key) {
                 aacs->num_uks++;
 
