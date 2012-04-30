@@ -680,6 +680,11 @@ void aacs_close(AACS *aacs)
     if (!aacs)
         return;
 
+    if (aacs->cf) {
+        keydbcfg_config_file_close(aacs->cf);
+        aacs->cf = NULL;
+    }
+
     X_FREE(aacs->uks);
     X_FREE(aacs->cps_units);
 
