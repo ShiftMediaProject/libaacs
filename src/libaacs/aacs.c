@@ -178,12 +178,12 @@ static int _read_vid(AACS *aacs, const char *path)
         hexstring_to_hex_array(cert,     sizeof(cert),     hccursor->host_cert);
 
         if (!crypto_aacs_verify_host_cert(cert)) {
-	    DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
-		  print_hex(tmp_str, cert, 92));
+            DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
+                  print_hex(tmp_str, cert, 92));
 
-	    hccursor = hccursor->next;
-	    continue;
-	}
+            hccursor = hccursor->next;
+            continue;
+        }
 
         DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
               print_hex(tmp_str, cert + 4, 6));
@@ -239,25 +239,25 @@ static int _calc_vuk(AACS *aacs, const char *path)
         return error_code;
     }
 
-        int a;
-        gcry_cipher_hd_t gcry_h;
+    int a;
+    gcry_cipher_hd_t gcry_h;
 
-        gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-        gcry_cipher_setkey(gcry_h, aacs->mk, 16);
-        gcry_cipher_decrypt(gcry_h, aacs->vuk, 16, aacs->vid, 16);
-        gcry_cipher_close(gcry_h);
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+    gcry_cipher_setkey(gcry_h, aacs->mk, 16);
+    gcry_cipher_decrypt(gcry_h, aacs->vuk, 16, aacs->vid, 16);
+    gcry_cipher_close(gcry_h);
 
-        for (a = 0; a < 16; a++) {
-            aacs->vuk[a] ^= aacs->vid[a];
-        }
+    for (a = 0; a < 16; a++) {
+        aacs->vuk[a] ^= aacs->vid[a];
+    }
 
-        char str[40];
-        DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(str, aacs->vuk, 16));
+    char str[40];
+    DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(str, aacs->vuk, 16));
 
-        /* cache vuk */
-        keycache_save("vuk", aacs->disc_id, aacs->vuk, 16);
+    /* cache vuk */
+    keycache_save("vuk", aacs->disc_id, aacs->vuk, 16);
 
-        return AACS_SUCCESS;
+    return AACS_SUCCESS;
 }
 
 static uint16_t _read_u16(AACS_FILE_H *fp)
@@ -350,61 +350,61 @@ static int _calc_uks(AACS *aacs, const char *path)
         return AACS_ERROR_CORRUPTED_DISC;
     }
 
-        if ((file_read(fp, buf, 4)) == 4) {
-            f_pos = MKINT_BE32(buf);
+    if ((file_read(fp, buf, 4)) == 4) {
+        f_pos = MKINT_BE32(buf);
 
-            // Read number of keys
-            file_seek(fp, f_pos, SEEK_SET);
-            if ((file_read(fp, buf, 2)) == 2) {
-                aacs->num_uks = MKINT_BE16(buf);
+        // Read number of keys
+        file_seek(fp, f_pos, SEEK_SET);
+        if ((file_read(fp, buf, 2)) == 2) {
+            aacs->num_uks = MKINT_BE16(buf);
 
-                X_FREE(aacs->uks);
-                aacs->uks = calloc(aacs->num_uks, 16);
+            X_FREE(aacs->uks);
+            aacs->uks = calloc(aacs->num_uks, 16);
 
-                DEBUG(DBG_AACS, "%d CPS unit keys\n", aacs->num_uks);
+            DEBUG(DBG_AACS, "%d CPS unit keys\n", aacs->num_uks);
 
-            } else {
-                aacs->num_uks = 0;
-                DEBUG(DBG_AACS | DBG_CRIT, "Error reading number of unit keys\n");
-                error_code = AACS_ERROR_CORRUPTED_DISC;
-            }
-
-            // Read keys
-            for (i = 0; i < aacs->num_uks; i++) {
-                f_pos += 48;
-
-                file_seek(fp, f_pos, SEEK_SET);
-                if ((file_read(fp, buf, 16)) != 16) {
-                    DEBUG(DBG_AACS, "Unit key %d: read error\n", i);
-                    aacs->num_uks = i;
-                    error_code = AACS_ERROR_CORRUPTED_DISC;
-                    break;
-                }
-
-                gcry_cipher_hd_t gcry_h;
-                gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES,
-                                 GCRY_CIPHER_MODE_ECB, 0);
-                gcry_cipher_setkey(gcry_h, aacs->vuk, 16);
-                gcry_cipher_decrypt(gcry_h, aacs->uks + 16*i, 16, buf, 16);
-                gcry_cipher_close(gcry_h);
-
-                char str[40];
-                DEBUG(DBG_AACS, "Unit key %d: %s\n", i,
-                      print_hex(str, aacs->uks + 16*i, 16));
-            }
-
-            /* failing next is not fatal, it just slows down things */
-            _read_uks_map(aacs, fp);
-
-            file_close(fp);
-
-            return error_code;
+        } else {
+            aacs->num_uks = 0;
+            DEBUG(DBG_AACS | DBG_CRIT, "Error reading number of unit keys\n");
+            error_code = AACS_ERROR_CORRUPTED_DISC;
         }
+
+        // Read keys
+        for (i = 0; i < aacs->num_uks; i++) {
+            f_pos += 48;
+
+            file_seek(fp, f_pos, SEEK_SET);
+            if ((file_read(fp, buf, 16)) != 16) {
+                DEBUG(DBG_AACS, "Unit key %d: read error\n", i);
+                aacs->num_uks = i;
+                error_code = AACS_ERROR_CORRUPTED_DISC;
+                break;
+            }
+
+            gcry_cipher_hd_t gcry_h;
+            gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES,
+                             GCRY_CIPHER_MODE_ECB, 0);
+            gcry_cipher_setkey(gcry_h, aacs->vuk, 16);
+            gcry_cipher_decrypt(gcry_h, aacs->uks + 16*i, 16, buf, 16);
+            gcry_cipher_close(gcry_h);
+
+            char str[40];
+            DEBUG(DBG_AACS, "Unit key %d: %s\n", i,
+                  print_hex(str, aacs->uks + 16*i, 16));
+        }
+
+        /* failing next is not fatal, it just slows down things */
+        _read_uks_map(aacs, fp);
 
         file_close(fp);
 
-        DEBUG(DBG_AACS | DBG_CRIT, "Error reading unit keys\n");
-        return AACS_ERROR_CORRUPTED_DISC;
+        return error_code;
+    }
+
+    file_close(fp);
+
+    DEBUG(DBG_AACS | DBG_CRIT, "Error reading unit keys\n");
+    return AACS_ERROR_CORRUPTED_DISC;
 }
 
 static int _calc_title_hash(const char *path, uint8_t *title_hash)
