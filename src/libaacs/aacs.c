@@ -53,6 +53,9 @@ struct aacs {
     uint32_t num_titles;
     uint16_t current_cps_unit;
     uint16_t *cps_units;  /* [0] = first play ; [1] = top menu ; [2] = title 1 ... */
+
+    char    *path;
+    int      mkb_version;
 };
 
 static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -93,7 +96,7 @@ static int _validate_pk(const uint8_t *pk,
     return AACS_ERROR_NO_PK;
 }
 
-static int _calc_mk(AACS *aacs, const char *path)
+static int _calc_mk(AACS *aacs)
 {
     int a, num_uvs = 0;
     size_t len;
@@ -107,8 +110,9 @@ static int _calc_mk(AACS *aacs, const char *path)
 
     DEBUG(DBG_AACS, "Calculate media key...\n");
 
-    if ((mkb = mkb_open(path))) {
+    if ((mkb = mkb_open(aacs->path))) {
         DEBUG(DBG_AACS, "Get UVS...\n");
+        aacs->mkb_version = mkb_version(mkb);
         uvs = mkb_subdiff_records(mkb, &len);
         rec = uvs;
         while (rec < uvs + len) {
@@ -151,11 +155,11 @@ static int _calc_mk(AACS *aacs, const char *path)
         return AACS_ERROR_NO_PK;
     }
 
-    DEBUG(DBG_AACS | DBG_CRIT, "Error opening %s/AACS/MKB_RO.inf\n", path);
+    DEBUG(DBG_AACS | DBG_CRIT, "Error opening %s/AACS/MKB_RO.inf\n", aacs->path);
     return AACS_ERROR_CORRUPTED_DISC;
 }
 
-static int _read_vid(AACS *aacs, const char *path)
+static int _read_vid(AACS *aacs)
 {
     /* Use VID given in config file if available */
     if (memcmp(aacs->vid, empty_key, 16)) {
@@ -163,7 +167,7 @@ static int _read_vid(AACS *aacs, const char *path)
     }
 
     MMC* mmc = NULL;
-    if (!(mmc = mmc_open(path))) {
+    if (!(mmc = mmc_open(aacs->path))) {
         return AACS_ERROR_MMC_OPEN;
     }
 
@@ -211,7 +215,7 @@ static int _read_vid(AACS *aacs, const char *path)
     return error_code;
 }
 
-static int _calc_vuk(AACS *aacs, const char *path)
+static int _calc_vuk(AACS *aacs)
 {
     int error_code;
 
@@ -228,13 +232,13 @@ static int _calc_vuk(AACS *aacs, const char *path)
     }
 
     /* make sure we have media key */
-    error_code = _calc_mk(aacs, path);
+    error_code = _calc_mk(aacs);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }
 
     /* acquire VID */
-    error_code = _read_vid(aacs, path);
+    error_code = _read_vid(aacs);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }
@@ -325,7 +329,7 @@ static AACS_FILE_H *_open_unit_key_file(const char *path)
     return fp;
 }
 
-static int _calc_uks(AACS *aacs, const char *path)
+static int _calc_uks(AACS *aacs)
 {
     AACS_FILE_H *fp = NULL;
     uint8_t  buf[16];
@@ -338,14 +342,14 @@ static int _calc_uks(AACS *aacs, const char *path)
         return AACS_SUCCESS;
 
     /* Make sure we have VUK */
-    error_code = _calc_vuk(aacs, path);
+    error_code = _calc_vuk(aacs);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }
 
     DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
-    fp = _open_unit_key_file(path);
+    fp = _open_unit_key_file(aacs->path);
     if (!fp) {
         return AACS_ERROR_CORRUPTED_DISC;
     }
@@ -651,6 +655,8 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
         return NULL;
     }
 
+    aacs->path = str_printf("%s", path);
+
     *error_code = _calc_title_hash(path, aacs->disc_id);
     if (*error_code != AACS_SUCCESS) {
         aacs_close(aacs);
@@ -661,7 +667,7 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
     _find_config_entry(aacs);
 
     DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
-    *error_code = _calc_uks(aacs, path);
+    *error_code = _calc_uks(aacs);
 
     keydbcfg_config_file_close(aacs->cf);
     aacs->cf = NULL;
@@ -687,6 +693,7 @@ void aacs_close(AACS *aacs)
 
     X_FREE(aacs->uks);
     X_FREE(aacs->cps_units);
+    X_FREE(aacs->path);
 
     DEBUG(DBG_AACS, "AACS destroyed! (%p)\n", aacs);
 
@@ -717,6 +724,18 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
     DEBUG(DBG_AACS, "Failed decrypting unit [6144 bytes] (%p)\n", aacs);
 
     return 0;
+}
+
+int aacs_get_mkb_version(AACS *aacs)
+{
+    if (!aacs->mkb_version) {
+        MKB *mkb;
+        if ((mkb = mkb_open(aacs->path))) {
+            aacs->mkb_version = mkb_version(mkb);
+            mkb_close(mkb);
+        }
+    }
+    return aacs->mkb_version;
 }
 
 const uint8_t *aacs_get_disc_id(AACS *aacs)
