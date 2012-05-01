@@ -339,6 +339,80 @@ static AACS_FILE_H *_open_unit_key_file(const char *path)
     return fp;
 }
 
+/* Function that collects keys from keydb config entry */
+static void _find_config_entry(AACS *aacs)
+{
+    uint8_t discid[20];
+    char str[48];
+
+    aacs->uks = NULL;
+    aacs->num_uks = 0;
+
+    if (aacs->cf && aacs->cf->list) {
+        struct title_entry_list_t *ce;
+        ce = aacs->cf->list;
+        while (ce && ce->entry.discid) {
+            memset(discid, 0, sizeof(discid));
+            hexstring_to_hex_array(discid, sizeof(discid),
+                                   ce->entry.discid);
+            if (!memcmp(aacs->disc_id, discid, 20)) {
+                DEBUG(DBG_AACS, "Found config entry for discid %s\n",
+                      ce->entry.discid);
+                break;
+            }
+
+            ce = ce->next;
+        }
+        if (!ce) {
+            return;
+        }
+
+        if (ce->entry.mek) {
+            hexstring_to_hex_array(aacs->mk, sizeof(aacs->mk),
+                                   ce->entry.mek);
+
+            DEBUG(DBG_AACS, "Found media key for %s: %s\n",
+                  ce->entry.discid, print_hex(str, aacs->mk, 16));
+        }
+
+        if (ce->entry.vid) {
+            hexstring_to_hex_array(aacs->vid, sizeof(aacs->vid),
+                                    ce->entry.vid);
+
+            DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
+                  ce->entry.discid, print_hex(str, aacs->vid, 16));
+        }
+
+        if (ce->entry.vuk) {
+            hexstring_to_hex_array(aacs->vuk, sizeof(aacs->vuk),
+                                    ce->entry.vuk);
+
+            DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
+                  ce->entry.discid, print_hex(str, aacs->vuk, 16));
+        }
+
+        if (ce->entry.uk) {
+            DEBUG(DBG_AACS, "Acquire CPS unit keys from keydb config file...\n");
+
+            digit_key_pair_list *ukcursor = ce->entry.uk;
+            while (ukcursor && ukcursor->key_pair.key) {
+                aacs->num_uks++;
+
+                aacs->uks = (uint8_t*)realloc(aacs->uks, 16 * aacs->num_uks);
+                hexstring_to_hex_array(aacs->uks + (16 * (aacs->num_uks - 1)), 16,
+                                      ukcursor->key_pair.key);
+
+                char str[40];
+                DEBUG(DBG_AACS, "Unit key %d from keydb entry: %s\n",
+                      aacs->num_uks,
+                      print_hex(str, aacs->uks + (16 * (aacs->num_uks - 1)), 16));
+
+                ukcursor = ukcursor->next;
+            }
+        }
+    }
+}
+
 static int _calc_uks(AACS *aacs)
 {
     AACS_FILE_H *fp = NULL;
@@ -484,80 +558,6 @@ static int _verify_ts(uint8_t *buf, size_t size)
     DEBUG(DBG_AACS, "Failed to verify TS!\n");
 
     return 0;
-}
-
-/* Function that collects keys from keydb config entry */
-static void _find_config_entry(AACS *aacs)
-{
-    uint8_t discid[20];
-    char str[48];
-
-    aacs->uks = NULL;
-    aacs->num_uks = 0;
-
-    if (aacs->cf && aacs->cf->list) {
-        struct title_entry_list_t *ce;
-        ce = aacs->cf->list;
-        while (ce && ce->entry.discid) {
-            memset(discid, 0, sizeof(discid));
-            hexstring_to_hex_array(discid, sizeof(discid),
-                                   ce->entry.discid);
-            if (!memcmp(aacs->disc_id, discid, 20)) {
-                DEBUG(DBG_AACS, "Found config entry for discid %s\n",
-                      ce->entry.discid);
-                break;
-            }
-
-            ce = ce->next;
-        }
-        if (!ce) {
-            return;
-        }
-
-        if (ce->entry.mek) {
-            hexstring_to_hex_array(aacs->mk, sizeof(aacs->mk),
-                                   ce->entry.mek);
-
-            DEBUG(DBG_AACS, "Found media key for %s: %s\n",
-                  ce->entry.discid, print_hex(str, aacs->mk, 16));
-        }
-
-        if (ce->entry.vid) {
-            hexstring_to_hex_array(aacs->vid, sizeof(aacs->vid),
-                                    ce->entry.vid);
-
-            DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
-                  ce->entry.discid, print_hex(str, aacs->vid, 16));
-        }
-
-        if (ce->entry.vuk) {
-            hexstring_to_hex_array(aacs->vuk, sizeof(aacs->vuk),
-                                    ce->entry.vuk);
-
-            DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
-                  ce->entry.discid, print_hex(str, aacs->vuk, 16));
-        }
-
-        if (ce->entry.uk) {
-            DEBUG(DBG_AACS, "Acquire CPS unit keys from keydb config file...\n");
-
-            digit_key_pair_list *ukcursor = ce->entry.uk;
-            while (ukcursor && ukcursor->key_pair.key) {
-                aacs->num_uks++;
-
-                aacs->uks = (uint8_t*)realloc(aacs->uks, 16 * aacs->num_uks);
-                hexstring_to_hex_array(aacs->uks + (16 * (aacs->num_uks - 1)), 16,
-                                      ukcursor->key_pair.key);
-
-                char str[40];
-                DEBUG(DBG_AACS, "Unit key %d from keydb entry: %s\n",
-                      aacs->num_uks,
-                      print_hex(str, aacs->uks + (16 * (aacs->num_uks - 1)), 16));
-
-                ukcursor = ukcursor->next;
-            }
-        }
-    }
 }
 
 #define ALIGNED_UNIT_LEN 6144
