@@ -45,16 +45,27 @@
 
 
 struct aacs {
-    uint8_t  mk[16], vuk[16], vid[16], disc_id[20], *uks;
-    uint32_t num_uks;
-    struct config_file_t *cf;
+    /* configuration data */
+    config_file *cf;
 
-    uint32_t num_titles;
-    uint16_t current_cps_unit;
+    /* current disc */
+    char     *path;
+    int       mkb_version;
+    uint8_t   disc_id[20];
+
+    /* disc keys */
+    uint8_t   mk[16], vuk[16], vid[16];
+
+    /* unit key for each CPS unit */
+    uint32_t  num_uks;
+    uint8_t  *uks;
+
+    /* CPS unit of currently selected title */
+    uint16_t  current_cps_unit;
+
+    /* title -> CPS unit mappings */
+    uint32_t  num_titles;
     uint16_t *cps_units;  /* [0] = first play ; [1] = top menu ; [2] = title 1 ... */
-
-    char    *path;
-    int      mkb_version;
 };
 
 static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
