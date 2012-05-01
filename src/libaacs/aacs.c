@@ -707,6 +707,14 @@ const uint8_t *aacs_get_disc_id(AACS *aacs)
 
 const uint8_t *aacs_get_vid(AACS *aacs)
 {
+    if (!memcmp(aacs->vid, empty_key, 16)) {
+        config_file *cf = keydbcfg_config_load(NULL);
+        if (cf) {
+            _read_vid(aacs, cf->host_cert_list);
+
+            keydbcfg_config_file_close(cf);
+        }
+    }
     return aacs->vid;
 }
 
