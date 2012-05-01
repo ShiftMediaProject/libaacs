@@ -596,39 +596,6 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
     return 0;
 }
 
-static int _load_config(AACS *aacs, const char *configfile_path)
-{
-    int config_ok = 0;
-
-    aacs->cf = keydbcfg_new_config_file();
-
-    /* try to load KEYDB.cfg */
-
-    if (configfile_path) {
-        config_ok = keydbcfg_parse_config(aacs->cf, configfile_path);
-
-    } else {
-        /* If no configfile path given, check for config files in user's home or
-         * under /etc.
-         */
-        char *cfgfile = keydbcfg_find_config_file();
-        config_ok = keydbcfg_parse_config(aacs->cf, cfgfile);
-        X_FREE(cfgfile);
-    }
-
-    /* Try to load simple (aacskeys) config files */
-
-    config_ok = keydbcfg_load_pk_file(aacs->cf)   || config_ok;
-    config_ok = keydbcfg_load_cert_file(aacs->cf) || config_ok;
-
-    if (!config_ok) {
-        DEBUG(DBG_AACS | DBG_CRIT, "No valid AACS configuration files found\n");
-        return AACS_ERROR_NO_CONFIG;
-    }
-
-    return AACS_SUCCESS;
-}
-
 void aacs_get_version(int *major, int *minor, int *micro)
 {
     *major = AACS_VERSION_MAJOR;
@@ -663,9 +630,10 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
 
     AACS *aacs = calloc(1, sizeof(AACS));
 
-    *error_code = _load_config(aacs, configfile_path);
-    if (*error_code != AACS_SUCCESS) {
+    aacs->cf = keydbcfg_config_load(configfile_path);
+    if (!aacs->cf) {
         aacs_close(aacs);
+        *error_code = AACS_ERROR_NO_CONFIG;
         return NULL;
     }
 

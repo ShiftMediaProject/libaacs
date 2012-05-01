@@ -118,9 +118,7 @@ AACS_PRIVATE int keydbcfg_config_file_close(config_file *cfgfile);
 
 /* */
 
-AACS_PRIVATE char *keydbcfg_find_config_file(void);
-AACS_PRIVATE int   keydbcfg_load_cert_file(config_file *cf);
-AACS_PRIVATE int   keydbcfg_load_pk_file(config_file *cf);
+AACS_PRIVATE config_file *keydbcfg_config_load(const char *configfile_path);
 
 AACS_PRIVATE int   keycache_save(const char *type, const uint8_t *disc_id,
                                  const uint8_t *key, unsigned int len);

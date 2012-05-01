@@ -244,7 +244,7 @@ static int _parse_cert_file(config_file *cf, FILE *fp)
     return result;
 }
 
-int keydbcfg_load_pk_file(config_file *cf)
+static int _load_pk_file(config_file *cf)
 {
     static const char pk_file_name[] = PK_FILE_NAME;
     FILE *fp;
@@ -265,7 +265,7 @@ int keydbcfg_load_pk_file(config_file *cf)
     return result;
 }
 
-int keydbcfg_load_cert_file(config_file *cf)
+static int _load_cert_file(config_file *cf)
 {
     static const char cert_file_name[] = CERT_FILE_NAME;
     FILE *fp;
@@ -402,7 +402,7 @@ int keycache_find(const char *type, const uint8_t *disc_id, uint8_t *key, unsign
     return result;
 }
 
-char *keydbcfg_find_config_file(void)
+static char *_find_config_file(void)
 {
     static const char cfg_file_name[] = CFG_FILE_NAME;
 
@@ -420,5 +420,39 @@ char *keydbcfg_find_config_file(void)
     }
 
     return cfg_file;
+}
+
+config_file *keydbcfg_config_load(const char *configfile_path)
+{
+    int config_ok = 0;
+
+    config_file *cf = keydbcfg_new_config_file();
+
+    /* try to load KEYDB.cfg */
+
+    if (configfile_path) {
+        config_ok = keydbcfg_parse_config(cf, configfile_path);
+
+    } else {
+        /* If no configfile path given, check for config files in user's home or
+         * under /etc.
+         */
+        char *cfgfile = _find_config_file();
+        config_ok = keydbcfg_parse_config(cf, cfgfile);
+        X_FREE(cfgfile);
+    }
+
+    /* Try to load simple (aacskeys) config files */
+
+    config_ok = _load_pk_file(cf)   || config_ok;
+    config_ok = _load_cert_file(cf) || config_ok;
+
+    if (!config_ok) {
+        DEBUG(DBG_AACS | DBG_CRIT, "No valid AACS configuration files found\n");
+        keydbcfg_config_file_close(cf);
+        return NULL;
+    }
+
+    return cf;
 }
 
