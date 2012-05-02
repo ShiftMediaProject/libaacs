@@ -69,9 +69,9 @@ void aacs_debug(const char *file, int line, uint32_t mask, const char *format, .
         va_list args;
 
         va_start(args, format);
-        vsprintf(buffer, format, args);
+        sprintf(buffer, "libaacs: %s:%d: %s", file, line, format);
+        vfprintf(logfile, buffer, args);
         va_end(args);
 
-        fprintf(logfile, "libaacs: %s:%d: %s", file, line, buffer);
     }
 }
