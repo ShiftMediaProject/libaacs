@@ -210,6 +210,10 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
     return 0;
 }
 
+/*
+ *
+ */
+
 static int _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr,
                            uint8_t blocks, uint8_t format, uint8_t *buf,
                            uint16_t len)
@@ -253,6 +257,26 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
     DEBUG(DBG_MMC, "cmd: %s (%p)\n", print_hex(str, cmd, 16), mmc);
     return _mmc_send_cmd(mmc, cmd, buf, len, 0);
 }
+
+static int _mmc_get_configuration(MMC *mmc, uint16_t feature, uint8_t *buf, uint16_t len)
+{
+    uint8_t cmd[16];
+    memset(cmd, 0, sizeof(cmd));
+    memset(buf, 0, len);
+
+    cmd[0] = 0x46; // operation code
+    cmd[1] = 0x01; // BluRay
+    cmd[2] = (feature >> 8) & 0xff;
+    cmd[3] = feature & 0xff;
+    cmd[7] = (len >> 8) & 0xff;
+    cmd[8] = len & 0xff;
+
+    return _mmc_send_cmd(mmc, cmd, buf, 0, len);
+}
+
+/*
+ *
+ */
 
 static int _mmc_invalidate_agid(MMC *mmc, uint8_t agid)
 {
@@ -323,6 +347,32 @@ static int _mmc_read_drive_key(MMC *mmc, uint8_t agid, uint8_t *drive_key_point,
         memcpy(drive_key_signature, buf + 44, 40);
         return 1;
     }
+    return 0;
+}
+
+
+static int _mmc_check_aacs(MMC *mmc)
+{
+    uint8_t buf[16];
+    memset(buf, 0, sizeof(buf));
+
+    if (_mmc_get_configuration(mmc, 0x010d, buf, 16)) {
+        uint16_t feature = MKINT_BE16(buf+8);
+        if (feature == 0x010d) {
+            DEBUG(DBG_MMC, "AACS feature descriptor:\n");
+            DEBUG(DBG_MMC, "  AACS version: %d\n", buf[5+8]);
+            DEBUG(DBG_MMC, "  AACS active: %d\n", buf[2+8] & 1);
+            DEBUG(DBG_MMC, "  Binding Nonce generation support: %d\n", buf[4+8] & 1);
+            DEBUG(DBG_MMC, "  Binding Nonce block count: %d\n", buf[5+8]);
+            DEBUG(DBG_MMC, "  Bus encryption support: %d\n", buf[4+8] & 2);
+            DEBUG(DBG_MMC, "  AGID count: %d\n", buf[6+8] & 0xf);
+
+            return buf[2+8] & 1;
+        }
+        DEBUG(DBG_MMC, "incorrect feature ID %04x\n", feature);
+    }
+
+    DEBUG(DBG_MMC, "_mmc_get_configuration() failed\n");
     return 0;
 }
 
@@ -477,6 +527,11 @@ MMC *mmc_open(const char *path)
     X_FREE(mmc);
 
 #endif
+
+    if (mmc && !_mmc_check_aacs(mmc)) {
+        DEBUG(DBG_MMC | DBG_CRIT, "AACS not active or supported by the drive\n");
+        X_FREE(mmc);
+    }
 
     return mmc;
 }
