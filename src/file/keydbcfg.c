@@ -402,6 +402,83 @@ int keycache_find(const char *type, const uint8_t *disc_id, uint8_t *key, unsign
     return result;
 }
 
+static char *_cache_file(const char *name)
+{
+    const char *cache_dir = get_cache_home();
+
+    if (!cache_dir) {
+        return NULL;
+    }
+
+    return str_printf("%s/%s/%s", cache_dir, CFG_DIR, name);
+}
+
+int cache_save(const char *name, uint32_t version, const uint8_t *data, uint32_t len)
+{
+    int result = 0;
+    char *file = _cache_file(name);
+
+    if (file) {
+        if (_mkpath(file)) {
+            FILE *fp = fopen(file, "w");
+
+            if (fp) {
+                if (fwrite(&version, 1, 4, fp) == 4 &&
+                    fwrite(&len, 1, 4, fp) == 4 &&
+                    fwrite(data, 1, len, fp) == len) {
+                    DEBUG(DBG_FILE, "Wrote %d bytes to %s\n", len + 8, file);
+                    result = 1;
+
+                } else {
+                    DEBUG(DBG_FILE, "Error writing to %s\n", file);
+                }
+
+                fclose(fp);
+            }
+        }
+
+        X_FREE(file);
+    }
+
+    return result;
+}
+
+int cache_get(const char *name, uint32_t *version, uint32_t *len, uint8_t *buf)
+{
+    int result = 0;
+    char *file = _cache_file(name);
+
+    *version = *len = 0;
+
+    if (file) {
+        FILE *fp = fopen(file, "r");
+
+        if (fp) {
+            DEBUG(DBG_FILE, "Reading %s\n", file);
+
+            if (fread(version, 1, 4, fp) == 4 &&
+                fread(len, 1, 4, fp) == 4 &&
+                (!buf || fread(buf, 1, *len, fp) == *len)) {
+
+              DEBUG(DBG_FILE, "Read %d bytes from %s, version %d\n", 8 + (buf ? *len : 0), file, *version);
+              result = 1;
+
+            } else {
+              DEBUG(DBG_FILE, "Error reading from %s\n", file);
+            }
+
+            fclose(fp);
+
+        } else {
+            DEBUG(DBG_FILE, "%s not found\n", file);
+        }
+
+        X_FREE(file);
+    }
+
+    return result;
+}
+
 static char *_find_config_file(void)
 {
     static const char cfg_file_name[] = CFG_FILE_NAME;
