@@ -28,7 +28,11 @@
 typedef struct mkb MKB;
 
 AACS_PRIVATE MKB *mkb_open(const char *path);    // init MKB
+AACS_PRIVATE MKB *mkb_init(uint8_t *data, int len); // init MKB from data
 AACS_PRIVATE void mkb_close(MKB *mkb);           // free MKB
+
+AACS_PRIVATE const uint8_t *mkb_data(MKB *mkb);
+AACS_PRIVATE size_t mkb_data_size(MKB *mkb);
 
 // returns type
 AACS_PRIVATE uint8_t mkb_type(MKB *mkb);

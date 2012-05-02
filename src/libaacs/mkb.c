@@ -88,11 +88,43 @@ MKB *mkb_open(const char *path)
     return NULL;
 }
 
+MKB *mkb_init(uint8_t *data, int len)
+{
+    MKB *mkb = malloc(sizeof(MKB));
+
+    mkb->size = len;
+    mkb->buf  = data;
+
+    return mkb;
+}
+
 void mkb_close(MKB *mkb)
 {
-    X_FREE(mkb->buf);
-    X_FREE(mkb);
+    if (mkb) {
+        X_FREE(mkb->buf);
+        X_FREE(mkb);
+    }
 }
+
+const uint8_t *mkb_data(MKB *mkb)
+{
+    return mkb->buf;
+}
+
+size_t mkb_data_size(MKB *mkb)
+{
+    size_t pos = 0;
+
+    while (pos + 4 <= mkb->size) {
+        if (!mkb->buf[pos]) {
+            break;
+        }
+        pos += MKINT_BE24(mkb->buf + pos + 1);
+    }
+
+    return pos;
+}
+
 
 uint8_t mkb_type(MKB *mkb)
 {
