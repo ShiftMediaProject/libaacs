@@ -32,9 +32,9 @@ static const char *_hex2str(const uint8_t *s, unsigned n)
     str = realloc(str, n*2 + 1);
     for (ii = 0; ii < n; ii++) {
         str[2*ii]     = hex[ s[ii] >> 4];
-        str[2*ii + 1] = hex[ s[ii] & 0x07];
+        str[2*ii + 1] = hex[ s[ii] & 0x0f];
     }
-    str[ii] = 0;
+    str[2*ii] = 0;
 
     return str;
 }
@@ -88,7 +88,7 @@ int main (int argc, char **argv)
     const uint8_t *vid = aacs_get_vid(aacs);
     const uint8_t *id  = aacs_get_disc_id(aacs);
     printf("Disc ID: %s\n", id  ? _hex2str(id,  20) : "???");
-    printf("VID    : %s\n", vid ? _hex2str(vid, 20) : "???");
+    printf("VID    : %s\n", vid ? _hex2str(vid, 16) : "???");
     printf("MKBv   : %d\n", aacs_get_mkb_version(aacs));
 
     aacs_close(aacs);
