@@ -1,6 +1,7 @@
 /*
  * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
+ * Copyright (C) 2010       npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -34,5 +35,8 @@ AACS_PRIVATE MMC *mmc_open(const char *path);
 AACS_PRIVATE void mmc_close(MMC *mmc);
 AACS_PRIVATE int  mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert,
                                uint8_t *vid);
+
+/* read partial MKB */
+AACS_PRIVATE uint8_t *mmc_read_mkb(MMC *mmc, int address, int *size);
 
 #endif /* MMC_H_ */

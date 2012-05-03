@@ -258,6 +258,29 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
     return _mmc_send_cmd(mmc, cmd, buf, len, 0);
 }
 
+static int _mmc_report_disc_structure(MMC *mmc, uint8_t agid, uint8_t format,
+                                      uint8_t layer, uint32_t address,
+                                      uint8_t *buf, uint16_t len)
+{
+    uint8_t cmd[16];
+    memset(cmd, 0, sizeof(cmd));
+    memset(buf, 0, len);
+
+    cmd[0] = 0xad; // operation code
+    cmd[1] = 0x01; // BluRay
+    cmd[2] = (address >> 24) & 0xff;
+    cmd[3] = (address >> 16) & 0xff;
+    cmd[4] = (address >> 8) & 0xff;
+    cmd[5] = address & 0xff;
+    cmd[6] = layer;
+    cmd[7] = format;
+    cmd[8] = (len >> 8) & 0xff;
+    cmd[9] = len & 0xff;
+    cmd[10] = (agid << 6);
+
+    return _mmc_send_cmd(mmc, cmd, buf, 0, len);
+}
+
 static int _mmc_get_configuration(MMC *mmc, uint16_t feature, uint8_t *buf, uint16_t len)
 {
     uint8_t cmd[16];
@@ -376,6 +399,38 @@ static int _mmc_check_aacs(MMC *mmc)
     return 0;
 }
 
+static uint8_t *_mmc_read_mkb(MMC *mmc, uint8_t agid, int address, int *size)
+{
+    const int layer = 0;
+    uint8_t *mkb = NULL;
+    uint8_t buf[32772];
+
+    *size = 0;
+    if (_mmc_report_disc_structure(mmc, agid, 0x83, layer, address, buf, sizeof(buf))) {
+        unsigned pack, num_packs = buf[3];
+        int32_t  len = MKINT_BE16(buf) - 2;
+        mkb = malloc(32768 * num_packs);
+
+        DEBUG(DBG_MMC, "got mkb: pack 0/%d %d bytes\n", num_packs, len);
+        memcpy(mkb, buf + 4, len);
+       *size += len;
+
+        for (pack = 1; pack < num_packs; pack++) {
+            if (_mmc_report_disc_structure(mmc, agid, 0x83, layer, pack, buf, sizeof(buf))) {
+                len = MKINT_BE16(buf) - 2;
+                DEBUG(DBG_MMC, "got mkb: pack %d/%d %d bytes\n", pack, num_packs, len);
+
+                memcpy(mkb + *size, buf + 4, len);
+                *size += len;
+            } else {
+                break;
+            }
+        }
+    }
+
+    return mkb;
+}
+
 static int _mmc_send_host_key(MMC *mmc, uint8_t agid,
                               const uint8_t *host_key_point,
                               const uint8_t *host_key_signature)
@@ -394,17 +449,9 @@ static int _mmc_read_vid(MMC *mmc, uint8_t agid, uint8_t *volume_id,
                          uint8_t *mac)
 {
     uint8_t buf[36];
-    uint8_t cmd[16];
-    memset(cmd, 0, sizeof(cmd));
-    memset(buf, 0, 36);
+    memset(buf, 0, sizeof(buf));
 
-    cmd[0] = 0xad;
-    cmd[1] = 1;    // 1 = BLURAY
-    cmd[7] = 0x80;
-    cmd[9] = 0x24;
-    cmd[10] = (agid << 6) & 0xc0;
-
-    if (_mmc_send_cmd(mmc, cmd, buf, 0, 36)) {
+    if (_mmc_report_disc_structure(mmc, agid, 0x80, 0, 0, buf, 36)) {
         memcpy(volume_id, buf + 4,  16);
         memcpy(mac,       buf + 20, 16);
         return 1;
@@ -673,4 +720,17 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
     _mmc_invalidate_agid(mmc, agid);
 
     return error_code;
+}
+
+uint8_t *mmc_read_mkb(MMC *mmc, int address, int *size)
+{
+    uint8_t agid = 0;
+
+    _mmc_report_agid(mmc, &agid);
+
+    uint8_t *mkb = _mmc_read_mkb(mmc, agid, address, size);
+
+    _mmc_invalidate_agid(mmc, agid);
+
+    return mkb;
 }
