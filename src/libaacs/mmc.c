@@ -135,9 +135,9 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
         DEBUG(DBG_MMC, "Send LINUX MMC cmd %s: (%p)\n",
               print_hex(str, cmd, 16), mmc);
         if (tx) {
-            DEBUG(DBG_MMC, "  Buffer: %s -> (%p)\n", print_hex(str, buf, tx), mmc);
+            DEBUG(DBG_MMC, "  Buffer: %s -> (%p)\n", print_hex(str, buf, tx>255?255:tx), mmc);
         } else {
-            DEBUG(DBG_MMC, "  Buffer: %s <- (%p)\n", print_hex(str, buf, rx), mmc);
+            DEBUG(DBG_MMC, "  Buffer: %s <- (%p)\n", print_hex(str, buf, rx>255?255:rx), mmc);
         }
 
         if (a >= 0) {
