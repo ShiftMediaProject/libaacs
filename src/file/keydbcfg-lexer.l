@@ -31,7 +31,9 @@
 
 int isatty(int i) { return 0; }
 
+#if 0
 static char *trim_string(const char *string);
+#endif
 %}
 /* Options to generate reentrant lexer that's POSIX lex compatible. The
  * bison-bridge option is also set since bison forces the use of a parameter
@@ -86,7 +88,8 @@ BAD_ENTRY               ([^\n])
 {WHITESPACE}              {}
 
 <TITLE_STATE>{DISC_TITLE} {
-                            yylval->string = trim_string(yytext);
+                            //yylval->string = trim_string(yytext);
+                            yylval->string = yytext;
                             BEGIN INITIAL;
                             return DISC_TITLE;
                           }
@@ -135,6 +138,7 @@ BAD_ENTRY               ([^\n])
 {COMMENT}                 {}
 {BAD_ENTRY}               { return BAD_ENTRY; }
 %%
+#if 0
 /* Function used to trim leading and trailing space from a string */
 static char *trim_string(const char *string)
 {
@@ -151,3 +155,4 @@ static char *trim_string(const char *string)
   new_string[size] = '\0';
   return new_string;
 }
+#endif
