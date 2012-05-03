@@ -64,19 +64,18 @@ enum
 };
 
 static dk_list *new_dk_list();
-static dk_list *add_dk_list_entry(dk_list *list, const char *key,
-                                  const char *node);
+static dk_list *add_dk_list_entry(dk_list *list, char *key, char *node);
 static pk_list *new_pk_list();
-static pk_list *add_pk_list_entry(pk_list *list, const char *key);
+static pk_list *add_pk_list_entry(pk_list *list, char *key);
 static cert_list *new_cert_list();
-static cert_list *add_cert_list(cert_list *list, const char *host_priv_key,
-                         const char *host_cert, const char *host_nonce,
-                         const char *host_key_point);
+static cert_list *add_cert_list(cert_list *list, char *host_priv_key,
+                         char *host_cert, char *host_nonce,
+                         char *host_key_point);
 static title_entry_list *new_title_entry_list();
-static int add_entry(title_entry_list *list, int type, const char *entry);
+static int add_entry(title_entry_list *list, int type, char *entry);
 static digit_key_pair_list *new_digit_key_pair_list();
 static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
-                              int type, unsigned int digit, const char *key);
+                              int type, unsigned int digit, char *key);
 static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
 void yyerror (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist,
@@ -477,6 +476,15 @@ int keydbcfg_config_file_close(config_file *cfgfile)
     cfgfile->pkl = next;
   }
 
+  /* free dk list */
+  while (cfgfile->dkl)
+  {
+    dk_list *next = cfgfile->dkl->next;
+    X_FREE(cfgfile->dkl->key);
+    X_FREE(cfgfile->dkl);
+    cfgfile->dkl = next;
+  }
+
   /* free host cert list */
   while (cfgfile->host_cert_list)
   {
@@ -522,8 +530,7 @@ static dk_list *new_dk_list()
 }
 
 /* Function to add dk to config file */
-static dk_list *add_dk_list_entry(dk_list *list, const char *key,
-                                  const char *node)
+static dk_list *add_dk_list_entry(dk_list *list, char *key, char *node)
 {
   if (!list)
   {
@@ -531,11 +538,11 @@ static dk_list *add_dk_list_entry(dk_list *list, const char *key,
     return NULL;
   }
 
-  list->key = (char*)malloc(strlen(key) + 1);
-  strcpy(list->key, key);
+  list->key  = key;
   list->node = strtoul(node, NULL, 16);
-
   list->next = new_dk_list();
+
+  X_FREE(node);
 
   return list->next;
 }
@@ -550,7 +557,7 @@ static pk_list *new_pk_list()
 }
 
 /* Function to add pk to config file */
-static pk_list *add_pk_list_entry(pk_list *list, const char *key)
+static pk_list *add_pk_list_entry(pk_list *list, char *key)
 {
   if (!list)
   {
@@ -558,9 +565,7 @@ static pk_list *add_pk_list_entry(pk_list *list, const char *key)
     return NULL;
   }
 
-  list->key = (char*)malloc(strlen(key) + 1);
-  strcpy(list->key, key);
-
+  list->key  = key;
   list->next = new_pk_list();
 
   return list->next;
@@ -586,9 +591,9 @@ static cert_list *new_cert_list()
 }
 
 /* Function to add certificate list entry into config file object */
-static cert_list *add_cert_list(cert_list *list, const char *host_priv_key,
-                         const char *host_cert, const char *host_nonce,
-                         const char *host_key_point)
+static cert_list *add_cert_list(cert_list *list, char *host_priv_key,
+                         char *host_cert, char *host_nonce,
+                         char *host_key_point)
 {
   if (!list)
   {
@@ -596,14 +601,10 @@ static cert_list *add_cert_list(cert_list *list, const char *host_priv_key,
     return NULL;
   }
 
-  list->host_priv_key = (char*)malloc(strlen(host_priv_key) + 1);
-  strcpy(list->host_priv_key, host_priv_key);
-  list->host_cert = (char*)malloc(strlen(host_cert) + 1);
-  strcpy(list->host_cert, host_cert);
-  list->host_nonce = (char*)malloc(strlen(host_nonce) + 1);
-  strcpy(list->host_nonce, host_nonce);
-  list->host_key_point = (char*)malloc(strlen(host_key_point) + 1);
-  strcpy(list->host_key_point, host_key_point);
+  list->host_priv_key = host_priv_key;
+  list->host_cert = host_cert;
+  list->host_nonce = host_nonce;
+  list->host_key_point = host_key_point;
 
   list->next = new_cert_list();
 
@@ -638,7 +639,7 @@ title_entry_list *new_title_entry_list()
 }
 
 /* Function to add standard string entries to a config entry */
-static int add_entry(title_entry_list *list, int type, const char *entry)
+static int add_entry(title_entry_list *list, int type, char *entry)
 {
   if (!list)
   {
@@ -649,31 +650,33 @@ static int add_entry(title_entry_list *list, int type, const char *entry)
   switch (type)
   {
     case ENTRY_TYPE_DISCID:
-      list->entry.discid = (char*)malloc(strlen(entry) + 1);
-      strcpy(list->entry.discid, entry);
+      X_FREE(list->entry.discid);
+      list->entry.discid = entry;
       break;
 
     case ENTRY_TYPE_TITLE:
+      X_FREE(list->entry.title);
       list->entry.title = (char*)malloc(strlen(entry) + 1);
       strcpy(list->entry.title, entry);
       break;
 
     case ENTRY_TYPE_MEK:
-      list->entry.mek = (char*)malloc(strlen(entry) + 1);
-      strcpy(list->entry.mek, entry);
+      X_FREE(list->entry.mek);
+      list->entry.mek = entry;
       break;
 
     case ENTRY_TYPE_VID:
-      list->entry.vid = (char*)malloc(strlen(entry) + 1);
-      strcpy(list->entry.vid, entry);
+      X_FREE(list->entry.vid);
+      list->entry.vid = entry;
       break;
 
     case ENTRY_TYPE_VUK:
-      list->entry.vuk = (char*)malloc(strlen(entry) + 1);
-      strcpy(list->entry.vuk, entry);
+      X_FREE(list->entry.vuk);
+      list->entry.vuk = entry;
       break;
 
     default:
+      X_FREE(entry);
       printf("WARNING: entry type passed in unknown\n");
       return 0;
   }
@@ -700,7 +703,7 @@ static digit_key_pair_list *new_digit_key_pair_list()
 
 /* Function used to add a digit/key pair to a list of digit key pair entries */
 static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
-                              int type, unsigned int digit, const char *key)
+                              int type, unsigned int digit, char *key)
 {
   if (!list)
   {
@@ -709,8 +712,7 @@ static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
   }
 
   list->key_pair.digit = digit;
-  list->key_pair.key = (char*)malloc(strlen(key) + 1);
-  strcpy(list->key_pair.key, key);
+  list->key_pair.key = key;
 
   list->next = new_digit_key_pair_list();
 
