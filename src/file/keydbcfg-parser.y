@@ -318,7 +318,7 @@ bn_data
     {
       if (!dkplist)
       {
-        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        dkplist = new_digit_key_pair_list();
         celist->entry.bn = dkplist;
       }
       dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_BN, $1, $3);
@@ -349,7 +349,7 @@ pak_data
     {
       if (!dkplist)
       {
-        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        dkplist = new_digit_key_pair_list();
         celist->entry.pak = dkplist;
       }
       dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_PAK, $1, $3);
@@ -373,7 +373,7 @@ tk_data
     {
       if (!dkplist)
       {
-        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        dkplist = new_digit_key_pair_list();
         celist->entry.tk = dkplist;
       }
       dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_TK, $1, $3);
@@ -397,7 +397,7 @@ uk_data
     {
       if (!dkplist)
       {
-        dkplist = (digit_key_pair_list *)malloc(sizeof(*dkplist));
+        dkplist = new_digit_key_pair_list();
         celist->entry.uk = dkplist;
       }
       dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_UK, $1, $3);
@@ -459,8 +459,7 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
 config_file *keydbcfg_new_config_file()
 {
   config_file *cfgfile = (config_file *)malloc(sizeof(*cfgfile));
-  cfgfile->pkl = NULL;
-  cfgfile->list = NULL;
+  memset(cfgfile, 0, sizeof(*cfgfile));
   return cfgfile;
 }
 
@@ -524,8 +523,7 @@ int keydbcfg_config_file_close(config_file *cfgfile)
 static dk_list *new_dk_list()
 {
   dk_list *dkl = (dk_list *)malloc(sizeof(*dkl));
-  dkl->key = NULL;
-  dkl->next = NULL;
+  memset(dkl, 0, sizeof(*dkl));
   return dkl;
 }
 
@@ -551,8 +549,7 @@ static dk_list *add_dk_list_entry(dk_list *list, char *key, char *node)
 static pk_list *new_pk_list()
 {
   pk_list *pkl = (pk_list *)malloc(sizeof(*pkl));
-  pkl->key = NULL;
-  pkl->next = NULL;
+  memset(pkl, 0, sizeof(*pkl));
   return pkl;
 }
 
@@ -581,11 +578,7 @@ static cert_list *new_cert_list()
     return NULL;
   }
 
-  list->host_priv_key = NULL;
-  list->host_cert = NULL;
-  list->host_nonce = NULL;
-  list->host_key_point = NULL;
-  list->next = NULL;
+  memset(list, 0, sizeof(*list));
 
   return list;
 }
@@ -621,19 +614,7 @@ title_entry_list *new_title_entry_list()
     return NULL;
   }
 
-  list->entry.discid = NULL;
-  list->entry.title = NULL;
-  list->entry.date.year = 0;
-  list->entry.date.month = 0;
-  list->entry.date.day = 0;
-  list->entry.mek = NULL;
-  list->entry.vid = NULL;
-  list->entry.bn = NULL;
-  list->entry.vuk = NULL;
-  list->entry.pak = NULL;
-  list->entry.tk = NULL;
-  list->entry.uk = NULL;
-  list->next = NULL;
+  memset(list, 0, sizeof(*list));
 
   return list;
 }
@@ -694,9 +675,7 @@ static digit_key_pair_list *new_digit_key_pair_list()
     return NULL;
   }
 
-  list->key_pair.digit = 0;
-  list->key_pair.key = NULL;
-  list->next = NULL;
+  memset(list, 0, sizeof(*list));
 
   return list;
 }
