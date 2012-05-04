@@ -103,6 +103,46 @@ static int _validate_pk(const uint8_t *pk,
     return AACS_ERROR_NO_PK;
 }
 
+static int _rl_verify_signature(const uint8_t *rl, size_t size)
+{
+    int    entries = MKINT_BE32(rl + 12 + 8);
+    size_t len     = 12 + 12 + 8 * entries; /* type_and_version_rec=12, rl_header=12, rl=entries*8 */
+
+    if (len + 40 > size) {
+        DEBUG(DBG_AACS, "revocation list size mismatch\n");
+        return 0;
+    }
+
+    return crypto_aacs_verify_aacsla(rl + len, rl, len);
+}
+
+static void _update_drl(MKB *mkb)
+{
+    uint32_t version = mkb_version(mkb);
+    uint32_t cache_version;
+
+    if (!cache_get("drl", &cache_version, NULL, NULL) || cache_version < version) {
+        size_t drl_len;
+        const uint8_t *drl_rec = mkb_drive_revokation_entries(mkb, &drl_len);
+        const uint8_t *v_rec   = mkb_type_and_version_record(mkb);
+
+        if (drl_rec && v_rec) {
+            drl_rec -= 4;
+            drl_len += 4;
+
+            uint8_t *data = malloc(12 + drl_len);
+            memcpy(data,      v_rec,   12);
+            memcpy(data + 12, drl_rec, drl_len);
+            if (!_rl_verify_signature(data, drl_len + 12)) {
+                DEBUG(DBG_AACS | DBG_CRIT, "invalid drive revocation list signature, not using it\n");
+            } else {
+                cache_save("drl", version, data, drl_len + 12);
+            }
+            X_FREE(data);
+        }
+    }
+}
+
 static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl)
 {
     int a, num_uvs = 0;
@@ -120,6 +160,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl)
 
     if ((mkb = mkb_open(aacs->path))) {
         DEBUG(DBG_AACS, "Get UVS...\n");
+        _update_drl(mkb);
         aacs->mkb_version = mkb_version(mkb);
         uvs = mkb_subdiff_records(mkb, &len);
         rec = uvs;
