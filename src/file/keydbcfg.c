@@ -38,7 +38,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -413,7 +412,7 @@ static char *_cache_file(const char *name)
     return str_printf("%s/%s/%s", cache_dir, CFG_DIR, name);
 }
 
-int cache_save(const char *name, uint32_t version, const uint8_t *data, uint32_t len)
+int cache_save(const char *name, uint32_t version, const void *data, uint32_t len)
 {
     int result = 0;
     char *file = _cache_file(name);
@@ -443,12 +442,15 @@ int cache_save(const char *name, uint32_t version, const uint8_t *data, uint32_t
     return result;
 }
 
-int cache_get(const char *name, uint32_t *version, uint32_t *len, uint8_t *buf)
+int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf)
 {
     int result = 0;
     char *file = _cache_file(name);
 
-    *version = *len = 0;
+    *version = 0;
+    if (len) {
+        *len = 0;
+    }
 
     if (file) {
         FILE *fp = fopen(file, "r");
@@ -457,10 +459,10 @@ int cache_get(const char *name, uint32_t *version, uint32_t *len, uint8_t *buf)
             DEBUG(DBG_FILE, "Reading %s\n", file);
 
             if (fread(version, 1, 4, fp) == 4 &&
-                fread(len, 1, 4, fp) == 4 &&
+                (!len || fread(len, 1, 4, fp) == 4) &&
                 (!buf || fread(buf, 1, *len, fp) == *len)) {
 
-              DEBUG(DBG_FILE, "Read %d bytes from %s, version %d\n", 8 + (buf ? *len : 0), file, *version);
+              DEBUG(DBG_FILE, "Read %d bytes from %s, version %d\n", 4 + (len ? 4 : 0) + (buf ? *len : 0), file, *version);
               result = 1;
 
             } else {
@@ -477,6 +479,53 @@ int cache_get(const char *name, uint32_t *version, uint32_t *len, uint8_t *buf)
     }
 
     return result;
+}
+
+int cache_remove(const char *name)
+{
+    char *file = _cache_file(name);
+    int result = !remove(name);
+    if (!result) {
+        DEBUG(DBG_FILE, "Error removing %s\n", file);
+    }
+    X_FREE(file);
+    return result;
+}
+
+void *cache_get_or_update(const char *type, const void *data, uint32_t *len, uint32_t version)
+{
+    uint32_t cache_len, cache_version;
+    uint8_t *cache_data = NULL;
+
+    /* get cache version */
+    cache_get(type, &cache_version, &cache_len, NULL);
+
+    /* if cached data is later, use it */
+    if (cache_len && cache_version > version) {
+        cache_data = malloc(cache_len);
+
+        if (cache_get(type, &cache_version, &cache_len, cache_data)) {
+            DEBUG(DBG_AACS, "Using cached %s. Version: %d\n", type, cache_version);
+            *len = cache_len;
+            return cache_data;
+        }
+
+        /* read failed, fall back to older version */
+        X_FREE(cache_data);
+    }
+
+    if (data) {
+        cache_data = malloc(*len);
+        memcpy(cache_data, data, *len);
+
+        /* cached data is older, update cache */
+        if (cache_version < version) {
+            cache_save(type, version, data, *len);
+            DEBUG(DBG_AACS, "Updated cached %s. Version: %d\n", type, version);
+        }
+    }
+
+    return cache_data;
 }
 
 static char *_find_config_file(void)

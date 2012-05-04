@@ -125,7 +125,10 @@ AACS_PRIVATE int   keycache_save(const char *type, const uint8_t *disc_id,
 AACS_PRIVATE int   keycache_find(const char *type, const uint8_t *disc_id,
                                  uint8_t *key, unsigned int len);
 
-AACS_PRIVATE int cache_get(const char *name, uint32_t *version, uint32_t *len, uint8_t *buf); /* use buf=NULL to get version and size */
-AACS_PRIVATE int cache_save(const char *name, uint32_t version, const uint8_t *data, uint32_t len);
+AACS_PRIVATE int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf); /* use buf=NULL to get version and size */
+AACS_PRIVATE int cache_save(const char *name, uint32_t version, const void *data, uint32_t len);
+AACS_PRIVATE int cache_remove(const char *name);
+
+AACS_PRIVATE void *cache_get_or_update(const char *type, const void *data, uint32_t *len, uint32_t version);
 
 #endif
