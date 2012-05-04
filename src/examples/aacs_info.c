@@ -18,6 +18,7 @@
  */
 
 #include "libaacs/aacs.h"
+#include "../util/macro.h"  /* MKINT_BE48 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,6 +63,28 @@ static const char *_error_str(int error_code)
   return "Unknown error";
 }
 
+static void _dump_rl(const char *type, AACS_RL_ENTRY *rl, int num_entries, int mkb_version)
+{
+    int ii;
+
+    printf("%s Revocation List  (MKB version %d):\n", type, mkb_version);
+
+    if (num_entries < 1 || !rl) {
+        printf("  (empty)\n");
+        return;
+    }
+
+    for (ii = 0; ii < num_entries; ii++) {
+        unsigned long long id = MKINT_BE48(rl[ii].id);
+
+        if (rl[ii].range) {
+            printf("  %012llx - %012llx\n", id, id + rl[ii].range);
+        } else {
+            printf("  %012llx\n", id);
+        }
+    }
+}
+
 int main (int argc, char **argv)
 {
     int major, minor, micro, error_code = AACS_SUCCESS;
@@ -92,6 +115,19 @@ int main (int argc, char **argv)
     printf("MKBv   : %d\n", aacs_get_mkb_version(aacs));
 
     aacs_close(aacs);
+
+    /* dump revocation lists */
+
+    AACS_RL_ENTRY *rl;
+    int num_entries, mkb_version;
+
+    rl = aacs_get_hrl(&num_entries, &mkb_version);
+    _dump_rl("Host", rl, num_entries, mkb_version);
+    X_FREE(rl);
+
+    rl = aacs_get_drl(&num_entries, &mkb_version);
+    _dump_rl("Drive", rl, num_entries, mkb_version);
+    X_FREE(rl);
 
     return EXIT_SUCCESS;
 }

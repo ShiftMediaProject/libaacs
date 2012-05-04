@@ -820,6 +820,52 @@ const uint8_t *aacs_get_vid(AACS *aacs)
     return aacs->vid;
 }
 
+static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkb_version)
+{
+    uint32_t len, version;
+    void *data = NULL;
+
+    *num_records = *mkb_version = 0;
+
+    cache_get(type, &version, &len, NULL);
+
+    if (version > 0 && len > 24) {
+        data = malloc(len);
+        if (cache_get(type, &version, &len, data) && len > 24) {
+
+            if (_rl_verify_signature(data, len)) {
+                *mkb_version = version;
+                *num_records = MKINT_BE32((uint8_t*)data + 20);
+                memmove(data, (uint8_t*)data + 24, len - 24);
+
+                int ii;
+                AACS_RL_ENTRY *rl = data;
+                for (ii = 0; ii < *num_records; ii++) {
+                    rl[ii].range = MKINT_BE16((uint8_t*)&rl[ii].range);
+                }
+
+                return rl;
+            }
+
+            DEBUG(DBG_AACS | DBG_CRIT, "invalid signature in cached %s\n", type);
+        }
+
+        X_FREE(data);
+    }
+
+    return data;
+}
+
+AACS_RL_ENTRY *aacs_get_hrl(int *num_records, int *mkb_version)
+{
+    return _get_rl("hrl", num_records, mkb_version);
+}
+
+AACS_RL_ENTRY *aacs_get_drl(int *num_records, int *mkb_version)
+{
+    return _get_rl("drl", num_records, mkb_version);
+}
+
 void aacs_select_title(AACS *aacs, uint32_t title)
 {
     if (!aacs) {

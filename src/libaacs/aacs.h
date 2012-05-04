@@ -46,8 +46,18 @@ AACS_PUBLIC void aacs_close(AACS *aacs);
 AACS_PUBLIC void aacs_select_title(AACS *aacs, uint32_t title); /* 0 - top menu, 0xffff - first play */
 AACS_PUBLIC int  aacs_decrypt_unit(AACS *aacs, uint8_t *buf);
 
+/* Disc information */
 AACS_PUBLIC int aacs_get_mkb_version(AACS *aacs);
 AACS_PUBLIC const uint8_t *aacs_get_disc_id(AACS *aacs);
-AACS_PUBLIC const uint8_t *aacs_get_vid(AACS *aacs);
+AACS_PUBLIC const uint8_t *aacs_get_vid(AACS *aacs); /* may fail even if disc can be decrypted */
+
+/* revocation lists */
+typedef struct {
+    uint16_t  range;
+    uint8_t   id[6];
+} AACS_RL_ENTRY;
+
+AACS_PUBLIC AACS_RL_ENTRY *aacs_get_hrl(int *num_entries, int *mkb_version);
+AACS_PUBLIC AACS_RL_ENTRY *aacs_get_drl(int *num_entries, int *mkb_version);
 
 #endif /* AACS_H_ */
