@@ -55,6 +55,9 @@ AACS_PRIVATE const uint8_t *mkb_mk_dv(MKB *mkb);
 // returns MKB signature
 AACS_PRIVATE const uint8_t *mkb_signature(MKB *mkb, size_t *len);
 
+AACS_PRIVATE int mkb_host_cert_is_revoked(MKB *mkb, const uint8_t *cert_id);
+AACS_PRIVATE int mkb_drive_cert_is_revoked(MKB *mkb, const uint8_t *cert_id);
+
 /* The Media Key block is of variable size but must be a multiple of 4
  * MKB Structure:
  *      Type and Version record (12 bytes)
