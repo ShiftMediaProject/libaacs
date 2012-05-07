@@ -1,4 +1,4 @@
-????-??-??: Version 0.4.0
+2012-05-07: Version 0.4.0
  - Added aacs_open2() and error codes
  - Renamed libaacs_test to aacs_info
  - Added aacs_get_mkb_version()
