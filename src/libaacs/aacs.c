@@ -289,6 +289,13 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
             continue;
         }
 
+        if (mkb_host_cert_is_revoked(hrl_mkb, cert + 4)) {
+            DEBUG(DBG_AACS | DBG_CRIT, "Host certificate %s has been revoked.\n",
+                  print_hex(tmp_str, cert + 4, 6));
+            error_code = AACS_ERROR_CERT_REVOKED;
+            //continue;
+        }
+
         DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
               print_hex(tmp_str, cert + 4, 6));
 

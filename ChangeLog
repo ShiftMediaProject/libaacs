@@ -5,6 +5,7 @@
  - Fixed memory leaks
  - Fixed buffer overflow
  - Added revocation list caching
+ - Check host certificates against latest seen revocation list
 
 2012-03-21: Version 0.3.1
  - Added configure option for libgcrypt prefix
