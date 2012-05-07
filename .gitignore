@@ -23,6 +23,7 @@ libtool
 .libs
 src/libaacs/aacs-version.h
 src/examples/parser_test
+src/examples/aacs_info
 src/keydbcfg-lexer.c
 src/keydbcfg-parser.c
 src/keydbcfg-parser.h
