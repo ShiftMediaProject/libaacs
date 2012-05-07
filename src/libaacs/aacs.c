@@ -203,6 +203,63 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl)
     return AACS_ERROR_CORRUPTED_DISC;
 }
 
+static MKB *_get_hrl_mkb(MMC *mmc)
+{
+    MKB     *mkb = NULL;
+    uint8_t *data;
+    int      size;
+
+    data = mmc_read_mkb(mmc, 0, &size);
+
+    /* check acquired hrl signature */
+    if (data && size > 0) {
+        if (_rl_verify_signature(data, size)) {
+            mkb = mkb_init(data, size);
+            DEBUG(DBG_AACS, "Partial hrl mkb read. Version: %d\n", mkb_version(mkb));
+        } else {
+            DEBUG(DBG_AACS | DBG_CRIT, "invalid host revocation list signature, not using it\n");
+            X_FREE(data);
+        }
+    }
+
+    if (mkb) {
+        /* use latest version, keep cache up-to-date */
+        uint32_t size;
+        size = mkb_data_size(mkb);
+        data = cache_get_or_update("hrl", mkb_data(mkb), &size, mkb_version(mkb));
+
+        if (!_rl_verify_signature(data, size)) {
+            DEBUG(DBG_AACS | DBG_CRIT, "invalid cached revocation list signature, replacing it\n");
+            cache_save("hrl", mkb_version(mkb), mkb_data(mkb), mkb_data_size(mkb));
+            X_FREE(data);
+        } else {
+            /* use cached version */
+            mkb_close(mkb);
+            mkb = mkb_init(data, size);
+        }
+
+    } else {
+        /* use cached version */
+        uint32_t size;
+        data = cache_get_or_update("hrl", NULL, &size, 0);
+        if (data && size > 0) {
+            if (!_rl_verify_signature(data, size)) {
+                mkb = mkb_init(data, size);
+            } else {
+                DEBUG(DBG_AACS | DBG_CRIT, "invalid cached revocation list signature, deleting cache\n");
+                cache_remove("hrl");
+            }
+        }
+    }
+
+
+    if (mkb) {
+        DEBUG(DBG_AACS, "Using hrl version %d\n", mkb_version(mkb));
+    }
+
+    return mkb;
+}
+
 static int _read_vid(AACS *aacs, cert_list *hcl)
 {
     /* Use VID given in config file if available */
@@ -216,6 +273,8 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
     }
 
     int error_code = AACS_ERROR_NO_CERT;
+
+    MKB *hrl_mkb = _get_hrl_mkb(mmc);
 
     for (;hcl && hcl->host_priv_key && hcl->host_cert; hcl = hcl->next) {
 
@@ -236,6 +295,7 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
         int mmc_result = mmc_read_vid(mmc, priv_key, cert, aacs->vid);
         switch (mmc_result) {
             case MMC_SUCCESS:
+                mkb_close(hrl_mkb);
                 mmc_close(mmc);
                 return AACS_SUCCESS;
             case MMC_ERROR_CERT_REVOKED:
@@ -248,6 +308,7 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
         }
     }
 
+    mkb_close(hrl_mkb);
     mmc_close(mmc);
 
     DEBUG(DBG_AACS, "Error reading VID!\n");

@@ -4,6 +4,7 @@
  - Added aacs_get_mkb_version()
  - Fixed memory leaks
  - Fixed buffer overflow
+ - Added revocation list caching
 
 2012-03-21: Version 0.3.1
  - Added configure option for libgcrypt prefix
