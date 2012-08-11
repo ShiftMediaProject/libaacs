@@ -27,6 +27,8 @@ AM_INIT_AUTOMAKE([foreign])
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
+SET_FEATURES="-D_ISOC99_SOURCE -D_POSIX_C_SOURCE=200112L"
+
 case "${host_os}" in
   "")
     SYS=unknown
@@ -42,6 +44,11 @@ case "${host_os}" in
         AC_DEFINE([_WIN32_IE], 0x0501, [Define to '0x0501' for IE 5.01.])
         ;;
     esac
+    ;;
+  *darwin*)
+    AC_DEFINE([USE_IOKIT], 1, [Use IOKit for MMC access])
+    LDFLAGS="${LDFLAGS} -lobjc -Wl,-framework,IOKit,-framework,Cocoa,-framework,DiskArbitration"
+    SET_FEATURES="${SET_FEATURES} -D_DARWIN_C_SOURCE"
     ;;
   *)
     SYS="${host_os}"
@@ -98,7 +105,8 @@ AC_TYPE_SIGNAL
 # required headers
 AC_CHECK_HEADERS([stdarg.h sys/types.h dirent.h errno.h libgen.h malloc.h])
 AC_CHECK_HEADERS([stdlib.h mntent.h linux/cdrom.h inttypes.h])
-AC_CHECK_HEADERS([sys/time.h time.h sys/select.h limits.h])
+AC_CHECK_HEADERS([sys/time.h time.h sys/select.h limits.h sys/param.h])
+AC_CHECK_HEADERS([sys/mount.h])
 
 # required structures
 AC_STRUCT_DIRENT_D_TYPE
@@ -224,5 +232,6 @@ AC_SUBST(LT_VERSION_INFO)
 AC_SUBST(SET_WARNINGS)
 AC_SUBST(SET_OPTIMIZATIONS)
 AC_SUBST(SET_DEBUG_OPTS)
+AC_SUBST(SET_FEATURES)
 AC_CONFIG_FILES([Makefile src/Makefile src/examples/Makefile src/libaacs.pc src/libaacs/aacs-version.h])
 AC_OUTPUT

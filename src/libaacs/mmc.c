@@ -33,6 +33,42 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <stdio.h>
+
+#define _IOKIT_SCSI_CMDS_INQUIRY_H_
+
+typedef void SCSICmd_INQUIRY_StandardData;
+
+#ifdef USE_IOKIT
+
+#include <Carbon/Carbon.h>
+
+#include <IOKit/IOKitLib.h>
+#include <IOKit/IOCFPlugIn.h>
+#include <IOKit/scsi/SCSITaskLib.h>
+
+#include <DiskArbitration/DiskArbitration.h>
+
+#include <IOKit/storage/IOBDMediaBSDClient.h>
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+
+#ifdef HAVE_LIBGEN_H
+#include <libgen.h>
+#endif
+
+#endif
+
 #ifdef HAVE_MNTENT_H
 #include <mntent.h>
 #endif
@@ -88,9 +124,19 @@ typedef struct _SCSI_PASS_THROUGH_DIRECT {
 
 #endif // defined(_WIN32)
 
-
 struct mmc {
-#if defined(_WIN32)
+#if defined(USE_IOKIT)
+    MMCDeviceInterface **mmcInterface;
+    SCSITaskDeviceInterface **taskInterface;
+
+    /* device short name (ie disk1) */
+    char bsd_name[128];
+
+    /* for mounting/unmounting the disc */
+    DADiskRef disk;
+    DASessionRef session;
+    bool is_mounted;
+#elif defined(_WIN32)
     HANDLE fd;
 #else
     int    fd;
@@ -205,6 +251,83 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
 
     DEBUG(DBG_MMC, "  Send failed! (%p)\n", mmc);
 
+#elif defined(USE_IOKIT)
+    SCSITaskInterface **task = NULL;
+    SCSI_Sense_Data sense;
+    SCSITaskStatus status;
+    SCSITaskSGElement iov;
+    UInt8 direction;
+    UInt64 sent;
+    int rc;
+
+    if (NULL == mmc->taskInterface) {
+        return 0;
+    }
+
+    do {
+        task = (*mmc->taskInterface)->CreateSCSITask (mmc->taskInterface);
+        if (NULL == task) {
+            DEBUG(DBG_MMC, "  Could not create SCSI Task\n");
+            break;
+        }
+
+        iov.address = (uintptr_t) buf;
+        iov.length  = tx ? tx : rx;
+
+        if (buf) {
+            direction = tx ? kSCSIDataTransfer_FromInitiatorToTarget :
+                kSCSIDataTransfer_FromTargetToInitiator;
+        } else {
+            direction = kSCSIDataTransfer_NoDataTransfer;
+        }
+
+        rc = (*task)->SetCommandDescriptorBlock (task, cmd, 16);
+        if (kIOReturnSuccess != rc) {
+            DEBUG(DBG_MMC, "  Error setting SCSI command\n");
+            break;
+        }
+
+        rc = (*task)->SetScatterGatherEntries (task, &iov, 1, iov.length, direction);
+        if (kIOReturnSuccess != rc) {
+            DEBUG(DBG_MMC, "  Error setting SCSI scatter gather entries\n");
+            break;
+        }
+
+        rc = (*task)->SetTimeoutDuration (task, 5000000);
+        if (kIOReturnSuccess != rc) {
+            DEBUG(DBG_MMC, "  Error setting SCSI command timeout\n");
+            break;
+        }
+
+        memset (&sense, 0, sizeof (sense));
+
+        rc = (*task)->ExecuteTaskSync (task, &sense, &status, &sent);
+
+        char str[512];
+        DEBUG(DBG_MMC, "Send SDSI MMC cmd %s: (%p)\n",
+              print_hex(str, cmd, 16), mmc);
+        if (tx) {
+            DEBUG(DBG_MMC, "  Buffer: %s -> (%p)\n", print_hex(str, buf, tx>255?255:tx), mmc);
+        } else {
+            DEBUG(DBG_MMC, "  Buffer: %s <- (%p)\n", print_hex(str, buf, rx>255?255:rx), mmc);
+        }
+
+        if (kIOReturnSuccess != rc || status != 0) {
+            DEBUG(DBG_MMC, "  Send failed! (%p)\n", mmc);
+            break;
+        } else {
+            DEBUG(DBG_MMC, "  Send succeeded! (%p) sent = %lld status = %u. response = %x\n", mmc,
+                  (unsigned long long) sent, status, sense.VALID_RESPONSE_CODE);
+        }
+
+        (*task)->Release (task);
+
+        return 1;
+    } while (0);
+
+    if (task) {
+        (*task)->Release (task);
+    }
 #endif
 
     return 0;
@@ -460,9 +583,228 @@ static int _mmc_read_vid(MMC *mmc, uint8_t agid, uint8_t *volume_id,
     return 0;
 }
 
+#ifdef USE_IOKIT
+static int get_mounted_device_from_path (MMC *mmc, const char *path) {
+  struct statfs stat_info;
+  int rc;
+
+  rc = statfs (path, &stat_info);
+  if (0 != rc) {
+    return rc;
+  }
+
+  strncpy (mmc->bsd_name, basename (stat_info.f_mntfromname), 256);
+
+  return 0;
+}
+
+static void iokit_unmount_complete (DADiskRef disk, DADissenterRef dissenter,
+                                    void *context) {
+    (void)disk; /* suppress warning */
+
+    if (dissenter) {
+        DEBUG(DBG_MMC, "Could not unmount the disc\n");
+    } else {
+        DEBUG(DBG_MMC, "Disc unmounted\n");
+        ((MMC *)context)->is_mounted = 0;
+    }
+}
+
+static void iokit_mount_complete (DADiskRef disk, DADissenterRef dissenter,
+                                  void *context) {
+    (void) disk; /* suppress warning */
+    (void) dissenter; /* suppress warning */
+
+    /* the disc mounts despite whether there is a dessenter */
+    DEBUG(DBG_MMC, "Disc mounted\n");
+    ((MMC *)context)->is_mounted = 1;
+}
+
+static int iokit_unmount (MMC *mmc) {
+    if (0 == mmc->is_mounted) {
+        return 0; /* nothing to do */
+    }
+
+    DEBUG(DBG_MMC, "Unmounting disk\n");
+
+    mmc->session = DASessionCreate (kCFAllocatorDefault);
+    if (NULL == mmc->session) {
+        DEBUG(DBG_MMC, "Could not create a disc arbitration session\n");
+        return -1;
+    }
+
+    mmc->disk = DADiskCreateFromBSDName (kCFAllocatorDefault, mmc->session, mmc->bsd_name);
+    if (NULL == mmc->disk) {
+        DEBUG(DBG_MMC, "Could not create a disc arbitration disc for the device\n");
+        CFRelease (mmc->session);
+        mmc->session = NULL;
+        return -1;
+    }
+
+    DAApprovalSessionScheduleWithRunLoop (mmc->session, CFRunLoopGetCurrent (),
+                                          kCFRunLoopDefaultMode);
+
+    DADiskUnmount (mmc->disk, kDADiskUnmountOptionForce, iokit_unmount_complete, mmc);
+
+    CFRunLoopRunInMode (kCFRunLoopDefaultMode, 10, true);
+
+    return mmc->is_mounted ? -1 : 0;
+}
+
+static int iokit_mount (MMC *mmc) {
+    if (0 == mmc->is_mounted) {
+        if (mmc->disk && mmc->session) {
+            DADiskMount (mmc->disk, NULL, kDADiskMountOptionDefault, iokit_mount_complete, mmc);
+
+            CFRunLoopRunInMode (kCFRunLoopDefaultMode, 10, false);
+
+            DAApprovalSessionUnscheduleFromRunLoop (mmc->session, CFRunLoopGetCurrent (),
+                                                    kCFRunLoopDefaultMode);
+        }
+
+        if (mmc->disk) {
+            CFRelease (mmc->disk);
+            mmc->disk = NULL;
+        }
+
+        if (mmc->session) {
+            CFRelease (mmc->session);
+            mmc->session = NULL;
+        }
+    }
+
+    return mmc->is_mounted ? 0 : -1;
+}
+
+static int iokit_find_service_matching (MMC *mmc, io_service_t *servp) {
+    CFMutableDictionaryRef matchingDict = IOServiceMatching("IOBDServices");
+    io_iterator_t deviceIterator;
+    io_service_t service;
+    int rc;
+
+    assert (NULL != servp);
+
+    *servp = 0;
+
+    if (!matchingDict) {
+        DEBUG(DBG_MMC, "Could not create a matching dictionary for IOBDServices\n");
+        return -1;
+    }
+
+    /* this call consumes the reference to the matchingDict. we do not need to release it */
+    rc = IOServiceGetMatchingServices(kIOMasterPortDefault, matchingDict, &deviceIterator);
+    if (kIOReturnSuccess != rc) {
+        DEBUG(DBG_MMC, "Could not create device iterator\n");
+        return -1;
+    }
+
+    while (0 != (service = IOIteratorNext (deviceIterator))) {
+        CFStringRef data;
+        char name[256] = "";
+
+        data = IORegistryEntrySearchCFProperty (service, kIOServicePlane, CFSTR("BSD Name"),
+                                                kCFAllocatorDefault, kIORegistryIterateRecursively);
+
+        if (NULL != data) {
+            rc = CFStringGetCString (data, name, sizeof (name), kCFStringEncodingASCII);
+
+            if (0 == strcmp (name, mmc->bsd_name)) {
+                break;
+            }
+        }
+
+        (void) IOObjectRelease (service);
+    }
+
+    IOObjectRelease (deviceIterator);
+
+    *servp = service;
+
+    return (service) ? 0 : -1;
+}
+
+static int iokit_find_interfaces (MMC *mmc, io_service_t service) {
+    IOCFPlugInInterface **plugInInterface = NULL;
+    SInt32 score;
+    int rc;
+
+    rc = IOCreatePlugInInterfaceForService (service, kIOMMCDeviceUserClientTypeID,
+                                            kIOCFPlugInInterfaceID, &plugInInterface,
+                                            &score);
+    if (kIOReturnSuccess != rc || NULL == plugInInterface) {
+        return -1;
+    }
+
+    DEBUG(DBG_MMC, "Getting MMC interface\n");
+
+    rc = (*plugInInterface)->QueryInterface(plugInInterface,
+                                            CFUUIDGetUUIDBytes(kIOMMCDeviceInterfaceID),
+                                            (LPVOID)&mmc->mmcInterface);
+    if (kIOReturnSuccess != rc) {
+        DEBUG(DBG_MMC, "Could not get multimedia commands (MMC) interface\n");
+        return -1;
+    }
+
+    DEBUG(DBG_MMC, "Have an MMC interface (%p). Getting a SCSI task interface...\n", mmc->mmcInterface);
+
+    mmc->taskInterface = (*mmc->mmcInterface)->GetSCSITaskDeviceInterface (mmc->mmcInterface);
+    if (NULL == mmc->taskInterface) {
+        DEBUG(DBG_MMC, "Could not get SCSI task device interface\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int mmc_open_iokit (const char *path, MMC *mmc) {
+    io_service_t service;
+    int rc;
+
+    mmc->mmcInterface = NULL;
+    mmc->taskInterface = NULL;
+    mmc->disk = NULL;
+    mmc->session = NULL;
+
+    rc = get_mounted_device_from_path (mmc, path);
+    if (0 != rc) {
+        DEBUG(DBG_MMC, "Could not locate mounted device associated with %s\n", path);
+        return rc;
+    }
+
+    rc = iokit_find_service_matching (mmc, &service);
+    if (0 != rc) {
+        DEBUG(DBG_MMC, "Could not find matching IOBDServices mounted @ %s\n", path);
+        return rc;
+    }
+
+    rc = iokit_find_interfaces (mmc, service);
+    IOObjectRelease (service);
+    if (0 != rc) {
+        return rc;
+    }
+
+    mmc->is_mounted = true;
+    rc = iokit_unmount (mmc);
+    if (0 != rc) {
+        return rc;
+    }
+
+    rc = (*mmc->taskInterface)->ObtainExclusiveAccess (mmc->taskInterface);
+    if (kIOReturnSuccess != rc) {
+        DEBUG(DBG_MMC, "Failed to obtain exclusive access. rc = %x\n", rc);
+        return -1;
+    }
+
+    DEBUG(DBG_MMC, "MMC Open complete\n");
+
+    return 0;
+}
+#endif
+
 MMC *mmc_open(const char *path)
 {
     MMC *mmc = calloc(1, sizeof(MMC));
+    int rc;
 
     crypto_create_nonce(mmc->host_nonce, sizeof(mmc->host_nonce));
 
@@ -482,7 +824,14 @@ MMC *mmc_open(const char *path)
               print_hex(str, mmc->host_key_point, sizeof(mmc->host_key_point)));
     }
 
-#if defined(HAVE_MNTENT_H)
+#if defined(USE_IOKIT)
+    rc = mmc_open_iokit (path, mmc);
+    if (0 != rc) {
+        mmc_close (mmc);
+        return NULL;
+    }
+
+#elif defined(HAVE_MNTENT_H)
 
 #ifdef HAVE_REALPATH
     char *file_path = malloc(PATH_MAX);
@@ -577,7 +926,8 @@ MMC *mmc_open(const char *path)
 
     if (mmc && !_mmc_check_aacs(mmc)) {
         DEBUG(DBG_MMC | DBG_CRIT, "AACS not active or supported by the drive\n");
-        X_FREE(mmc);
+        mmc_close (mmc);
+        return NULL;
     }
 
     return mmc;
@@ -596,6 +946,19 @@ void mmc_close(MMC *mmc)
         if (mmc->fd != INVALID_HANDLE_VALUE) {
             CloseHandle(mmc->fd);
         }
+#elif defined(USE_IOKIT)
+        if (mmc->taskInterface) {
+            (*mmc->taskInterface)->ReleaseExclusiveAccess (mmc->taskInterface);
+            (*mmc->taskInterface)->Release (mmc->taskInterface);
+            mmc->taskInterface = NULL;
+        }
+
+        if (mmc->mmcInterface) {
+            (*mmc->mmcInterface)->Release (mmc->mmcInterface);
+            mmc->mmcInterface = NULL;
+        }
+
+        (void) iokit_mount (mmc);
 #endif
 
         DEBUG(DBG_MMC, "Closed MMC drive (%p)\n", mmc);
