@@ -936,11 +936,13 @@ MMC *mmc_open(const char *path)
 
 #endif
 
+#ifndef _WIN32
     if (mmc && !_mmc_check_aacs(mmc)) {
         DEBUG(DBG_MMC | DBG_CRIT, "AACS not active or supported by the drive\n");
         mmc_close (mmc);
         return NULL;
     }
+#endif
 
     return mmc;
 }
