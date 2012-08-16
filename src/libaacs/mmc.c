@@ -817,7 +817,6 @@ int mmc_open_iokit (const char *path, MMC *mmc) {
 MMC *mmc_open(const char *path)
 {
     MMC *mmc = calloc(1, sizeof(MMC));
-    int rc;
 
     crypto_create_nonce(mmc->host_nonce, sizeof(mmc->host_nonce));
 
@@ -838,7 +837,7 @@ MMC *mmc_open(const char *path)
     }
 
 #if defined(USE_IOKIT)
-    rc = mmc_open_iokit (path, mmc);
+    int rc = mmc_open_iokit (path, mmc);
     if (0 != rc) {
         mmc_close (mmc);
         return NULL;
