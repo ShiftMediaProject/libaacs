@@ -1,3 +1,7 @@
+2012-08-17: Version 0.5.0
+ - Support for Mac OS X using IOKit
+ - Fix AACS detection failure in some Win32 systems
+
 2012-05-07: Version 0.4.0
  - Added aacs_open2() and error codes
  - Renamed libaacs_test to aacs_info
