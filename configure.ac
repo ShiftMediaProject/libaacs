@@ -46,6 +46,7 @@ case "${host_os}" in
     esac
     ;;
   *darwin*)
+    SYS=darwin
     AC_DEFINE([USE_IOKIT], 1, [Use IOKit for MMC access])
     LDFLAGS="${LDFLAGS} -lobjc -Wl,-framework,IOKit,-framework,Cocoa,-framework,DiskArbitration"
     SET_FEATURES="${SET_FEATURES} -D_DARWIN_C_SOURCE"
@@ -56,6 +57,7 @@ case "${host_os}" in
 esac
 
 AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
+AM_CONDITIONAL(HAVE_DARWIN,  test "${SYS}" = "darwin")
 
 # messages
 library_not_found="Could not find required library!"

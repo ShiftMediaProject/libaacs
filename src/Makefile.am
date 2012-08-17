@@ -40,6 +40,11 @@ libaacs_la_SOURCES=\
 EXTRA_libaacs_la_SOURCES=\
 	libaacs/ec.c
 
+if HAVE_DARWIN
+libaacs_la_SOURCES+= \
+	file/darwin.c \
+	file/darwin.h
+else
 if HAVE_WIN32
 libaacs_la_SOURCES+= \
 	file/win32.c \
@@ -48,6 +53,7 @@ else
 libaacs_la_SOURCES+= \
 	file/xdg.c \
 	file/xdg.h
+endif
 endif
 
 libaacs_ladir= $(includedir)/libaacs
