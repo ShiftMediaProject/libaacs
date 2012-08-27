@@ -449,6 +449,8 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   cfgfile->host_cert_list = head_clist;
   cfgfile->list = head_celist;
 
+  fclose(fp);
+
   if (retval)
     return 0;
 
