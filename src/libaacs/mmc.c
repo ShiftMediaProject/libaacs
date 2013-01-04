@@ -585,6 +585,21 @@ static int _mmc_read_vid(MMC *mmc, uint8_t agid, uint8_t *volume_id,
     return 0;
 }
 
+static int _mmc_read_pmsn(MMC *mmc, uint8_t agid, uint8_t *pmsn,
+                          uint8_t *mac)
+{
+    uint8_t buf[36];
+    memset(buf, 0, sizeof(buf));
+
+    if (_mmc_report_disc_structure(mmc, agid, 0x81, 0, 0, buf, 36)) {
+        memcpy(pmsn, buf + 4,  16);
+        memcpy(mac,  buf + 20, 16);
+        return 1;
+    }
+
+    return 0;
+}
+
 #ifdef USE_IOKIT
 static int get_mounted_device_from_path (MMC *mmc, const char *path) {
   struct statfs stat_info;
@@ -992,7 +1007,7 @@ static int _verify_signature(const uint8_t *cert, const uint8_t *signature,
     return crypto_aacs_verify(cert, signature, data, 60);
 }
 
-int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *vid)
+int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *vid, uint8_t *pmsn)
 {
     uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40], mac[16];
     char str[512];
@@ -1086,6 +1101,17 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
     if (_mmc_read_vid(mmc, agid, vid, mac)) {
         DEBUG(DBG_MMC, "VID: %s (%p)\n", print_hex(str, vid, 16), mmc);
         DEBUG(DBG_MMC, "MAC: %s (%p)\n", print_hex(str, mac, 16), mmc);
+        /* TODO: verify MAC */
+
+        /* read pmsn */
+        if (_mmc_read_pmsn(mmc, agid, pmsn, mac)) {
+            DEBUG(DBG_MMC, "PMSN: %s (%p)\n", print_hex(str, pmsn, 16), mmc);
+            DEBUG(DBG_MMC, "MAC:  %s (%p)\n", print_hex(str, mac,  16), mmc);
+            /* TODO: verify MAC */
+        } else {
+            memset(pmsn, 0, 16);
+            DEBUG(DBG_MMC | DBG_CRIT, "Unable to read PMSN from drive! (%p)\n", mmc);
+        }
 
         _mmc_invalidate_agid(mmc, agid);
 

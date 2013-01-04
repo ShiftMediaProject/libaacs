@@ -49,7 +49,8 @@ AACS_PUBLIC int  aacs_decrypt_unit(AACS *aacs, uint8_t *buf);
 /* Disc information */
 AACS_PUBLIC int aacs_get_mkb_version(AACS *aacs);
 AACS_PUBLIC const uint8_t *aacs_get_disc_id(AACS *aacs);
-AACS_PUBLIC const uint8_t *aacs_get_vid(AACS *aacs); /* may fail even if disc can be decrypted */
+AACS_PUBLIC const uint8_t *aacs_get_vid(AACS *aacs);  /* may fail even if disc can be decrypted */
+AACS_PUBLIC const uint8_t *aacs_get_pmsn(AACS *aacs); /* may fail even if disc can be decrypted */
 
 /* revocation lists */
 typedef struct {

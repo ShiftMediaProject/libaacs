@@ -52,6 +52,8 @@ struct aacs {
 
     /* VID is cached for BD-J */
     uint8_t   vid[16];
+    /* PMSN is cached for BD-J */
+    uint8_t   pmsn[16];
 
     /* unit key for each CPS unit */
     uint32_t  num_uks;
@@ -299,7 +301,7 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
         DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
               print_hex(tmp_str, cert + 4, 6));
 
-        int mmc_result = mmc_read_vid(mmc, priv_key, cert, aacs->vid);
+        int mmc_result = mmc_read_vid(mmc, priv_key, cert, aacs->vid, aacs->pmsn);
         switch (mmc_result) {
             case MMC_SUCCESS:
                 mkb_close(hrl_mkb);
@@ -825,6 +827,19 @@ const uint8_t *aacs_get_vid(AACS *aacs)
         }
     }
     return aacs->vid;
+}
+
+const uint8_t *aacs_get_pmsn(AACS *aacs)
+{
+    if (!memcmp(aacs->vid, empty_key, 16)) {
+        config_file *cf = keydbcfg_config_load(NULL);
+        if (cf) {
+            _read_vid(aacs, cf->host_cert_list);
+
+            keydbcfg_config_file_close(cf);
+        }
+    }
+    return aacs->pmsn;
 }
 
 static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkb_version)

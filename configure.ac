@@ -1,6 +1,6 @@
 # library version number
 m4_define([aacs_major], 0)
-m4_define([aacs_minor], 5)
+m4_define([aacs_minor], 6)
 m4_define([aacs_micro], 0)
 m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 
@@ -14,9 +14,9 @@ m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 #
 # Library file name will be libaacs.(current-age).age.revision
 #
-m4_define([lt_current],  2)
-m4_define([lt_age],      2)
-m4_define([lt_revision], 1)
+m4_define([lt_current],  3)
+m4_define([lt_age],      3)
+m4_define([lt_revision], 0)
 
 # initilization
 AC_INIT([libaacs], aacs_version, [http://www.videolan.org/developers/libaacs.html])

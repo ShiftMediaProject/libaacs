@@ -1,3 +1,6 @@
+????-??-??: Version 0.6.0
+ - Added reading of PMSN (Pre-recorded Media Serial Number)
+
 2012-08-17: Version 0.5.0
  - Support for Mac OS X using IOKit
  - Fix AACS detection failure in some Win32 systems
