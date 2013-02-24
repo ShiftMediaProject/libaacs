@@ -1,4 +1,4 @@
-SUBDIRS=src
+SUBDIRS=src src/examples
 
 ACLOCAL_AMFLAGS=-I m4
 
