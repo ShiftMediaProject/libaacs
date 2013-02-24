@@ -1,5 +1,3 @@
-LIB_VERSION_INFO="@LT_VERSION_INFO@"
-
 SET_FEATURES = @SET_FEATURES@
 SET_WARNINGS = @SET_WARNINGS@
 SET_OPTIMIZATIONS = @SET_OPTIMIZATIONS@
@@ -56,7 +54,7 @@ endif
 
 libaacs_ladir= $(includedir)/libaacs
 libaacs_la_HEADERS= libaacs/aacs.h file/filesystem.h libaacs/aacs-version.h
-libaacs_la_LDFLAGS= -no-undefined -version-info $(LIB_VERSION_INFO)
+libaacs_la_LDFLAGS= -no-undefined -version-info $(LT_VERSION_INFO)
 libaacs_la_LIBADD = $(LIBGCRYPT_LIBS)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libaacs.pc
