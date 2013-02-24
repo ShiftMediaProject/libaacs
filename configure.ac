@@ -1,24 +1,24 @@
-# library version number
+dnl library version number
 m4_define([aacs_major], 0)
 m4_define([aacs_minor], 6)
 m4_define([aacs_micro], 0)
 m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 
-# library (.so) version
+dnl library (.so) version
 #
-# update when making new release
+dnl update when making new release
 #
-# - If there are no ABI changes, increase revision.
-# - If ABI is changed backwards-compatible way, increase current and age. Set revision to 0.
-# - If ABI is broken, increase current and set age and revision to 0.
+dnl - If there are no ABI changes, increase revision.
+dnl - If ABI is changed backwards-compatible way, increase current and age. Set revision to 0.
+dnl - If ABI is broken, increase current and set age and revision to 0.
 #
-# Library file name will be libaacs.(current-age).age.revision
+dnl Library file name will be libaacs.(current-age).age.revision
 #
 m4_define([lt_current],  3)
 m4_define([lt_age],      3)
 m4_define([lt_revision], 0)
 
-# initilization
+dnl initilization
 AC_INIT([libaacs], aacs_version, [http://www.videolan.org/developers/libaacs.html])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
@@ -59,11 +59,11 @@ esac
 AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
 AM_CONDITIONAL(HAVE_DARWIN,  test "${SYS}" = "darwin")
 
-# messages
+dnl messages
 library_not_found="Could not find required library!"
 function_not_found="Could not find required function!"
 
-# configure options
+dnl configure options
 AC_ARG_ENABLE([werror],
   [AS_HELP_STRING([--enable-werror],
   [set warnings as errors via -Werror (default is no)])],
@@ -94,41 +94,41 @@ dnl fail on anything other than pass_all.
 AC_CACHE_VAL(lt_cv_deplibs_check_method,
     [lt_cv_deplibs_check_method=pass_all])
 
-# required programs
+dnl required programs
 AC_PROG_CC
 AC_PROG_LIBTOOL
 AC_LIBTOOL_WIN32_DLL
 AM_PROG_LEX
 AC_PROG_YACC
 
-# required types
+dnl required types
 AC_TYPE_SIGNAL
 
-# required headers
+dnl required headers
 AC_CHECK_HEADERS([stdarg.h sys/types.h dirent.h errno.h libgen.h malloc.h])
 AC_CHECK_HEADERS([stdlib.h mntent.h linux/cdrom.h inttypes.h])
 AC_CHECK_HEADERS([sys/time.h time.h sys/select.h limits.h sys/param.h])
 AC_CHECK_HEADERS([sys/mount.h])
 
-# required structures
+dnl required structures
 AC_STRUCT_DIRENT_D_TYPE
 
-# required system services
+dnl required system services
 AC_SYS_LARGEFILE
 
-# required functions
+dnl required functions
 AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
 AC_CHECK_FUNC([realpath],[AC_DEFINE([HAVE_REALPATH],[1],[realpath])])
 
-# pthread check (not on win32)
+dnl pthread check (not on win32)
 if test "${SYS}" != "mingw32" ; then
   AC_CHECK_HEADERS([pthread.h])
   AC_CHECK_LIB([pthread], [pthread_mutex_init],,
     [AC_MSG_ERROR($library_not_found)])
 fi
 
-# gcrypt check
+dnl gcrypt check
 
 AC_ARG_WITH(libgcrypt-prefix,
             AC_HELP_STRING([--with-libgcrypt-prefix=PFX],
@@ -152,7 +152,7 @@ fi
 AC_FUNC_STRERROR_R
 AC_CHECK_LIB([gpg-error], [gpg_strerror_r])
 
-# function testing for supported compiler options
+dnl function testing for supported compiler options
 check_cc_options()
 {
   local tmpfile=$(mktemp XXXXXXXXXX)
@@ -172,7 +172,7 @@ check_cc_options()
   return $retval
 }
 
-# set default warnings if supported
+dnl set default warnings if supported
 check_cc_options -Wall && \
   SET_WARNINGS="$SET_WARNINGS -Wall"
 check_cc_options -Wdisabled-optimization && \
@@ -190,13 +190,13 @@ check_cc_options -Wtype-limits && \
 check_cc_options -Wundef && \
   SET_WARNINGS="$SET_WARNINGS -Wundef"
 
-# use -Werror
+dnl use -Werror
 if [[ $use_werror = "yes" ]]; then
   check_cc_options -Werror && \
     SET_WARNINGS="$SET_WARNINGS -Werror"
 fi
 
-# use extra warnings
+dnl use extra warnings
 if [[ $use_extra_warnings = "yes" ]]; then
   check_cc_options -Wextra && \
     SET_WARNINGS="$SET_WARNINGS -Wextra"
@@ -204,7 +204,7 @@ if [[ $use_extra_warnings = "yes" ]]; then
     SET_WARNINGS="$SET_WARNINGS -Winline"
 fi
 
-# use optimizations
+dnl use optimizations
 if [[ $use_optimizations = "yes" ]]; then
   check_cc_options -O3 && \
     SET_OPTIMIZATIONS="$SET_OPTIMIZATIONS -O3"
@@ -212,13 +212,13 @@ if [[ $use_optimizations = "yes" ]]; then
     SET_OPTIMIZATIONS="$SET_OPTIMIZATIONS -fomit-frame-pointer"
 fi
 
-# use debug
+dnl use debug
 if [[ $use_debug = "yes" ]]; then
   check_cc_options -g && \
     SET_DEBUG_OPTS="$SET_DEBUG_OPTS -g"
 fi
 
-# export library version number
+dnl export library version number
 AACS_VERSION_MAJOR=aacs_major()
 AC_SUBST(AACS_VERSION_MAJOR)
 AACS_VERSION_MINOR=aacs_minor()
@@ -226,11 +226,11 @@ AC_SUBST(AACS_VERSION_MINOR)
 AACS_VERSION_MICRO=aacs_micro()
 AC_SUBST(AACS_VERSION_MICRO)
 
-# export library (.so) version
+dnl export library (.so) version
 LT_VERSION_INFO="lt_current:lt_revision:lt_age"
 AC_SUBST(LT_VERSION_INFO)
 
-# generate output files
+dnl generate output files
 AC_SUBST(SET_WARNINGS)
 AC_SUBST(SET_OPTIMIZATIONS)
 AC_SUBST(SET_DEBUG_OPTS)
