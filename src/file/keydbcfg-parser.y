@@ -1,4 +1,8 @@
-%{
+%code requires {
+#include "file/keydbcfg.h"
+}
+
+%code {
 /*
  * This file is part of libaacs
  * Copyright (C) 2010  gates
@@ -18,7 +22,6 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "file/keydbcfg.h"
 #include "util/macro.h"
 
 #include <stdio.h>
@@ -85,7 +88,7 @@ extern int libaacs_yyget_lineno  (void *scanner);
 
 /* uncomment the line below for debugging */
 // int yydebug = 1;
-%}
+}
 /* Options set to generate a reentrant parser that is POSIX yacc compatible
  * The basic 'scanner' parameters are set. Also, another parameter is set
  * to pass in a title entry list struct used to hold all title entries.
