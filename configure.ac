@@ -23,7 +23,7 @@ AC_INIT([libaacs], aacs_version, [http://www.videolan.org/developers/libaacs.htm
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip])
 AC_CONFIG_HEADERS(config.h)
 AM_MAINTAINER_MODE
 
