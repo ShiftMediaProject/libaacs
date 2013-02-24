@@ -65,28 +65,13 @@ function_not_found="Could not find required function!"
 
 dnl configure options
 AC_ARG_ENABLE([werror],
-  [AS_HELP_STRING([--enable-werror],
-  [set warnings as errors via -Werror (default is no)])],
-  [use_werror=$enableval],
-  [use_werror=no])
+  [AS_HELP_STRING([--enable-werror], [set warnings as errors via -Werror @<:@default=disabled@:>@])])
 
 AC_ARG_ENABLE([extra-warnings],
-  [AS_HELP_STRING([--enable-extra-warnings],
-  [set extra warnings (default is yes)])],
-  [use_extra_warnings=$enableval],
-  [use_extra_warnings=yes])
+  [AS_HELP_STRING([--disable-extra-warnings], [set extra warnings @<:@default=enabled@:>@])])
 
 AC_ARG_ENABLE([optimizations],
-  [AS_HELP_STRING([--enable-optimizations],
-  [enable optimizations (default is yes)])],
-  [use_optimizations=$enableval],
-  [use_optimizations=yes])
-
-AC_ARG_ENABLE([debug],
-  [AS_HELP_STRING([--enable-debug],
-  [enable debugging information (default is yes)])],
-  [use_debug=$enableval],
-  [use_debug=yes])
+  [AS_HELP_STRING([--disable-optimizations], [disable optimizations @<:@default=enabled@:>@])])
 
 dnl override platform specific check for dependent libraries
 dnl otherwise libtool linking of shared libraries will
@@ -155,71 +140,28 @@ fi
 AC_FUNC_STRERROR_R
 AC_CHECK_LIB([gpg-error], [gpg_strerror_r])
 
-dnl function testing for supported compiler options
-check_cc_options()
-{
-  local tmpfile=$(mktemp XXXXXXXXXX)
-  local tmpcfile="$tmpfile.c"
-  mv $tmpfile $tmpcfile
-  local retval=1
-  printf "Checking if compiler supports $@... "
-  if $CC -c $@ $tmpcfile -o /dev/null >/dev/null 2>&1; then
-    local retval=0
-  fi
-  rm $tmpcfile
-  if [[ $retval = "0" ]]; then
-    echo "yes"
-  else
-    echo "no"
-  fi
-  return $retval
-}
 
-dnl set default warnings if supported
-check_cc_options -Wall && \
-  SET_WARNINGS="$SET_WARNINGS -Wall"
-check_cc_options -Wdisabled-optimization && \
-  SET_WARNINGS="$SET_WARNINGS -Wdisabled-optimization"
-check_cc_options -Wpointer-arith && \
-  SET_WARNINGS="$SET_WARNINGS -Wpointer-arith"
-check_cc_options -Wredundant-decls && \
-  SET_WARNINGS="$SET_WARNINGS -Wredundant-decls"
-check_cc_options -Wcast-qual && \
-  SET_WARNINGS="$SET_WARNINGS -Wcast-qual"
-check_cc_options -Wwrite-strings && \
-  SET_WARNINGS="$SET_WARNINGS -Wwrite-strings"
-check_cc_options -Wtype-limits && \
-  SET_WARNINGS="$SET_WARNINGS -Wtype-limits"
-check_cc_options -Wundef && \
-  SET_WARNINGS="$SET_WARNINGS -Wundef"
+CC_CHECK_CFLAGS_APPEND([-Wall -Wdisabled-optimization -Wpointer-arith ]dnl
+[-Wredundant-decls -Wcast-qual -Wwrite-strings -Wtype-limits -Wundef ]dnl
+[-Wmissing-prototypes -Wshadow])
 
-dnl use -Werror
-if [[ $use_werror = "yes" ]]; then
-  check_cc_options -Werror && \
-    SET_WARNINGS="$SET_WARNINGS -Werror"
-fi
+CC_CHECK_CFLAGS_APPEND([-Werror=implicit-function-declaration ]dnl
+                       [-Werror-implicit-function-declaration],
+                       [break;])
 
-dnl use extra warnings
-if [[ $use_extra_warnings = "yes" ]]; then
-  check_cc_options -Wextra && \
-    SET_WARNINGS="$SET_WARNINGS -Wextra"
-  check_cc_options -Winline && \
-    SET_WARNINGS="$SET_WARNINGS -Winline"
-fi
+CC_CHECK_WERROR
+AS_IF([test "x$enable_werror" = "xyes"], [
+  CFLAGS="${CFLAGS} $cc_cv_werror"
+])
 
-dnl use optimizations
-if [[ $use_optimizations = "yes" ]]; then
-  check_cc_options -O3 && \
-    SET_OPTIMIZATIONS="$SET_OPTIMIZATIONS -O3"
-  check_cc_options -fomit-frame-pointer && \
-    SET_OPTIMIZATIONS="$SET_OPTIMIZATIONS -fomit-frame-pointer"
-fi
+AS_IF([test "x$enable_extra_warnings" != "xno"], [
+  CC_CHECK_CFLAGS_APPEND([-Wextra -Winline])
+])
 
-dnl use debug
-if [[ $use_debug = "yes" ]]; then
-  check_cc_options -g && \
-    SET_DEBUG_OPTS="$SET_DEBUG_OPTS -g"
-fi
+AS_IF([test "x$enable_optimizations" != "xno"], [
+  CC_CHECK_CFLAGS_APPEND([-O3 -fomit-frame-pointer])
+])
+
 
 dnl export library version number
 AACS_VERSION_MAJOR=aacs_major()
@@ -234,9 +176,6 @@ LT_VERSION_INFO="lt_current:lt_revision:lt_age"
 AC_SUBST(LT_VERSION_INFO)
 
 dnl generate output files
-AC_SUBST(SET_WARNINGS)
-AC_SUBST(SET_OPTIMIZATIONS)
-AC_SUBST(SET_DEBUG_OPTS)
 AC_SUBST(SET_FEATURES)
 AC_CONFIG_FILES([Makefile src/Makefile src/examples/Makefile src/libaacs.pc src/libaacs/aacs-version.h])
 AC_OUTPUT
