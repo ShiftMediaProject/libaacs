@@ -121,12 +121,15 @@ AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
 AC_CHECK_FUNC([realpath],[AC_DEFINE([HAVE_REALPATH],[1],[realpath])])
 
+dnl required libraries
+
 dnl pthread check (not on win32)
-if test "${SYS}" != "mingw32" ; then
-  AC_CHECK_HEADERS([pthread.h])
-  AC_CHECK_LIB([pthread], [pthread_mutex_init],,
-    [AC_MSG_ERROR($library_not_found)])
-fi
+AS_IF([test "${SYS}" != "mingw32"], [
+  AC_CHECK_HEADERS([pthread.h], ,
+    [AC_MSG_ERROR([pthread required])])
+  AC_SEARCH_LIBS([pthread_create], [pthread], ,
+    [AC_MSG_ERROR([pthread required])])
+])
 
 dnl gcrypt check
 
