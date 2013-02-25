@@ -47,8 +47,11 @@ libaacs_la_SOURCES+= \
 endif
 endif
 
-libaacs_ladir= $(includedir)/libaacs
-libaacs_la_HEADERS= libaacs/aacs.h file/filesystem.h libaacs/aacs-version.h
+pkginclude_HEADERS = \
+	libaacs/aacs.h \
+	file/filesystem.h \
+	libaacs/aacs-version.h
+
 libaacs_la_LDFLAGS= -no-undefined -version-info $(LT_VERSION_INFO)
 libaacs_la_LIBADD = $(LIBGCRYPT_LIBS)
 pkgconfigdir = $(libdir)/pkgconfig
