@@ -30,7 +30,6 @@
 
 /* Disable some warnings triggered by generated parser */
 #if defined __GNUC__
-#pragma GCC diagnostic ignored "-Wredundant-decls"
 #pragma GCC diagnostic ignored "-Wimplicit-function-declaration"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC visibility push(hidden)
@@ -44,10 +43,10 @@
 {                                        \
   while (X)                              \
   {                                      \
-    digit_key_pair_list *next = X->next; \
+    digit_key_pair_list *pnext = X->next;\
     X_FREE(X->key_pair.key);             \
     X_FREE(X);                           \
-    X = next;                            \
+    X = pnext;                           \
   }                                      \
 } while (0);
 
@@ -66,17 +65,17 @@ enum
   ENTRY_TYPE_UK
 };
 
-static dk_list *new_dk_list();
+static dk_list *new_dk_list(void);
 static dk_list *add_dk_list_entry(dk_list *list, char *key, char *node);
-static pk_list *new_pk_list();
+static pk_list *new_pk_list(void);
 static pk_list *add_pk_list_entry(pk_list *list, char *key);
-static cert_list *new_cert_list();
+static cert_list *new_cert_list(void);
 static cert_list *add_cert_list(cert_list *list, char *host_priv_key,
                          char *host_cert, char *host_nonce,
                          char *host_key_point);
-static title_entry_list *new_title_entry_list();
+static title_entry_list *new_title_entry_list(void);
 static int add_entry(title_entry_list *list, int type, char *entry);
-static digit_key_pair_list *new_digit_key_pair_list();
+static digit_key_pair_list *new_digit_key_pair_list(void);
 static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
                               int type, unsigned int digit, char *key);
 static int add_date_entry(title_entry_list *list, unsigned int year,
@@ -461,7 +460,7 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
 }
 
 /* Function that returns pointer to new config file object */
-config_file *keydbcfg_new_config_file()
+config_file *keydbcfg_new_config_file(void)
 {
   config_file *cfgfile = (config_file *)malloc(sizeof(*cfgfile));
   memset(cfgfile, 0, sizeof(*cfgfile));
@@ -525,7 +524,7 @@ int keydbcfg_config_file_close(config_file *cfgfile)
 }
 
 /* Function to return new dk_list object */
-static dk_list *new_dk_list()
+static dk_list *new_dk_list(void)
 {
   dk_list *dkl = (dk_list *)malloc(sizeof(*dkl));
   memset(dkl, 0, sizeof(*dkl));
@@ -551,7 +550,7 @@ static dk_list *add_dk_list_entry(dk_list *list, char *key, char *node)
 }
 
 /* Function to return new pk_list object */
-static pk_list *new_pk_list()
+static pk_list *new_pk_list(void)
 {
   pk_list *pkl = (pk_list *)malloc(sizeof(*pkl));
   memset(pkl, 0, sizeof(*pkl));
@@ -574,7 +573,7 @@ static pk_list *add_pk_list_entry(pk_list *list, char *key)
 }
 
 /* Function to create new certificate list */
-static cert_list *new_cert_list()
+static cert_list *new_cert_list(void)
 {
   cert_list *list = (cert_list *)malloc(sizeof(*list));
   if (!list)
@@ -610,7 +609,7 @@ static cert_list *add_cert_list(cert_list *list, char *host_priv_key,
 }
 
 /* Function that returns pointer to new title entry list */
-title_entry_list *new_title_entry_list()
+title_entry_list *new_title_entry_list(void)
 {
   title_entry_list *list = (title_entry_list *)malloc(sizeof(*list));
   if (!list)
@@ -671,7 +670,7 @@ static int add_entry(title_entry_list *list, int type, char *entry)
 }
 
 /* Function that returns pointer to new digit key pair list */
-static digit_key_pair_list *new_digit_key_pair_list()
+static digit_key_pair_list *new_digit_key_pair_list(void)
 {
   digit_key_pair_list *list = (digit_key_pair_list *)malloc(sizeof(*list));
   if (!list)
