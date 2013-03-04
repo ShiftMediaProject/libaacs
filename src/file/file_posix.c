@@ -38,7 +38,7 @@ static void file_close_linux(AACS_FILE_H *file)
     if (file) {
         fclose((FILE *)file->internal);
 
-        DEBUG(DBG_FILE, "Closed LINUX file (%p)\n", file);
+        DEBUG(DBG_FILE, "Closed LINUX file (%p)\n", (void*)file);
 
         X_FREE(file);
     }
@@ -82,7 +82,7 @@ static AACS_FILE_H *file_open_linux(const char* filename, const char *mode)
     FILE *fp = NULL;
     AACS_FILE_H *file = malloc(sizeof(AACS_FILE_H));
 
-    DEBUG(DBG_FILE, "Opening LINUX file %s... (%p)\n", filename, file);
+    DEBUG(DBG_FILE, "Opening LINUX file %s... (%p)\n", filename, (void*)file);
     file->close = file_close_linux;
     file->seek = file_seek_linux;
     file->read = file_read_linux;
@@ -96,7 +96,7 @@ static AACS_FILE_H *file_open_linux(const char* filename, const char *mode)
         return file;
     }
 
-    DEBUG(DBG_FILE, "Error opening file %s ! (%p)\n", filename, file);
+    DEBUG(DBG_FILE, "Error opening file %s ! (%p)\n", filename, (void*)file);
 
     X_FREE(file);
 
