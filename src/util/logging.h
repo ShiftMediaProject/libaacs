@@ -24,7 +24,7 @@
 
 #include <stdint.h>
 
-#define DEBUG(X,Y,...) aacs_debug(__FILE__,__LINE__,X,Y,##__VA_ARGS__)
+#define DEBUG(MASK,...) aacs_debug(__FILE__,__LINE__,MASK,##__VA_ARGS__)
 
 enum debug_mask_enum {
     DBG_RESERVED   = 0x0001,
