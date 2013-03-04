@@ -1,5 +1,8 @@
-????-??-??: Version 0.6.0
+2013-03-04: Version 0.6.0
  - Added reading of PMSN (Pre-recorded Media Serial Number)
+ - Fix resource leak
+ - Use proper paths to search for keydb and friends on Darwin.
+ - Build fixes and improvements
 
 2012-08-17: Version 0.5.0
  - Support for Mac OS X using IOKit
