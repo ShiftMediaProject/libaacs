@@ -209,14 +209,14 @@ static MKB *_get_hrl_mkb(MMC *mmc)
 {
     MKB     *mkb = NULL;
     uint8_t *data;
-    int      size;
+    int      mkb_size;
 
-    data = mmc_read_mkb(mmc, 0, &size);
+    data = mmc_read_mkb(mmc, 0, &mkb_size);
 
     /* check acquired hrl signature */
-    if (data && size > 0) {
-        if (_rl_verify_signature(data, size)) {
-            mkb = mkb_init(data, size);
+    if (data && mkb_size > 0) {
+        if (_rl_verify_signature(data, mkb_size)) {
+            mkb = mkb_init(data, mkb_size);
             DEBUG(DBG_AACS, "Partial hrl mkb read. Version: %d\n", mkb_version(mkb));
         } else {
             DEBUG(DBG_AACS | DBG_CRIT, "invalid host revocation list signature, not using it\n");
@@ -325,7 +325,7 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
 }
 
 static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk,
-                     pk_list *pk_list, cert_list *host_cert_list)
+                     pk_list *pkl, cert_list *host_cert_list)
 {
     int error_code;
 
@@ -342,7 +342,7 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk,
     }
 
     /* make sure we have media key */
-    error_code = _calc_mk(aacs, mk, pk_list);
+    error_code = _calc_mk(aacs, mk, pkl);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }
@@ -498,7 +498,6 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
                 hexstring_to_hex_array(aacs->uks + (16 * (aacs->num_uks - 1)), 16,
                                       ukcursor->key_pair.key);
 
-                char str[40];
                 DEBUG(DBG_AACS, "Unit key %d from keydb entry: %s\n",
                       aacs->num_uks,
                       print_hex(str, aacs->uks + (16 * (aacs->num_uks - 1)), 16));
@@ -842,12 +841,12 @@ const uint8_t *aacs_get_pmsn(AACS *aacs)
     return aacs->pmsn;
 }
 
-static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkb_version)
+static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkbv)
 {
     uint32_t len, version;
     void *data = NULL;
 
-    *num_records = *mkb_version = 0;
+    *num_records = *mkbv = 0;
 
     cache_get(type, &version, &len, NULL);
 
@@ -856,7 +855,7 @@ static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkb_versi
         if (cache_get(type, &version, &len, data) && len > 24) {
 
             if (_rl_verify_signature(data, len)) {
-                *mkb_version = version;
+                *mkbv = version;
                 *num_records = MKINT_BE32((uint8_t*)data + 20);
                 memmove(data, (uint8_t*)data + 24, len - 24);
 
@@ -878,14 +877,14 @@ static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkb_versi
     return data;
 }
 
-AACS_RL_ENTRY *aacs_get_hrl(int *num_records, int *mkb_version)
+AACS_RL_ENTRY *aacs_get_hrl(int *num_records, int *mkbv)
 {
-    return _get_rl("hrl", num_records, mkb_version);
+    return _get_rl("hrl", num_records, mkbv);
 }
 
-AACS_RL_ENTRY *aacs_get_drl(int *num_records, int *mkb_version)
+AACS_RL_ENTRY *aacs_get_drl(int *num_records, int *mkbv)
 {
-    return _get_rl("drl", num_records, mkb_version);
+    return _get_rl("drl", num_records, mkbv);
 }
 
 void aacs_select_title(AACS *aacs, uint32_t title)

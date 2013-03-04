@@ -210,8 +210,8 @@ static int _cert_is_revoked(const uint8_t *rl, size_t rl_size, const uint8_t *ce
         int entries = MKINT_BE32(rl + 4);
         int ii;
 
-        size_t len = 4 + 4 + 8 * entries + 40;
-        if (len > rl_size) {
+        size_t rec_len = 4 + 4 + 8 * entries + 40;
+        if (rec_len > rl_size) {
             DEBUG(DBG_MKB, "revocation list size mismatch\n");
             return -1;
         }
