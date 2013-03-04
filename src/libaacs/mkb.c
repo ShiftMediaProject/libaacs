@@ -43,7 +43,7 @@ static const uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
 
         if (mkb->buf[pos] == type) {
             DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (%p)\n", type,
-                  mkb->buf + pos);
+                  (void*)(mkb->buf + pos));
 
             return mkb->buf + pos;
         }
@@ -62,7 +62,7 @@ MKB *mkb_open(const char *path)
 
     f_name = str_printf("%s/AACS/MKB_RO.inf", path);
 
-    DEBUG(DBG_MKB, "Opening MKB %s... (%p)\n", f_name, mkb);
+    DEBUG(DBG_MKB, "Opening MKB %s...\n", f_name);
     fp = file_open(f_name, "rb");
 
     X_FREE(f_name);
@@ -76,14 +76,14 @@ MKB *mkb_open(const char *path)
 
         file_read(fp, mkb->buf, mkb->size);
 
-        DEBUG(DBG_MKB, "MKB size: %zd (%p)\n", mkb->size, mkb);
-        DEBUG(DBG_MKB, "MKB version: %d (%p)\n", mkb_version(mkb), mkb);
+        DEBUG(DBG_MKB, "MKB size: %zd\n", mkb->size);
+        DEBUG(DBG_MKB, "MKB version: %d\n", mkb_version(mkb));
 
         file_close(fp);
         return mkb;
     }
 
-    DEBUG(DBG_MKB, "Error opening MKB! (%p)\n", mkb);
+    DEBUG(DBG_MKB, "Error opening MKB!\n");
 
     return NULL;
 }

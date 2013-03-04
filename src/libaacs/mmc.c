@@ -180,21 +180,20 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
         int a = ioctl(mmc->fd, CDROM_SEND_PACKET, &cgc);
 
         char str[512];
-        DEBUG(DBG_MMC, "Send LINUX MMC cmd %s: (%p)\n",
-              print_hex(str, cmd, 16), mmc);
+        DEBUG(DBG_MMC, "Send LINUX MMC cmd %s:\n",
+              print_hex(str, cmd, 16));
         if (tx) {
-            DEBUG(DBG_MMC, "  Buffer: %s -> (%p)\n", print_hex(str, buf, tx>255?255:tx), mmc);
+            DEBUG(DBG_MMC, "  Buffer: %s ->\n", print_hex(str, buf, tx>255?255:tx));
         } else {
-            DEBUG(DBG_MMC, "  Buffer: %s <- (%p)\n", print_hex(str, buf, rx>255?255:rx), mmc);
+            DEBUG(DBG_MMC, "  Buffer: %s <-\n", print_hex(str, buf, rx>255?255:rx));
         }
 
         if (a >= 0) {
-            DEBUG(DBG_MMC, "  Send succeeded! [%d] (%p)\n", a, mmc);
+            DEBUG(DBG_MMC, "  Send succeeded! [%d]\n", a);
             return 1;
         }
 
-        DEBUG(DBG_MMC, "  Send failed! [%d] %s (%p)\n", a, strerror(errno),
-              mmc);
+        DEBUG(DBG_MMC, "  Send failed! [%d] %s\n", a, strerror(errno));
     }
 
 #elif defined(_WIN32)
@@ -246,12 +245,12 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
                         &dwBytesReturned, NULL)) {
 
         if (sptd_sb.sptd.ScsiStatus == 0 /* STATUS_GOOD */) {
-            DEBUG(DBG_MMC, "  Send succeeded! (%p)\n", mmc);
+            DEBUG(DBG_MMC, "  Send succeeded!\n");
             return 1;
         }
     }
 
-    DEBUG(DBG_MMC, "  Send failed! (%p)\n", mmc);
+    DEBUG(DBG_MMC, "  Send failed!\n");
 
 #elif defined(USE_IOKIT)
     SCSITaskInterface **task = NULL;
@@ -306,19 +305,18 @@ static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
         rc = (*task)->ExecuteTaskSync (task, &sense, &status, &sent);
 
         char str[512];
-        DEBUG(DBG_MMC, "Send SCSI MMC cmd %s: (%p)\n",
-              print_hex(str, cmd, 16), mmc);
+        DEBUG(DBG_MMC, "Send SCSI MMC cmd %s:\n", print_hex(str, cmd, 16));
         if (tx) {
-            DEBUG(DBG_MMC, "  Buffer: %s -> (%p)\n", print_hex(str, buf, tx>255?255:tx), mmc);
+            DEBUG(DBG_MMC, "  Buffer: %s ->\n", print_hex(str, buf, tx>255?255:tx));
         } else {
-            DEBUG(DBG_MMC, "  Buffer: %s <- (%p)\n", print_hex(str, buf, rx>255?255:rx), mmc);
+            DEBUG(DBG_MMC, "  Buffer: %s <-\n", print_hex(str, buf, rx>255?255:rx));
         }
 
         if (kIOReturnSuccess != rc || status != 0) {
-            DEBUG(DBG_MMC, "  Send failed! (%p)\n", mmc);
+            DEBUG(DBG_MMC, "  Send failed!\n");
             break;
         } else {
-            DEBUG(DBG_MMC, "  Send succeeded! (%p) sent = %lld status = %u. response = %x\n", mmc,
+            DEBUG(DBG_MMC, "  Send succeeded! sent = %lld status = %u. response = %x\n",
                   (unsigned long long) sent, status, sense.VALID_RESPONSE_CODE);
         }
 
@@ -347,7 +345,7 @@ static int _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr,
     memset(cmd, 0, sizeof(cmd));
     memset(buf, 0, len);
 
-    DEBUG(DBG_MMC, "MMC report key... (%p)\n", mmc);
+    DEBUG(DBG_MMC, "MMC report key...\n");
 
     cmd[0] = 0xa4;
     cmd[2] = (addr >> 24) & 0xff;
@@ -370,8 +368,7 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
     char str[512];
     memset(cmd, 0, sizeof(cmd));
 
-    DEBUG(DBG_MMC, "MMC send key [%d] %s... (%p)\n", len, print_hex(str, buf, len),
-          mmc);
+    DEBUG(DBG_MMC, "MMC send key [%d] %s...\n", len, print_hex(str, buf, len));
 
     cmd[0] = 0xa3;
     cmd[7] = 0x02;
@@ -379,7 +376,7 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
     cmd[9] = len & 0xff;
     cmd[10] = (agid << 6) | (format & 0x3f);
 
-    DEBUG(DBG_MMC, "cmd: %s (%p)\n", print_hex(str, cmd, 16), mmc);
+    DEBUG(DBG_MMC, "cmd: %s\n", print_hex(str, cmd, 16));
     return _mmc_send_cmd(mmc, cmd, buf, len, 0);
 }
 
@@ -764,7 +761,7 @@ static int iokit_find_interfaces (MMC *mmc, io_service_t service) {
         return -1;
     }
 
-    DEBUG(DBG_MMC, "Have an MMC interface (%p). Getting a SCSI task interface...\n", mmc->mmcInterface);
+    DEBUG(DBG_MMC, "Have an MMC interface (%p). Getting a SCSI task interface...\n", (void*)mmc->mmcInterface);
 
     mmc->taskInterface = (*mmc->mmcInterface)->GetSCSITaskDeviceInterface (mmc->mmcInterface);
     if (NULL == mmc->taskInterface) {
@@ -863,7 +860,7 @@ MMC *mmc_open(const char *path)
 #ifdef HAVE_REALPATH
     char *file_path = malloc(PATH_MAX);
     if (!file_path || !realpath(path, file_path)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Failed resolving path %s (%p)\n", path, mmc);
+        DEBUG(DBG_MMC | DBG_CRIT, "Failed resolving path %s\n", path);
         X_FREE(mmc);
         X_FREE(file_path);
         return NULL;
@@ -883,7 +880,7 @@ MMC *mmc_open(const char *path)
         file_path[path_len] = '\0';
     }
 
-    DEBUG(DBG_MMC, "Opening LINUX MMC drive %s... (%p)\n", file_path, mmc);
+    DEBUG(DBG_MMC, "Opening LINUX MMC drive %s...\n", file_path);
 
     if ((proc_mounts = setmntent("/proc/mounts", "r"))) {
         struct mntent* mount_entry;
@@ -892,23 +889,23 @@ MMC *mmc_open(const char *path)
             if (strcmp(mount_entry->mnt_dir, file_path) == 0) {
                 mmc->fd = open(mount_entry->mnt_fsname, O_RDONLY | O_NONBLOCK);
                 if (mmc->fd >= 0) {
-                    DEBUG(DBG_MMC, "LINUX MMC drive %s opened - fd: %d (%p)\n",
-                          mount_entry->mnt_fsname, mmc->fd, mmc);
+                    DEBUG(DBG_MMC, "LINUX MMC drive %s opened - fd: %d\n",
+                          mount_entry->mnt_fsname, mmc->fd);
                     break;
                 }
 
-                DEBUG(DBG_MMC, "Failed opening LINUX MMC drive %s mounted to %s (%p)\n",
-                      mount_entry->mnt_fsname, file_path, mmc);
+                DEBUG(DBG_MMC, "Failed opening LINUX MMC drive %s mounted to %s\n",
+                      mount_entry->mnt_fsname, file_path);
             }
         }
 
         endmntent(proc_mounts);
     } else {
-        DEBUG(DBG_MMC, "Error opening /proc/mounts (%p)\n", mmc);
+        DEBUG(DBG_MMC, "Error opening /proc/mounts\n");
     }
 
     if (mmc->fd < 0) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Error opening LINUX MMC drive mounted to %s (%p)\n", file_path, mmc);
+        DEBUG(DBG_MMC | DBG_CRIT, "Error opening LINUX MMC drive mounted to %s\n", file_path);
         X_FREE(mmc);
     }
 
@@ -918,7 +915,7 @@ MMC *mmc_open(const char *path)
     char drive[] = { path[0], ':', '\\', 0 };
     char volume[] = {'\\', '\\', '.', '\\', path[0], ':', 0};
 
-    DEBUG(DBG_MMC, "Opening Windows MMC drive %s... (%p)\n", drive, mmc);
+    DEBUG(DBG_MMC, "Opening Windows MMC drive %s...\n", drive);
 
     UINT type = GetDriveType(drive);
 
@@ -936,13 +933,13 @@ MMC *mmc_open(const char *path)
                              FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (mmc->fd == INVALID_HANDLE_VALUE) {
-            DEBUG(DBG_MMC, "Failed opening Windows MMC drive %s (%p)\n", volume, mmc);
+            DEBUG(DBG_MMC, "Failed opening Windows MMC drive %s\n", volume);
             X_FREE(mmc);
             return NULL;
         }
     }
 
-    DEBUG(DBG_MMC, "Windows MMC drive %s opened (%p)\n", volume, mmc);
+    DEBUG(DBG_MMC, "Windows MMC drive %s opened\n", volume);
 
 #else
 
@@ -990,7 +987,7 @@ void mmc_close(MMC *mmc)
         (void) iokit_mount (mmc);
 #endif
 
-        DEBUG(DBG_MMC, "Closed MMC drive (%p)\n", mmc);
+        DEBUG(DBG_MMC, "Closed MMC drive\n");
 
         X_FREE(mmc);
     }
@@ -1015,28 +1012,26 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
 
     memset(hks, 0, sizeof(hks));
 
-    DEBUG(DBG_MMC, "Reading VID from drive... (%p)\n", mmc);
+    DEBUG(DBG_MMC, "Reading VID from drive...\n");
 
     _mmc_invalidate_agids(mmc);
 
     if (!_mmc_report_agid(mmc, &agid)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive (%p)\n", mmc);
+        DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive\n");
         return MMC_ERROR;
     }
-    DEBUG(DBG_MMC, "Got AGID from drive: %d (%p)\n", agid, mmc);
+    DEBUG(DBG_MMC, "Got AGID from drive: %d\n", agid);
 
     if (!PATCHED_DRIVE) do {
 
         if (DEBUG_KEYS) {
-            DEBUG(DBG_MMC, "Host certificate   : %s (%p)\n", print_hex(str, host_cert,       92), mmc);
-            DEBUG(DBG_MMC, "Host nonce         : %s (%p)\n", print_hex(str, mmc->host_nonce, 20), mmc);
+            DEBUG(DBG_MMC, "Host certificate   : %s\n", print_hex(str, host_cert,       92));
+            DEBUG(DBG_MMC, "Host nonce         : %s\n", print_hex(str, mmc->host_nonce, 20));
         }
 
         // send host cert + nonce
         if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, host_cert)) {
-            DEBUG(DBG_MMC | DBG_CRIT,
-                  "Host key / Certificate has been revoked by your drive ? "
-                  "(%p)\n", mmc);
+            DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate has been revoked by your drive ?\n");
             error_code = MMC_ERROR_CERT_REVOKED;
             break;
         }
@@ -1044,31 +1039,30 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
         // receive mmc cert + nonce
         if (!_mmc_read_drive_cert(mmc, agid, dn, dc)) {
             DEBUG(DBG_MMC | DBG_CRIT,
-                  "Drive doesn't give its certificate (%p)\n", mmc);
+                  "Drive doesn't give its certificate\n");
             break;
         }
 
         if (DEBUG_KEYS) {
-            DEBUG(DBG_MMC, "Drive certificate   : %s (%p)\n", print_hex(str, dc, 92), mmc);
-            DEBUG(DBG_MMC, "Drive nonce         : %s (%p)\n", print_hex(str, dn, 20), mmc);
+            DEBUG(DBG_MMC, "Drive certificate   : %s\n", print_hex(str, dc, 92));
+            DEBUG(DBG_MMC, "Drive nonce         : %s\n", print_hex(str, dn, 20));
         }
 
         // verify drive certificate
         if (!crypto_aacs_verify_drive_cert(dc)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid (%p)\n", mmc);
+            DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
             break;
         }
 
         // receive mmc key
         if (!_mmc_read_drive_key(mmc, agid, dkp, dks)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its drive key (%p)\n",
-                  mmc);
+            DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its drive key\n");
             break;
         }
 
         if (DEBUG_KEYS) {
-            DEBUG(DBG_MMC, "Drive key point     : %s (%p)\n", print_hex(str, dkp, 40), mmc);
-            DEBUG(DBG_MMC, "Drive key signature : %s (%p)\n", print_hex(str, dks, 40), mmc);
+            DEBUG(DBG_MMC, "Drive key point     : %s\n", print_hex(str, dkp, 40));
+            DEBUG(DBG_MMC, "Drive key signature : %s\n", print_hex(str, dks, 40));
         }
 
         // verify drive signature
@@ -1089,28 +1083,26 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
 
         // send signed host key and point
         if (!_mmc_send_host_key(mmc, agid, mmc->host_key_point, hks)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Error sending host signature (%p)\n",
-                  mmc);
-            DEBUG(DBG_MMC,  "Host key signature : %s (%p)\n",
-                  print_hex(str, hks, 40), mmc);
+            DEBUG(DBG_MMC | DBG_CRIT, "Error sending host signature\n");
+            DEBUG(DBG_MMC,  "Host key signature : %s\n", print_hex(str, hks, 40));
             break;
         }
 
     } while (0);
 
     if (_mmc_read_vid(mmc, agid, vid, mac)) {
-        DEBUG(DBG_MMC, "VID: %s (%p)\n", print_hex(str, vid, 16), mmc);
-        DEBUG(DBG_MMC, "MAC: %s (%p)\n", print_hex(str, mac, 16), mmc);
+        DEBUG(DBG_MMC, "VID: %s\n", print_hex(str, vid, 16));
+        DEBUG(DBG_MMC, "MAC: %s\n", print_hex(str, mac, 16));
         /* TODO: verify MAC */
 
         /* read pmsn */
         if (_mmc_read_pmsn(mmc, agid, pmsn, mac)) {
-            DEBUG(DBG_MMC, "PMSN: %s (%p)\n", print_hex(str, pmsn, 16), mmc);
-            DEBUG(DBG_MMC, "MAC:  %s (%p)\n", print_hex(str, mac,  16), mmc);
+            DEBUG(DBG_MMC, "PMSN: %s\n", print_hex(str, pmsn, 16));
+            DEBUG(DBG_MMC, "MAC:  %s\n", print_hex(str, mac,  16));
             /* TODO: verify MAC */
         } else {
             memset(pmsn, 0, 16);
-            DEBUG(DBG_MMC | DBG_CRIT, "Unable to read PMSN from drive! (%p)\n", mmc);
+            DEBUG(DBG_MMC | DBG_CRIT, "Unable to read PMSN from drive!\n");
         }
 
         _mmc_invalidate_agid(mmc, agid);
@@ -1118,7 +1110,7 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
         return MMC_SUCCESS;
     }
 
-    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive! (%p)\n", mmc);
+    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive!\n");
 
     _mmc_invalidate_agid(mmc, agid);
 

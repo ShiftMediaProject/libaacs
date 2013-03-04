@@ -750,9 +750,9 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
     *error_code = _calc_uks(aacs, configfile_path);
 
     if (*error_code == AACS_SUCCESS) {
-        DEBUG(DBG_AACS, "AACS initialized! (%p)\n", aacs);
+        DEBUG(DBG_AACS, "AACS initialized!\n");
     } else {
-        DEBUG(DBG_AACS, "Failed to initialize AACS! (%p)\n", aacs);
+        DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
     }
 
     return aacs;
@@ -767,7 +767,7 @@ void aacs_close(AACS *aacs)
     X_FREE(aacs->cps_units);
     X_FREE(aacs->path);
 
-    DEBUG(DBG_AACS, "AACS destroyed! (%p)\n", aacs);
+    DEBUG(DBG_AACS, "AACS destroyed!\n");
 
     X_FREE(aacs);
 }
@@ -793,7 +793,7 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
         return 1;
     }
 
-    DEBUG(DBG_AACS, "Failed decrypting unit [6144 bytes] (%p)\n", aacs);
+    DEBUG(DBG_AACS, "Failed decrypting unit [6144 bytes]\n");
 
     return 0;
 }
@@ -894,22 +894,22 @@ void aacs_select_title(AACS *aacs, uint32_t title)
     }
 
     if (!aacs->cps_units) {
-        DEBUG(DBG_AACS|DBG_CRIT, "aacs_select_title(): CPS units not read ! (%p)\n", aacs);
+        DEBUG(DBG_AACS|DBG_CRIT, "aacs_select_title(): CPS units not read !\n");
         return;
     }
 
     if (title == 0xffff) {
         /* first play */
         aacs->current_cps_unit = aacs->cps_units[0];
-        DEBUG(DBG_AACS, "aacs_set_title(first_play): CPS unit %d (%p)\n", aacs->current_cps_unit, aacs);
+        DEBUG(DBG_AACS, "aacs_set_title(first_play): CPS unit %d\n", aacs->current_cps_unit);
         return;
     }
 
     if (title <= aacs->num_titles) {
         aacs->current_cps_unit = aacs->cps_units[title + 1];
-        DEBUG(DBG_AACS, "aacs_set_title(%d): CPS unit %d (%p)\n", title, aacs->current_cps_unit, aacs);
+        DEBUG(DBG_AACS, "aacs_set_title(%d): CPS unit %d\n", title, aacs->current_cps_unit);
         return;
     }
 
-    DEBUG(DBG_AACS|DBG_CRIT, "aacs_set_title(%d): invalid title ! (%p)\n", title, aacs);
+    DEBUG(DBG_AACS|DBG_CRIT, "aacs_set_title(%d): invalid title !\n", title);
 }
