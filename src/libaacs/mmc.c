@@ -2,7 +2,7 @@
 /*
  * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
- * Copyright (C) 2010       npzacs
+ * Copyright (C) 2010-2013  npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -146,6 +146,8 @@ struct mmc {
     uint8_t host_nonce[20];
     uint8_t host_key[20];
     uint8_t host_key_point[40];
+
+    uint8_t bus_encryption;
 };
 
 static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
@@ -511,6 +513,8 @@ static int _mmc_check_aacs(MMC *mmc)
             DEBUG(DBG_MMC, "  Binding Nonce block count: %d\n", buf[5+8]);
             DEBUG(DBG_MMC, "  Bus encryption support: %d\n", buf[4+8] & 2);
             DEBUG(DBG_MMC, "  AGID count: %d\n", buf[6+8] & 0xf);
+
+            mmc->bus_encryption = !!(buf[4+8] & 2);
 
             return buf[2+8] & 1;
         }
@@ -955,6 +959,10 @@ MMC *mmc_open(const char *path)
         return NULL;
     }
 #endif
+
+    if (mmc && mmc->bus_encryption) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Bus encryption not implemented. Your drive requires bus encryption.\n");
+    }
 
     return mmc;
 }
