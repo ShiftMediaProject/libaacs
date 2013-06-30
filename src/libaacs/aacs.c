@@ -262,10 +262,10 @@ static MKB *_get_hrl_mkb(MMC *mmc)
     return mkb;
 }
 
-static int _read_vid(AACS *aacs, cert_list *hcl)
+static int _read_vid(AACS *aacs, cert_list *hcl, int force_mmc)
 {
     /* Use VID given in config file if available */
-    if (memcmp(aacs->vid, empty_key, 16)) {
+    if (!force_mmc && memcmp(aacs->vid, empty_key, 16)) {
         return AACS_SUCCESS;
     }
 
@@ -350,7 +350,7 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk,
     }
 
     /* acquire VID */
-    error_code = _read_vid(aacs, host_cert_list);
+    error_code = _read_vid(aacs, host_cert_list, 0);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }
@@ -828,7 +828,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
 
         config_file *cf = keydbcfg_config_load(NULL);
         if (cf) {
-            _read_vid(aacs, cf->host_cert_list);
+            _read_vid(aacs, cf->host_cert_list, 0);
 
             keydbcfg_config_file_close(cf);
         }
@@ -847,7 +847,7 @@ const uint8_t *aacs_get_pmsn(AACS *aacs)
     if (!memcmp(aacs->pmsn, empty_key, 16)) {
         config_file *cf = keydbcfg_config_load(NULL);
         if (cf) {
-            _read_vid(aacs, cf->host_cert_list);
+            _read_vid(aacs, cf->host_cert_list, 1);
 
             keydbcfg_config_file_close(cf);
         }
