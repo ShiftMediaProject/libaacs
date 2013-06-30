@@ -208,6 +208,12 @@ static int _str_is_hex_string(const char *str, int len)
         }
     }
 
+    /* check end */
+    if (isxdigit(str[ii])) {
+        //DEBUG(DBG_AACS, "Invalid hex string (too long): %s", str);
+        return 0;
+    }
+
     return 1;
 }
 
