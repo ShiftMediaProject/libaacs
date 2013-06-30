@@ -306,6 +306,8 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
             case MMC_SUCCESS:
                 mkb_close(hrl_mkb);
                 mmc_close(mmc);
+                /* cache vid */
+                keycache_save("vid", aacs->disc_id, aacs->vid, 16);
                 return AACS_SUCCESS;
             case MMC_ERROR_CERT_REVOKED:
                 error_code = AACS_ERROR_CERT_REVOKED;
@@ -818,6 +820,12 @@ const uint8_t *aacs_get_disc_id(AACS *aacs)
 const uint8_t *aacs_get_vid(AACS *aacs)
 {
     if (!memcmp(aacs->vid, empty_key, 16)) {
+        /* get cached vid */
+        if (keycache_find("vid", aacs->disc_id, aacs->vid, 16)) {
+            DEBUG(DBG_AACS, "Using cached VID\n");
+            return aacs->vid;
+        }
+
         config_file *cf = keydbcfg_config_load(NULL);
         if (cf) {
             _read_vid(aacs, cf->host_cert_list);
@@ -830,7 +838,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
 
 const uint8_t *aacs_get_pmsn(AACS *aacs)
 {
-    if (!memcmp(aacs->vid, empty_key, 16)) {
+    if (!memcmp(aacs->pmsn, empty_key, 16)) {
         config_file *cf = keydbcfg_config_load(NULL);
         if (cf) {
             _read_vid(aacs, cf->host_cert_list);
