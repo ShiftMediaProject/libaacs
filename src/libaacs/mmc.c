@@ -1132,7 +1132,7 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
 
         } else {
             memset(pmsn, 0, 16);
-            DEBUG(DBG_MMC | DBG_CRIT, "Unable to read PMSN from drive!\n");
+            DEBUG(DBG_MMC, "Unable to read PMSN from drive!\n");
         }
 
         _mmc_invalidate_agid(mmc, agid);
