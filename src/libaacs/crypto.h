@@ -28,6 +28,8 @@
 AACS_PRIVATE int  crypto_init(void);
 AACS_PRIVATE void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk,
                                uint8_t *pk);   // returns left, centre, right keys
+AACS_PRIVATE void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac);
+
 AACS_PRIVATE void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
                                    uint8_t *signature,
                                    const uint8_t *nonce, const uint8_t *point);
@@ -41,5 +43,6 @@ AACS_PRIVATE int  crypto_aacs_verify_drive_cert(const uint8_t *cert);
 
 AACS_PRIVATE void crypto_create_host_key_pair(uint8_t *key, uint8_t *key_point);
 AACS_PRIVATE void crypto_create_nonce(uint8_t *buf, size_t len);
+AACS_PRIVATE void crypto_create_bus_key(const uint8_t *priv_key, const uint8_t *drive_key_point, unsigned char *bus_key);
 
 #endif /* CRYPTO_H_ */

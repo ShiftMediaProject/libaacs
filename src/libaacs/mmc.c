@@ -1014,7 +1014,7 @@ static int _verify_signature(const uint8_t *cert, const uint8_t *signature,
 
 int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *vid, uint8_t *pmsn)
 {
-    uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40], mac[16];
+    uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40], mac[16], calc_mac[16], bus_key[16];
     char str[512];
     int error_code = MMC_ERROR;
 
@@ -1096,18 +1096,40 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
             break;
         }
 
+        // calculate bus key
+        crypto_create_bus_key(mmc->host_key, dkp, bus_key);
+        if (DEBUG_KEYS) {
+            DEBUG(DBG_MMC, "Bus Key             : %s\n", print_hex(str, bus_key, 16));
+        }
+
+
     } while (0);
 
     if (_mmc_read_vid(mmc, agid, vid, mac)) {
-        DEBUG(DBG_MMC, "VID: %s\n", print_hex(str, vid, 16));
-        DEBUG(DBG_MMC, "MAC: %s\n", print_hex(str, mac, 16));
-        /* TODO: verify MAC */
+        if (DEBUG_KEYS) {
+            DEBUG(DBG_MMC, "VID                 : %s\n", print_hex(str, vid, 16));
+            DEBUG(DBG_MMC, "VID MAC             : %s\n", print_hex(str, mac, 16));
+        }
+
+        /* verify MAC */
+        crypto_aes_cmac_16(vid, bus_key, calc_mac);
+        if (memcmp(calc_mac, mac, 16)) {
+            DEBUG(DBG_MMC | DBG_CRIT, "VID MAC is incorrect. This means this Volume ID is not correct.\n");
+        }
 
         /* read pmsn */
         if (_mmc_read_pmsn(mmc, agid, pmsn, mac)) {
-            DEBUG(DBG_MMC, "PMSN: %s\n", print_hex(str, pmsn, 16));
-            DEBUG(DBG_MMC, "MAC:  %s\n", print_hex(str, mac,  16));
-            /* TODO: verify MAC */
+            if (DEBUG_KEYS) {
+                DEBUG(DBG_MMC, "PMSN                : %s\n", print_hex(str, pmsn, 16));
+                DEBUG(DBG_MMC, "PMSN MAC            : %s\n", print_hex(str, mac,  16));
+            }
+
+            /* verify CMAC */
+            crypto_aes_cmac_16(vid, bus_key, calc_mac);
+            if (memcmp(calc_mac, mac, 16)) {
+                DEBUG(DBG_MMC | DBG_CRIT, "PMSN MAC is incorrect. This means PMSN is not correct.\n");
+            }
+
         } else {
             memset(pmsn, 0, 16);
             DEBUG(DBG_MMC | DBG_CRIT, "Unable to read PMSN from drive!\n");

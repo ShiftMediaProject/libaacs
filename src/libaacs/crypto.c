@@ -1,7 +1,7 @@
 /*
  * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
- * Copyright (C) 2010       npzacs
+ * Copyright (C) 2010-2013  npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -150,6 +150,67 @@ void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
         _aesg3(D, rsubk, 2);
     }
 }
+
+/*
+ * AES CMAC
+ */
+
+static void _shl_128(unsigned char *dst, const unsigned char *src)
+{
+    uint8_t overflow = 0;
+    int i;
+
+    for (i = 15; i >= 0; i--) {
+        dst[i] = (src[i] << 1) | overflow;
+	overflow = src[i] >> 7;
+    }
+}
+
+static void _cmac_key(const unsigned char *aes_key, unsigned char *k1, unsigned char *k2)
+{
+    uint8_t key[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    gcry_cipher_hd_t gcry_h;
+
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+    gcry_cipher_setkey(gcry_h, aes_key, 16);
+    gcry_cipher_encrypt (gcry_h, key, 16, NULL, 0);
+    gcry_cipher_close(gcry_h);
+
+    _shl_128(k1, key);
+    if (key[0] & 0x80) {
+        k1[15] ^= 0x87;
+    }
+
+    _shl_128(k2, k1);
+    if (k1[0] & 0x80) {
+        k2[15] ^= 0x87;
+    }
+}
+
+void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac)
+{
+    gcry_cipher_hd_t gcry_h;
+    uint8_t k1[16], k2[16];
+    unsigned ii;
+
+    /*
+     * Somplified version of AES CMAC. Spports only 16-byte input data.
+     */
+
+    /* generate CMAC keys */
+    _cmac_key(aes_key, k1, k2);
+
+    memcpy(cmac, data, 16);
+    for (ii = 0; ii < 16; ii++) {
+        cmac[ii] ^= k1[ii];
+    }
+ 
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+    gcry_cipher_setkey(gcry_h, aes_key, 16);
+    gcry_cipher_encrypt (gcry_h, cmac, 16, 0, 16);
+    gcry_cipher_close(gcry_h);
+}
+
 
 #if defined(HAVE_STRERROR_R) && defined(HAVE_LIBGPG_ERROR)
 #define LOG_GCRY_ERROR(msg, func, err)                                  \
@@ -501,6 +562,59 @@ void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
 void crypto_create_nonce(uint8_t *buf, size_t len)
 {
     gcry_create_nonce(buf, len);
+}
+
+void crypto_create_bus_key(const uint8_t *priv_key, const uint8_t *drive_key_point, unsigned char *bus_key)
+{
+    /* init AACS curve */
+
+    elliptic_curve_t ec;
+    _aacs_curve_init(&ec);
+
+    /* init ec context */
+
+    mpi_ec_t ctx = _gcry_mpi_ec_init (ec.p, ec.a);
+
+    /* parse input data */
+
+    gcry_mpi_t mpi_priv_key = NULL;
+    gcry_mpi_scan (&mpi_priv_key, GCRYMPI_FMT_USG, priv_key, 20, NULL);
+
+    mpi_point_t Q;
+    point_init (&Q);
+    gcry_mpi_scan (&Q.x, GCRYMPI_FMT_USG, drive_key_point,      20, NULL);
+    gcry_mpi_scan (&Q.y, GCRYMPI_FMT_USG, drive_key_point + 20, 20, NULL);
+    Q.z = mpi_alloc_set_ui(1);
+
+    /* calculate bus key point: multiply drive key point with private key */
+
+    mpi_point_t bus_key_point;
+    point_init (&bus_key_point);
+    _gcry_mpi_ec_mul_point (&bus_key_point, mpi_priv_key, &Q, ctx);
+
+    /* bus key is lowest 128 bits of bus_key_point x-coordinate */
+
+    /* get affine coordinates (Hv) */
+    gcry_mpi_t q_x = mpi_new(0);
+    gcry_mpi_t q_y = mpi_new(0);
+    _gcry_mpi_ec_get_affine (q_x, q_y, &bus_key_point, ctx);
+
+    /* convert to binary */
+    uint8_t q_x_bin[100];
+    size_t n = 0;
+    gcry_mpi_print (GCRYMPI_FMT_USG, q_x_bin, sizeof(q_x_bin), &n, q_x);
+
+    memcpy(bus_key, q_x_bin + n - 16, 16);
+
+    /* cleanup */
+
+    _gcry_mpi_ec_free (ctx);
+    _curve_free(&ec);
+    mpi_free(mpi_priv_key);
+    point_free(&Q);
+    point_free(&bus_key_point);
+    mpi_free(q_x);
+    mpi_free(q_y);
 }
 
 void crypto_create_host_key_pair(uint8_t *host_key, uint8_t *host_key_point)
