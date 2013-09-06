@@ -1,3 +1,5 @@
+ - Bus encryption support
+
 2013-03-04: Version 0.6.0
  - Added reading of PMSN (Pre-recorded Media Serial Number)
  - Fix resource leak

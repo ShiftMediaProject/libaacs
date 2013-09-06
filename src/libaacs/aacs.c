@@ -69,6 +69,7 @@ struct aacs {
     /* bus encryption */
     int       bee;        /* bus encryption enabled flag in content certificate */
     int       bec;        /* bus encryption capable flag in drive certificate */
+    uint8_t   read_data_key[16];
 };
 
 static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -330,6 +331,53 @@ static int _read_vid(AACS *aacs, cert_list *hcl, int force_mmc)
     return error_code;
 }
 
+static int _read_read_data_key(AACS *aacs, cert_list *hcl)
+{
+    MMC* mmc = NULL;
+    if (!(mmc = mmc_open(aacs->path))) {
+        return AACS_ERROR_MMC_OPEN;
+    }
+
+    int error_code = AACS_ERROR_NO_CERT;
+
+    for (;hcl && hcl->host_priv_key && hcl->host_cert; hcl = hcl->next) {
+
+        char tmp_str[2*92+1];
+        uint8_t priv_key[20], cert[92];
+        hexstring_to_hex_array(priv_key, sizeof(priv_key), hcl->host_priv_key);
+        hexstring_to_hex_array(cert,     sizeof(cert),     hcl->host_cert);
+
+        if (!crypto_aacs_verify_host_cert(cert)) {
+            DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
+                  print_hex(tmp_str, cert, 92));
+            continue;
+        }
+
+        DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
+              print_hex(tmp_str, cert + 4, 6));
+
+        int mmc_result = mmc_read_data_keys(mmc, priv_key, cert, aacs->read_data_key, NULL);
+
+        switch (mmc_result) {
+            case MMC_SUCCESS:
+                mmc_close(mmc);
+                return AACS_SUCCESS;
+            case MMC_ERROR_CERT_REVOKED:
+                error_code = AACS_ERROR_CERT_REVOKED;
+                break;
+            case MMC_ERROR:
+            default:
+                error_code = AACS_ERROR_MMC_FAILURE;
+                break;
+        }
+    }
+
+    mmc_close(mmc);
+
+    DEBUG(DBG_AACS, "Error reading read data key!\n");
+    return error_code;
+}
+
 static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk,
                      pk_list *pkl, cert_list *host_cert_list)
 {
@@ -529,7 +577,7 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
         }
 }
 
-static int _calc_uks(AACS *aacs, const char *configfile_path)
+static int _calc_uks(AACS *aacs, config_file *cf)
 {
     AACS_FILE_H *fp = NULL;
     uint8_t  buf[16];
@@ -537,26 +585,18 @@ static int _calc_uks(AACS *aacs, const char *configfile_path)
     unsigned int i;
     int error_code;
 
-    config_file *cf = NULL;
     uint8_t mk[16] = {0}, vuk[16] = {0};
-
-    cf = keydbcfg_config_load(configfile_path);
-    if (!cf) {
-        return AACS_ERROR_NO_CONFIG;
-    }
 
     DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
     _find_config_entry(aacs, cf->list, mk, vuk);
 
     /* Skip if retrieved from config file */
     if (aacs->uks) {
-        keydbcfg_config_file_close(cf);
         return AACS_SUCCESS;
     }
 
     /* Make sure we have VUK */
     error_code = _calc_vuk(aacs, mk, vuk, cf->pkl, cf->host_cert_list);
-    keydbcfg_config_file_close(cf);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }
@@ -770,6 +810,22 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
     return 0;
 }
 
+#define SECTOR_LEN 2048
+static void _decrypt_bus(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf)
+{
+    gcry_cipher_hd_t gcry_h;
+    uint8_t iv[] = "\x0b\xa0\xf8\xdd\xfe\xa6\x1f\xb3"
+                   "\xd8\xdf\x9f\x56\x6a\x05\x0f\x78";
+
+    memcpy(out_buf, in_buf, 16); /* first 16 bytes are plain */
+
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
+    gcry_cipher_setkey(gcry_h, aacs->read_data_key, 16);
+    gcry_cipher_setiv(gcry_h, iv, 16);
+    gcry_cipher_decrypt(gcry_h, out_buf + 16, SECTOR_LEN - 16, in_buf + 16, SECTOR_LEN - 16);
+    gcry_cipher_close(gcry_h);
+}
+
 void aacs_get_version(int *major, int *minor, int *micro)
 {
     *major = AACS_VERSION_MAJOR;
@@ -803,6 +859,7 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
     }
 
     AACS *aacs = calloc(1, sizeof(AACS));
+    config_file *cf;
 
     aacs->path = str_printf("%s", path);
 
@@ -812,17 +869,38 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
         return NULL;
     }
 
+    cf = keydbcfg_config_load(configfile_path);
+    if (!cf) {
+        *error_code = AACS_ERROR_NO_CONFIG;
+        aacs_close(aacs);
+        return NULL;
+    }
+
     DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
-    *error_code = _calc_uks(aacs, configfile_path);
+    *error_code = _calc_uks(aacs, cf);
+    if (*error_code != AACS_SUCCESS) {
+        DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
+        keydbcfg_config_file_close(cf);
+        aacs_close(aacs);
+        return NULL;
+    }
 
     aacs->bee = _get_bus_encryption_enabled(path);
     aacs->bec = _get_bus_encryption_capable(path);
 
-    if (*error_code == AACS_SUCCESS) {
-        DEBUG(DBG_AACS, "AACS initialized!\n");
-    } else {
-        DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
+    if (aacs->bee && aacs->bec) {
+        *error_code = _read_read_data_key(aacs, cf->host_cert_list);
+        if (*error_code != AACS_SUCCESS) {
+            DEBUG(DBG_AACS | DBG_CRIT, "Unable to initialize bus encryption required by drive and disc\n");
+            keydbcfg_config_file_close(cf);
+            aacs_close(aacs);
+            return NULL;
+        }
     }
+
+    keydbcfg_config_file_close(cf);
+
+    DEBUG(DBG_AACS, "AACS initialized!\n");
 
     return aacs;
 }
@@ -844,17 +922,24 @@ void aacs_close(AACS *aacs)
 int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
 {
     uint8_t out_buf[ALIGNED_UNIT_LEN];
+    int i;
 
     if (!(buf[0] & 0xc0)) {
         // TP_extra_header Copy_permission_indicator == 0, unit is not encrypted
         return 1;
     }
 
+    if (aacs->bee && aacs->bec) {
+        for (i = 0; i < ALIGNED_UNIT_LEN; i += SECTOR_LEN) {
+            _decrypt_bus(aacs, out_buf + i, buf + i);
+        }
+        memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
+    }
+
     if (_decrypt_unit(aacs, out_buf, buf, aacs->current_cps_unit)) {
         memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
 
         // Clear copy_permission_indicator bits
-        int i;
         for (i = 0; i < 6144; i += 192) {
             buf[i] &= ~0xc0;
         }

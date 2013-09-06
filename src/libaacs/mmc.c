@@ -978,10 +978,6 @@ MMC *mmc_open(const char *path)
     }
 #endif
 
-    if (mmc && mmc->bus_encryption) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Bus encryption not implemented. Your drive requires bus encryption.\n");
-    }
-
     return mmc;
 }
 
