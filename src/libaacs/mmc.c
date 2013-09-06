@@ -601,6 +601,19 @@ static int _mmc_read_pmsn(MMC *mmc, uint8_t agid, uint8_t *pmsn,
     return 0;
 }
 
+static int _mmc_read_data_keys(MMC *mmc, uint8_t agid, uint8_t *read_data_key, uint8_t *write_data_key)
+{
+    uint8_t buf[36];
+
+    if (_mmc_report_disc_structure(mmc, agid, 0x84, 0, 0, buf, 36)) {
+        memcpy(read_data_key, buf + 4, 16);
+        memcpy(write_data_key, buf + 20, 16);
+        return 1;
+    }
+
+    return 0;
+}
+
 #ifdef USE_IOKIT
 static int get_mounted_device_from_path (MMC *mmc, const char *path) {
   struct statfs stat_info;
@@ -1152,6 +1165,53 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
     }
 
     DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive!\n");
+
+    _mmc_invalidate_agid(mmc, agid);
+
+    return MMC_ERROR;
+}
+
+int mmc_read_data_keys(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *read_data_key, uint8_t *write_data_key)
+{
+    uint8_t agid = 0, bus_key[16], encrypted_read_data_key[16], encrypted_write_data_key[16];
+    char str[512];
+    int error_code;
+
+    DEBUG(DBG_MMC, "Reading data keys from drive...\n");
+
+    _mmc_invalidate_agids(mmc);
+
+    if (!_mmc_report_agid(mmc, &agid)) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive\n");
+        return MMC_ERROR;
+    }
+    DEBUG(DBG_MMC, "Got AGID from drive: %d\n", agid);
+
+    error_code = _mmc_aacs_auth(mmc, host_priv_key, host_cert, bus_key);
+    if (error_code) {
+        return error_code;
+    }
+
+    if (_mmc_read_data_keys(mmc, agid, encrypted_read_data_key, encrypted_write_data_key)) {
+        if (read_data_key) {
+            crypto_aes128d(bus_key, encrypted_read_data_key, read_data_key);
+            if (DEBUG_KEYS) {
+                DEBUG(DBG_MMC, "READ DATA KEY       : %s\n", print_hex(str, read_data_key, 16));
+            }
+        }
+        if (write_data_key) {
+            crypto_aes128d(bus_key, encrypted_write_data_key, write_data_key);
+            if (DEBUG_KEYS) {
+                DEBUG(DBG_MMC, "WRITE DATA KEY      : %s\n", print_hex(str, write_data_key, 16));
+            }
+        }
+
+        _mmc_invalidate_agid(mmc, agid);
+
+        return MMC_SUCCESS;
+    }
+
+    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read data keys from drive!\n");
 
     _mmc_invalidate_agid(mmc, agid);
 
