@@ -1012,13 +1012,92 @@ static int _verify_signature(const uint8_t *cert, const uint8_t *signature,
     return crypto_aacs_verify(cert, signature, data, 60);
 }
 
-int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *vid, uint8_t *pmsn)
+static int _mmc_aacs_auth(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *bus_key)
 {
-    uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40], mac[16], calc_mac[16], bus_key[16];
+    uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40];
     char str[512];
-    int error_code = MMC_ERROR;
 
     memset(hks, 0, sizeof(hks));
+
+    if (DEBUG_KEYS) {
+        DEBUG(DBG_MMC, "Host certificate   : %s\n", print_hex(str, host_cert,       92));
+        DEBUG(DBG_MMC, "Host nonce         : %s\n", print_hex(str, mmc->host_nonce, 20));
+    }
+
+    // send host cert + nonce
+    if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, host_cert)) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate has been revoked by your drive ?\n");
+        return MMC_ERROR_CERT_REVOKED;
+    }
+
+    // receive mmc cert + nonce
+    if (!_mmc_read_drive_cert(mmc, agid, dn, dc)) {
+        DEBUG(DBG_MMC | DBG_CRIT,
+              "Drive doesn't give its certificate\n");
+        return MMC_ERROR;
+    }
+
+    if (DEBUG_KEYS) {
+        DEBUG(DBG_MMC, "Drive certificate   : %s\n", print_hex(str, dc, 92));
+        DEBUG(DBG_MMC, "Drive nonce         : %s\n", print_hex(str, dn, 20));
+    }
+
+    // verify drive certificate
+    if (!crypto_aacs_verify_drive_cert(dc)) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
+        return MMC_ERROR;
+    }
+
+    // receive mmc key
+    if (!_mmc_read_drive_key(mmc, agid, dkp, dks)) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its drive key\n");
+        return MMC_ERROR;
+    }
+
+    if (DEBUG_KEYS) {
+        DEBUG(DBG_MMC, "Drive key point     : %s\n", print_hex(str, dkp, 40));
+        DEBUG(DBG_MMC, "Drive key signature : %s\n", print_hex(str, dks, 40));
+    }
+
+    // verify drive signature
+    if (!_verify_signature(dc, dks, mmc->host_nonce, dkp)) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Drive signature is invalid\n");
+        return MMC_ERROR;
+    }
+
+    // sign
+    crypto_aacs_sign(host_cert, host_priv_key, hks, dn,
+                     mmc->host_key_point);
+
+    // verify own signature
+    if (!_verify_signature(host_cert, hks, dn, mmc->host_key_point)) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Created signature is invalid ?\n");
+        return MMC_ERROR;
+    }
+
+    // send signed host key and point
+    if (!_mmc_send_host_key(mmc, agid, mmc->host_key_point, hks)) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Error sending host signature\n");
+        DEBUG(DBG_MMC,  "Host key signature : %s\n", print_hex(str, hks, 40));
+        return MMC_ERROR;
+    }
+
+    // calculate bus key
+    if (bus_key) {
+        crypto_create_bus_key(mmc->host_key, dkp, bus_key);
+        if (DEBUG_KEYS) {
+            DEBUG(DBG_MMC, "Bus Key             : %s\n", print_hex(str, bus_key, 16));
+        }
+    }
+
+    return MMC_SUCCESS;
+}
+
+int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *vid, uint8_t *pmsn)
+{
+    uint8_t agid = 0, mac[16], calc_mac[16], bus_key[16];
+    char str[512];
+    int error_code;
 
     DEBUG(DBG_MMC, "Reading VID from drive...\n");
 
@@ -1031,78 +1110,10 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
     DEBUG(DBG_MMC, "Got AGID from drive: %d\n", agid);
 
     if (!PATCHED_DRIVE) do {
-
-        if (DEBUG_KEYS) {
-            DEBUG(DBG_MMC, "Host certificate   : %s\n", print_hex(str, host_cert,       92));
-            DEBUG(DBG_MMC, "Host nonce         : %s\n", print_hex(str, mmc->host_nonce, 20));
-        }
-
-        // send host cert + nonce
-        if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, host_cert)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate has been revoked by your drive ?\n");
-            error_code = MMC_ERROR_CERT_REVOKED;
-            break;
-        }
-
-        // receive mmc cert + nonce
-        if (!_mmc_read_drive_cert(mmc, agid, dn, dc)) {
-            DEBUG(DBG_MMC | DBG_CRIT,
-                  "Drive doesn't give its certificate\n");
-            break;
-        }
-
-        if (DEBUG_KEYS) {
-            DEBUG(DBG_MMC, "Drive certificate   : %s\n", print_hex(str, dc, 92));
-            DEBUG(DBG_MMC, "Drive nonce         : %s\n", print_hex(str, dn, 20));
-        }
-
-        // verify drive certificate
-        if (!crypto_aacs_verify_drive_cert(dc)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
-            break;
-        }
-
-        // receive mmc key
-        if (!_mmc_read_drive_key(mmc, agid, dkp, dks)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its drive key\n");
-            break;
-        }
-
-        if (DEBUG_KEYS) {
-            DEBUG(DBG_MMC, "Drive key point     : %s\n", print_hex(str, dkp, 40));
-            DEBUG(DBG_MMC, "Drive key signature : %s\n", print_hex(str, dks, 40));
-        }
-
-        // verify drive signature
-        if (!_verify_signature(dc, dks, mmc->host_nonce, dkp)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Drive signature is invalid\n");
-            break;
-        }
-
-        // sign
-        crypto_aacs_sign(host_cert, host_priv_key, hks, dn,
-                         mmc->host_key_point);
-
-        // verify own signature
-        if (!_verify_signature(host_cert, hks, dn, mmc->host_key_point)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Created signature is invalid ?\n");
-            break;
-        }
-
-        // send signed host key and point
-        if (!_mmc_send_host_key(mmc, agid, mmc->host_key_point, hks)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Error sending host signature\n");
-            DEBUG(DBG_MMC,  "Host key signature : %s\n", print_hex(str, hks, 40));
-            break;
-        }
-
-        // calculate bus key
-        crypto_create_bus_key(mmc->host_key, dkp, bus_key);
-        if (DEBUG_KEYS) {
-            DEBUG(DBG_MMC, "Bus Key             : %s\n", print_hex(str, bus_key, 16));
-        }
-
-
+            error_code = _mmc_aacs_auth(mmc, host_priv_key, host_cert, bus_key);
+            if (error_code) {
+                return error_code;
+            }
     } while (0);
 
     if (_mmc_read_vid(mmc, agid, vid, mac)) {
@@ -1144,7 +1155,7 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
 
     _mmc_invalidate_agid(mmc, agid);
 
-    return error_code;
+    return MMC_ERROR;
 }
 
 uint8_t *mmc_read_mkb(MMC *mmc, int address, int *size)
