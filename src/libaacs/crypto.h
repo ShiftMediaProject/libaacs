@@ -26,6 +26,7 @@
 #include <stdint.h>
 
 AACS_PRIVATE int  crypto_init(void);
+AACS_PRIVATE void crypto_aes128d(const uint8_t *key, const uint8_t *data, uint8_t *dst);
 AACS_PRIVATE void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk,
                                uint8_t *pk);   // returns left, centre, right keys
 AACS_PRIVATE void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac);
