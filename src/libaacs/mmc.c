@@ -469,8 +469,8 @@ static int _mmc_send_host_cert(MMC *mmc, uint8_t agid,
     return _mmc_send_key(mmc, agid, 0x01, buf, 116);
 }
 
-static int _mmc_read_drive_cert(MMC *mmc, uint8_t agid, uint8_t *drive_nonce,
-                                uint8_t *drive_cert)
+static int _mmc_read_drive_cert_challenge(MMC *mmc, uint8_t agid, uint8_t *drive_nonce,
+                                          uint8_t *drive_cert)
 {
     uint8_t buf[116];
     memset(buf, 0, sizeof(buf));
@@ -1044,7 +1044,7 @@ static int _mmc_aacs_auth(MMC *mmc, const uint8_t *host_priv_key, const uint8_t 
     }
 
     // receive mmc cert + nonce
-    if (!_mmc_read_drive_cert(mmc, agid, dn, dc)) {
+    if (!_mmc_read_drive_cert_challenge(mmc, agid, dn, dc)) {
         DEBUG(DBG_MMC | DBG_CRIT,
               "Drive doesn't give its certificate\n");
         return MMC_ERROR;
@@ -1220,6 +1220,17 @@ int mmc_read_data_keys(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *ho
 
     _mmc_invalidate_agid(mmc, agid);
 
+    return MMC_ERROR;
+}
+
+int mmc_read_drive_cert(MMC *mmc, uint8_t *drive_cert)
+{
+    uint8_t buf[116];
+
+    if (_mmc_report_key(mmc, 0, 0, 0, 0x38, buf, 116)) {
+        memcpy(drive_cert,  buf + 4, 92);
+        return MMC_SUCCESS;
+    }
     return MMC_ERROR;
 }
 

@@ -65,6 +65,10 @@ struct aacs {
     /* title -> CPS unit mappings */
     uint32_t  num_titles;
     uint16_t *cps_units;  /* [0] = first play ; [1] = top menu ; [2] = title 1 ... */
+
+    /* bus encryption */
+    int       bee;        /* bus encryption enabled flag in content certificate */
+    int       bec;        /* bus encryption capable flag in drive certificate */
 };
 
 static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -441,6 +445,22 @@ static AACS_FILE_H *_open_unit_key_file(const char *path)
     return fp;
 }
 
+static AACS_FILE_H *_open_content_certificate_file(const char *path)
+{
+    AACS_FILE_H *fp;
+    char        *f_name;
+
+    f_name = str_printf("%s/AACS/Content000.cer", path);
+    fp = file_open(f_name, "rb");
+
+    if (!fp) {
+        DEBUG(DBG_AACS | DBG_CRIT, "Error opening content certificate file %s\n", f_name);
+    }
+
+    X_FREE(f_name);
+    return fp;
+}
+
 /* Function that collects keys from keydb config entry */
 static void _find_config_entry(AACS *aacs, title_entry_list *ce,
                                uint8_t *mk, uint8_t *vuk)
@@ -639,6 +659,50 @@ static int _calc_title_hash(const char *path, uint8_t *title_hash)
     return result;
 }
 
+static int _get_bus_encryption_enabled(const char *path)
+{
+    AACS_FILE_H *fp = NULL;
+    uint8_t buf[2];
+    int bee = 0;
+
+    fp = _open_content_certificate_file(path);
+    if (!fp) {
+        DEBUG(DBG_AACS | DBG_CRIT, "Unable to open content certificate\n");
+        return 0;
+    }
+
+    if (file_read(fp, buf, 2) == 2) {
+        bee = (buf[1] & 0x80) >> 7;
+        DEBUG(DBG_AACS, "Bus Encryption Enabled flag in content certificate: %d\n", bee);
+    } else {
+        DEBUG(DBG_AACS | DBG_CRIT, "Failed to read Bus Encryption Enabled flag from content certificate file\n");
+    }
+
+    file_close(fp);
+    return bee;
+}
+
+static int _get_bus_encryption_capable(const char *path)
+{
+    MMC* mmc = NULL;
+    uint8_t drive_cert[92];
+    int bec = 0;
+
+    if (!(mmc = mmc_open(path))) {
+        return 0;
+    }
+
+    if (mmc_read_drive_cert(mmc, drive_cert) == MMC_SUCCESS) {
+        bec = drive_cert[1] & 1;
+        DEBUG(DBG_AACS, "Bus Encryption Capable flag in drive certificate: %d\n", bec);
+    } else {
+        DEBUG(DBG_AACS | DBG_CRIT, "Unable to read drive certificate\n");
+    }
+
+    mmc_close(mmc);
+    return bec;
+}
+
 static int _verify_ts(uint8_t *buf, size_t size)
 {
     uint8_t *ptr;
@@ -750,6 +814,9 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
 
     DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
     *error_code = _calc_uks(aacs, configfile_path);
+
+    aacs->bee = _get_bus_encryption_enabled(path);
+    aacs->bec = _get_bus_encryption_capable(path);
 
     if (*error_code == AACS_SUCCESS) {
         DEBUG(DBG_AACS, "AACS initialized!\n");
