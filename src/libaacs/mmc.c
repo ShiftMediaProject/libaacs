@@ -1187,6 +1187,11 @@ int mmc_read_data_keys(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *ho
     }
     DEBUG(DBG_MMC, "Got AGID from drive: %d\n", agid);
 
+    /*
+     * NOTE: It seems that at least some drives require a new AACS-Auth every time
+     * keys are being read
+     */
+
     error_code = _mmc_aacs_auth(mmc, host_priv_key, host_cert, bus_key);
     if (error_code) {
         return error_code;
