@@ -147,7 +147,10 @@ struct mmc {
     uint8_t host_key[20];
     uint8_t host_key_point[40];
 
+    uint8_t drive_cert[92];
+
     uint8_t bus_encryption;
+    uint8_t read_drive_cert;
 };
 
 static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
@@ -512,9 +515,11 @@ static int _mmc_check_aacs(MMC *mmc)
             DEBUG(DBG_MMC, "  Binding Nonce generation support: %d\n", buf[4+8] & 1);
             DEBUG(DBG_MMC, "  Binding Nonce block count: %d\n", buf[5+8]);
             DEBUG(DBG_MMC, "  Bus encryption support: %d\n", buf[4+8] & 2);
+            DEBUG(DBG_MMC, "  Read drive certificate: %d\n", buf[4+8] & 0x10);
             DEBUG(DBG_MMC, "  AGID count: %d\n", buf[6+8] & 0xf);
 
             mmc->bus_encryption = !!(buf[4+8] & 2);
+            mmc->read_drive_cert = !!(buf[4+8] & 0x10);
 
             return buf[2+8] & 1;
         }
@@ -1027,7 +1032,7 @@ static int _verify_signature(const uint8_t *cert, const uint8_t *signature,
 
 static int _mmc_aacs_auth(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *bus_key)
 {
-    uint8_t agid = 0, hks[40], dn[20], dc[92], dkp[40], dks[40];
+    uint8_t agid = 0, hks[40], dn[20], dkp[40], dks[40];
     char str[512];
 
     memset(hks, 0, sizeof(hks));
@@ -1044,19 +1049,19 @@ static int _mmc_aacs_auth(MMC *mmc, const uint8_t *host_priv_key, const uint8_t 
     }
 
     // receive mmc cert + nonce
-    if (!_mmc_read_drive_cert_challenge(mmc, agid, dn, dc)) {
+    if (!_mmc_read_drive_cert_challenge(mmc, agid, dn, mmc->drive_cert)) {
         DEBUG(DBG_MMC | DBG_CRIT,
               "Drive doesn't give its certificate\n");
         return MMC_ERROR;
     }
 
     if (DEBUG_KEYS) {
-        DEBUG(DBG_MMC, "Drive certificate   : %s\n", print_hex(str, dc, 92));
+        DEBUG(DBG_MMC, "Drive certificate   : %s\n", print_hex(str, mmc->drive_cert, 92));
         DEBUG(DBG_MMC, "Drive nonce         : %s\n", print_hex(str, dn, 20));
     }
 
     // verify drive certificate
-    if (!crypto_aacs_verify_drive_cert(dc)) {
+    if (!crypto_aacs_verify_drive_cert(mmc->drive_cert)) {
         DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
         return MMC_ERROR;
     }
@@ -1073,7 +1078,7 @@ static int _mmc_aacs_auth(MMC *mmc, const uint8_t *host_priv_key, const uint8_t 
     }
 
     // verify drive signature
-    if (!_verify_signature(dc, dks, mmc->host_nonce, dkp)) {
+    if (!_verify_signature(mmc->drive_cert, dks, mmc->host_nonce, dkp)) {
         DEBUG(DBG_MMC | DBG_CRIT, "Drive signature is invalid\n");
         return MMC_ERROR;
     }
@@ -1226,6 +1231,15 @@ int mmc_read_data_keys(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *ho
 int mmc_read_drive_cert(MMC *mmc, uint8_t *drive_cert)
 {
     uint8_t buf[116];
+
+    if (mmc->drive_cert[0] == 0x01) {
+        memcpy(drive_cert, mmc->drive_cert, 92);
+        return MMC_SUCCESS;
+    }
+
+    if (!mmc->read_drive_cert) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Drive does not support reading drive certificate\n");
+    }
 
     if (_mmc_report_key(mmc, 0, 0, 0, 0x38, buf, 116)) {
         memcpy(drive_cert,  buf + 4, 92);
