@@ -1102,7 +1102,7 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     return MMC_SUCCESS;
 }
 
-int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *vid, uint8_t *pmsn)
+int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *vid)
 {
     uint8_t agid = 0, mac[16], calc_mac[16], bus_key[16];
     char str[512];
@@ -1135,22 +1135,49 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
             DEBUG(DBG_MMC | DBG_CRIT, "VID MAC is incorrect. This means this Volume ID is not correct.\n");
         }
 
-        /* read pmsn */
-        if (_mmc_read_pmsn(mmc, agid, pmsn, mac)) {
-            if (DEBUG_KEYS) {
-                DEBUG(DBG_MMC, "PMSN                : %s\n", print_hex(str, pmsn, 16));
-                DEBUG(DBG_MMC, "PMSN MAC            : %s\n", print_hex(str, mac,  16));
-            }
+        _mmc_invalidate_agid(mmc, agid);
 
-            /* verify CMAC */
-            crypto_aes_cmac_16(vid, bus_key, calc_mac);
-            if (memcmp(calc_mac, mac, 16)) {
-                DEBUG(DBG_MMC | DBG_CRIT, "PMSN MAC is incorrect. This means PMSN is not correct.\n");
-            }
+        return MMC_SUCCESS;
+    }
 
-        } else {
-            memset(pmsn, 0, 16);
-            DEBUG(DBG_MMC, "Unable to read PMSN from drive!\n");
+    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive!\n");
+
+    _mmc_invalidate_agid(mmc, agid);
+
+    return MMC_ERROR;
+}
+
+int mmc_read_pmsn(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *pmsn)
+{
+    uint8_t agid = 0, mac[16], calc_mac[16], bus_key[16];
+    char str[512];
+    int error_code;
+
+    DEBUG(DBG_MMC, "Reading PMSN from drive...\n");
+
+    _mmc_invalidate_agids(mmc);
+
+    if (!_mmc_report_agid(mmc, &agid)) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive\n");
+        return MMC_ERROR;
+    }
+    DEBUG(DBG_MMC, "Got AGID from drive: %d\n", agid);
+
+    error_code = _mmc_aacs_auth(mmc, agid, host_priv_key, host_cert, bus_key);
+    if (error_code) {
+        return error_code;
+    }
+
+    if (_mmc_read_pmsn(mmc, agid, pmsn, mac)) {
+        if (DEBUG_KEYS) {
+            DEBUG(DBG_MMC, "PMSN                : %s\n", print_hex(str, pmsn, 16));
+            DEBUG(DBG_MMC, "PMSN MAC            : %s\n", print_hex(str, mac, 16));
+        }
+
+        /* verify MAC */
+        crypto_aes_cmac_16(pmsn, bus_key, calc_mac);
+        if (memcmp(calc_mac, mac, 16)) {
+            DEBUG(DBG_MMC | DBG_CRIT, "PMSN MAC is incorrect. This means this Pre-recorded Medial Serial Number is not correct.\n");
         }
 
         _mmc_invalidate_agid(mmc, agid);
@@ -1158,7 +1185,7 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
         return MMC_SUCCESS;
     }
 
-    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive!\n");
+    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read PMSN from drive!\n");
 
     _mmc_invalidate_agid(mmc, agid);
 

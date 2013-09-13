@@ -269,10 +269,10 @@ static MKB *_get_hrl_mkb(MMC *mmc)
     return mkb;
 }
 
-static int _read_vid(AACS *aacs, cert_list *hcl, int force_mmc)
+static int _read_vid(AACS *aacs, cert_list *hcl)
 {
     /* Use VID given in config file if available */
-    if (!force_mmc && memcmp(aacs->vid, empty_key, 16)) {
+    if (memcmp(aacs->vid, empty_key, 16)) {
         return AACS_SUCCESS;
     }
 
@@ -308,7 +308,7 @@ static int _read_vid(AACS *aacs, cert_list *hcl, int force_mmc)
         DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
               print_hex(tmp_str, cert + 4, 6));
 
-        int mmc_result = mmc_read_vid(mmc, priv_key, cert, aacs->vid, aacs->pmsn);
+        int mmc_result = mmc_read_vid(mmc, priv_key, cert, aacs->vid);
         switch (mmc_result) {
             case MMC_SUCCESS:
                 mkb_close(hrl_mkb);
@@ -380,6 +380,52 @@ static int _read_read_data_key(AACS *aacs, cert_list *hcl)
     return error_code;
 }
 
+static int _read_pmsn(AACS *aacs, cert_list *hcl)
+{
+    MMC* mmc = NULL;
+    if (!(mmc = mmc_open(aacs->path))) {
+        return AACS_ERROR_MMC_OPEN;
+    }
+
+    int error_code = AACS_ERROR_NO_CERT;
+
+    for (;hcl && hcl->host_priv_key && hcl->host_cert; hcl = hcl->next) {
+
+        char tmp_str[2*92+1];
+        uint8_t priv_key[20], cert[92];
+        hexstring_to_hex_array(priv_key, sizeof(priv_key), hcl->host_priv_key);
+        hexstring_to_hex_array(cert,     sizeof(cert),     hcl->host_cert);
+
+        if (!crypto_aacs_verify_host_cert(cert)) {
+            DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
+                  print_hex(tmp_str, cert, 92));
+            continue;
+        }
+
+        DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
+              print_hex(tmp_str, cert + 4, 6));
+
+        int mmc_result = mmc_read_pmsn(mmc, priv_key, cert, aacs->pmsn);
+        switch (mmc_result) {
+            case MMC_SUCCESS:
+                mmc_close(mmc);
+                return AACS_SUCCESS;
+            case MMC_ERROR_CERT_REVOKED:
+                error_code = AACS_ERROR_CERT_REVOKED;
+                break;
+            case MMC_ERROR:
+            default:
+                error_code = AACS_ERROR_MMC_FAILURE;
+                break;
+        }
+    }
+
+    mmc_close(mmc);
+
+    DEBUG(DBG_AACS, "Error reading PMSN!\n");
+    return error_code;
+}
+
 static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk,
                      pk_list *pkl, cert_list *host_cert_list)
 {
@@ -404,7 +450,7 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk,
     }
 
     /* acquire VID */
-    error_code = _read_vid(aacs, host_cert_list, 0);
+    error_code = _read_vid(aacs, host_cert_list);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }
@@ -969,7 +1015,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
 
         config_file *cf = keydbcfg_config_load(NULL);
         if (cf) {
-            _read_vid(aacs, cf->host_cert_list, 0);
+            _read_vid(aacs, cf->host_cert_list);
 
             keydbcfg_config_file_close(cf);
         }
@@ -988,7 +1034,7 @@ const uint8_t *aacs_get_pmsn(AACS *aacs)
     if (!memcmp(aacs->pmsn, empty_key, 16)) {
         config_file *cf = keydbcfg_config_load(NULL);
         if (cf) {
-            _read_vid(aacs, cf->host_cert_list, 1);
+            _read_pmsn(aacs, cf->host_cert_list);
 
             keydbcfg_config_file_close(cf);
         }
