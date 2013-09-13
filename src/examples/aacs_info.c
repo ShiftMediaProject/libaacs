@@ -129,11 +129,11 @@ int main (int argc, char **argv)
 
     rl = aacs_get_hrl(&num_entries, &mkb_version);
     _dump_rl("Host", rl, num_entries, mkb_version);
-    X_FREE(rl);
+    aacs_free_rl(&rl);
 
     rl = aacs_get_drl(&num_entries, &mkb_version);
     _dump_rl("Drive", rl, num_entries, mkb_version);
-    X_FREE(rl);
+    aacs_free_rl(&rl);
 
     return EXIT_SUCCESS;
 }

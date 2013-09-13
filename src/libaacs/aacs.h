@@ -60,6 +60,7 @@ typedef struct {
 
 AACS_PUBLIC AACS_RL_ENTRY *aacs_get_hrl(int *num_entries, int *mkb_version);
 AACS_PUBLIC AACS_RL_ENTRY *aacs_get_drl(int *num_entries, int *mkb_version);
+AACS_PUBLIC void           aacs_free_rl(AACS_RL_ENTRY **rl);
 
 /* bus encryption info */
 
