@@ -974,6 +974,13 @@ AACS_RL_ENTRY *aacs_get_drl(int *num_records, int *mkbv)
     return _get_rl("drl", num_records, mkbv);
 }
 
+uint32_t aacs_get_bus_encryption(AACS *aacs)
+{
+  return (aacs->bee * AACS_BUS_ENCRYPTION_ENABLED) |
+         (aacs->bec * AACS_BUS_ENCRYPTION_CAPABLE);
+}
+
+
 void aacs_select_title(AACS *aacs, uint32_t title)
 {
     if (!aacs) {

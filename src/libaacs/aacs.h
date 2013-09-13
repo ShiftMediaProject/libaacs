@@ -61,4 +61,11 @@ typedef struct {
 AACS_PUBLIC AACS_RL_ENTRY *aacs_get_hrl(int *num_entries, int *mkb_version);
 AACS_PUBLIC AACS_RL_ENTRY *aacs_get_drl(int *num_entries, int *mkb_version);
 
+/* bus encryption info */
+
+#define AACS_BUS_ENCRYPTION_ENABLED  0x01  /* Bus encryption enabled in the media */
+#define AACS_BUS_ENCRYPTION_CAPABLE  0x02  /* Bus encryption capable drive */
+
+AACS_PUBLIC uint32_t aacs_get_bus_encryption(AACS *);
+
 #endif /* AACS_H_ */
