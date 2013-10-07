@@ -1021,9 +1021,9 @@ static int _verify_signature(const uint8_t *cert, const uint8_t *signature,
     return crypto_aacs_verify(cert, signature, data, 60);
 }
 
-static int _mmc_aacs_auth(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *bus_key)
+static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *bus_key)
 {
-    uint8_t agid = 0, hks[40], dn[20], dkp[40], dks[40];
+    uint8_t hks[40], dn[20], dkp[40], dks[40];
     char str[512];
 
     memset(hks, 0, sizeof(hks));
@@ -1118,7 +1118,7 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
     }
     DEBUG(DBG_MMC, "Got AGID from drive: %d\n", agid);
 
-    error_code = _mmc_aacs_auth(mmc, host_priv_key, host_cert, bus_key);
+    error_code = _mmc_aacs_auth(mmc, agid, host_priv_key, host_cert, bus_key);
     if (error_code) {
         return error_code;
     }
@@ -1186,7 +1186,7 @@ int mmc_read_data_keys(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *ho
      * keys are being read
      */
 
-    error_code = _mmc_aacs_auth(mmc, host_priv_key, host_cert, bus_key);
+    error_code = _mmc_aacs_auth(mmc, agid, host_priv_key, host_cert, bus_key);
     if (error_code) {
         return error_code;
     }
