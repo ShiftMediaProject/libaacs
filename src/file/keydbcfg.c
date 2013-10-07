@@ -61,6 +61,37 @@
 #define MAX_FILE_SIZE  65535
 
 
+static int _mkpath(const char *path)
+{
+    struct stat s;
+    int result = 1;
+    char *dir = str_printf("%s", path);
+    char *end = dir;
+
+    while (*end == '/')
+        end++;
+
+    while ((end = strchr(end, '/'))) {
+        *end = 0;
+
+        if (stat(dir, &s) != 0 || !S_ISDIR(s.st_mode)) {
+            DEBUG(DBG_FILE, "Creating directory %s\n", dir);
+
+            if (mkdir(dir, S_IRWXU|S_IRWXG|S_IRWXO) == -1) {
+                DEBUG(DBG_FILE, "Error creating directory %s\n", dir);
+                result = 0;
+                break;
+            }
+        }
+
+        *end++ = '/';
+    }
+
+    X_FREE(dir);
+
+    return result;
+}
+
 static char *_load_file(FILE *fp)
 {
     char *data = NULL;
@@ -286,37 +317,6 @@ static int _load_cert_file(config_file *cf)
         result += _parse_cert_file(cf, fp);
         fclose(fp);
     }
-
-    return result;
-}
-
-static int _mkpath(const char *path)
-{
-    struct stat s;
-    int result = 1;
-    char *dir = str_printf("%s", path);
-    char *end = dir;
-
-    while (*end == '/')
-        end++;
-
-    while ((end = strchr(end, '/'))) {
-        *end = 0;
-
-        if (stat(dir, &s) != 0 || !S_ISDIR(s.st_mode)) {
-            DEBUG(DBG_FILE, "Creating directory %s\n", dir);
-
-            if (mkdir(dir, S_IRWXU|S_IRWXG|S_IRWXO) == -1) {
-                DEBUG(DBG_FILE, "Error creating directory %s\n", dir);
-                result = 0;
-                break;
-            }
-        }
-
-        *end++ = '/';
-    }
-
-    X_FREE(dir);
 
     return result;
 }
