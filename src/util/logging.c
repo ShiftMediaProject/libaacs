@@ -45,6 +45,7 @@ void aacs_debug(const char *file, int line, uint32_t mask, const char *format, .
     if (!debug_init) {
         debug_init = 1;
         logfile = stderr;
+        debug_mask = DBG_CRIT;
 
         char *env = NULL;
         if ((env = getenv("AACS_DEBUG_MASK")))
