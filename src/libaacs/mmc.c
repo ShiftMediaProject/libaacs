@@ -1006,6 +1006,9 @@ void mmc_close(MMC *mmc)
 
         DEBUG(DBG_MMC, "Closed MMC drive\n");
 
+        /* erase sensitive data */
+        memset(mmc, 0, sizeof(*mmc));
+
         X_FREE(mmc);
     }
 }

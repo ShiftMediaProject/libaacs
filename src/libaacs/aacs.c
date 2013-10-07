@@ -946,11 +946,19 @@ void aacs_close(AACS *aacs)
     if (!aacs)
         return;
 
+    /* erase sensitive data */
+    if (aacs->uks) {
+        memset(aacs->uks, 0, 16 * aacs->num_uks);
+    }
+
     X_FREE(aacs->uks);
     X_FREE(aacs->cps_units);
     X_FREE(aacs->path);
 
     DEBUG(DBG_AACS, "AACS destroyed!\n");
+
+    /* erase sensitive data */
+    memset(aacs, 0, sizeof(*aacs));
 
     X_FREE(aacs);
 }
