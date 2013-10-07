@@ -78,7 +78,7 @@ static int _mkpath(const char *path)
             DEBUG(DBG_FILE, "Creating directory %s\n", dir);
 
             if (mkdir(dir, S_IRWXU|S_IRWXG|S_IRWXO) == -1) {
-                DEBUG(DBG_FILE, "Error creating directory %s\n", dir);
+                DEBUG(DBG_FILE | DBG_CRIT, "Error creating directory %s\n", dir);
                 result = 0;
                 break;
             }
