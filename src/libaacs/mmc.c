@@ -89,11 +89,6 @@
 #include <winsock.h>
 #endif
 
-/* define in CFLAGS to skip drive certificate checks */
-#ifndef PATCHED_DRIVE
-#define PATCHED_DRIVE 0
-#endif
-
 #ifndef DEBUG_KEYS
 #define DEBUG_KEYS 0
 #endif
@@ -1123,12 +1118,10 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
     }
     DEBUG(DBG_MMC, "Got AGID from drive: %d\n", agid);
 
-    if (!PATCHED_DRIVE) do {
-            error_code = _mmc_aacs_auth(mmc, host_priv_key, host_cert, bus_key);
-            if (error_code) {
-                return error_code;
-            }
-    } while (0);
+    error_code = _mmc_aacs_auth(mmc, host_priv_key, host_cert, bus_key);
+    if (error_code) {
+        return error_code;
+    }
 
     if (_mmc_read_vid(mmc, agid, vid, mac)) {
         if (DEBUG_KEYS) {
