@@ -74,6 +74,8 @@ struct aacs {
 
 static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
                                    "\x00\x00\x00\x00\x00\x00\x00\x00";
+static const uint8_t aacs_iv[]   = "\x0b\xa0\xf8\xdd\xfe\xa6\x1f\xb3"
+                                   "\xd8\xdf\x9f\x56\x6a\x05\x0f\x78";
 
 static int _validate_pk(const uint8_t *pk,
                         const uint8_t *cvalue, const uint8_t *uv, const uint8_t *vd,
@@ -779,8 +781,7 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
 {
     gcry_cipher_hd_t gcry_h;
     int a;
-    uint8_t key[16], iv[] = "\x0b\xa0\xf8\xdd\xfe\xa6\x1f\xb3"
-                            "\xd8\xdf\x9f\x56\x6a\x05\x0f\x78";
+    uint8_t key[16];
 
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
     gcry_cipher_setkey(gcry_h, aacs->uks + curr_uk * 16, 16);
@@ -795,7 +796,7 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
 
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
     gcry_cipher_setkey(gcry_h, key, 16);
-    gcry_cipher_setiv(gcry_h, iv, 16);
+    gcry_cipher_setiv(gcry_h, aacs_iv, 16);
     gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
     gcry_cipher_close(gcry_h);
 
@@ -814,14 +815,12 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
 static void _decrypt_bus(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf)
 {
     gcry_cipher_hd_t gcry_h;
-    uint8_t iv[] = "\x0b\xa0\xf8\xdd\xfe\xa6\x1f\xb3"
-                   "\xd8\xdf\x9f\x56\x6a\x05\x0f\x78";
 
     memcpy(out_buf, in_buf, 16); /* first 16 bytes are plain */
 
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
     gcry_cipher_setkey(gcry_h, aacs->read_data_key, 16);
-    gcry_cipher_setiv(gcry_h, iv, 16);
+    gcry_cipher_setiv(gcry_h, aacs_iv, 16);
     gcry_cipher_decrypt(gcry_h, out_buf + 16, SECTOR_LEN - 16, in_buf + 16, SECTOR_LEN - 16);
     gcry_cipher_close(gcry_h);
 }
