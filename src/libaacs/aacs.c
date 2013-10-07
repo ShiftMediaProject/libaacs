@@ -869,29 +869,22 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
     cf = keydbcfg_config_load(configfile_path);
     if (!cf) {
         *error_code = AACS_ERROR_NO_CONFIG;
-        aacs_close(aacs);
-        return NULL;
+        return aacs;
     }
 
     DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
     *error_code = _calc_uks(aacs, cf);
     if (*error_code != AACS_SUCCESS) {
         DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
-        keydbcfg_config_file_close(cf);
-        aacs_close(aacs);
-        return NULL;
     }
 
     aacs->bee = _get_bus_encryption_enabled(path);
     aacs->bec = _get_bus_encryption_capable(path);
 
-    if (aacs->bee && aacs->bec) {
+    if (*error_code == AACS_SUCCESS && aacs->bee && aacs->bec) {
         *error_code = _read_read_data_key(aacs, cf->host_cert_list);
         if (*error_code != AACS_SUCCESS) {
             DEBUG(DBG_AACS | DBG_CRIT, "Unable to initialize bus encryption required by drive and disc\n");
-            keydbcfg_config_file_close(cf);
-            aacs_close(aacs);
-            return NULL;
         }
     }
 
