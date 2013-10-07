@@ -120,7 +120,7 @@ static char *_load_file(FILE *fp)
     return data;
 }
 
-static FILE *_open_cfg_file_user(const char *file_name, char **path)
+static char *_config_file_user(const char *file_name)
 {
     const char *cfg_dir = get_config_home();
 
@@ -128,10 +128,27 @@ static FILE *_open_cfg_file_user(const char *file_name, char **path)
         return NULL;
     }
 
-    char *cfg_file = str_printf("%s/%s/%s", cfg_dir, CFG_DIR, file_name);
-    FILE *fp       = fopen(cfg_file, "r");
+    return str_printf("%s/%s/%s", cfg_dir, CFG_DIR, file_name);
+}
 
-    DEBUG(DBG_FILE, fp ? "Reading %s\n" : "%s not found\n", cfg_file);
+static FILE *_open_cfg_file_user(const char *file_name, char **path, const char *mode)
+{
+    char *cfg_file = _config_file_user(file_name);
+
+    if (!cfg_file) {
+        return NULL;
+    }
+
+    if (*mode == 'w') {
+        if (!_mkpath(cfg_file)) {
+            X_FREE(cfg_file);
+            return NULL;
+        }
+    }
+
+    FILE *fp = fopen(cfg_file, mode);
+
+    DEBUG(DBG_FILE, fp ? "Opened %s for %s\n" : "%s not found\n", cfg_file, mode);
 
     if (fp && path) {
         *path = cfg_file;
@@ -285,7 +302,7 @@ static int _load_pk_file(config_file *cf)
     FILE *fp;
     int result = 0;
 
-    fp = _open_cfg_file_user(pk_file_name, NULL);
+    fp = _open_cfg_file_user(pk_file_name, NULL, "r");
     if (fp) {
         result += _parse_pk_file(cf, fp);
         fclose(fp);
@@ -306,7 +323,7 @@ static int _load_cert_file(config_file *cf)
     FILE *fp;
     int result = 0;
 
-    fp = _open_cfg_file_user(cert_file_name, NULL);
+    fp = _open_cfg_file_user(cert_file_name, NULL, "r");
     if (fp) {
         result += _parse_cert_file(cf, fp);
         fclose(fp);
@@ -540,7 +557,7 @@ static char *_find_config_file(void)
     char       *cfg_file = NULL;
     FILE       *fp       = NULL;
 
-    fp = _open_cfg_file_user(cfg_file_name, &cfg_file);
+    fp = _open_cfg_file_user(cfg_file_name, &cfg_file, "r");
     if (!fp) {
         fp = _open_cfg_file_system(cfg_file_name, &cfg_file);
     }
