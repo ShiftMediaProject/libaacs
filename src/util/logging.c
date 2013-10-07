@@ -24,7 +24,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-static debug_mask_t debug_mask = DBG_CRIT;
+uint32_t debug_mask = (uint32_t)-1; /* set all bits to make sure aacs_debug() is called for initialization */
 
 char *print_hex(char *out, const uint8_t *buf, int count)
 {

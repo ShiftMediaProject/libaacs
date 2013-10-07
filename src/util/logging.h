@@ -24,7 +24,14 @@
 
 #include <stdint.h>
 
-#define DEBUG(MASK,...) aacs_debug(__FILE__,__LINE__,MASK,##__VA_ARGS__)
+AACS_PRIVATE extern uint32_t debug_mask;
+
+#define DEBUG(MASK,...)                                 \
+  do {                                                  \
+    if (AACS_UNLIKELY((MASK) & debug_mask)) {           \
+      aacs_debug(__FILE__,__LINE__,MASK,__VA_ARGS__);   \
+    }                                                   \
+  } while (0)
 
 enum debug_mask_enum {
     DBG_RESERVED   = 0x0001,

@@ -17,8 +17,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIBBLURAY_ATTRIBUTES_H_
-#define LIBBLURAY_ATTRIBUTES_H_
+#ifndef LIBAACS_ATTRIBUTES_H_
+#define LIBAACS_ATTRIBUTES_H_
 
 #if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3 ))
 #    define AACS_ATTR_FORMAT_PRINTF(format,var) \
@@ -47,4 +47,12 @@
 #    define AACS_PRIVATE
 #endif
 
-#endif /* LIBBLURAY_ATTRIBUTES_H_ */
+#if !defined(__GNUC__) || __GNUC__ < 3
+#  define AACS_LIKELY(x)   (x)
+#  define AACS_UNLIKELY(x) (x)
+#else
+#  define AACS_LIKELY(x)   __builtin_expect((x),1)
+#  define AACS_UNLIKELY(x) __builtin_expect((x),0)
+#endif
+
+#endif /* LIBAACS_ATTRIBUTES_H_ */
