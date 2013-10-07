@@ -812,16 +812,14 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
 }
 
 #define SECTOR_LEN 2048
-static void _decrypt_bus(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf)
+static void _decrypt_bus(AACS *aacs, uint8_t *buf)
 {
     gcry_cipher_hd_t gcry_h;
-
-    memcpy(out_buf, in_buf, 16); /* first 16 bytes are plain */
 
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
     gcry_cipher_setkey(gcry_h, aacs->read_data_key, 16);
     gcry_cipher_setiv(gcry_h, aacs_iv, 16);
-    gcry_cipher_decrypt(gcry_h, out_buf + 16, SECTOR_LEN - 16, in_buf + 16, SECTOR_LEN - 16);
+    gcry_cipher_decrypt(gcry_h, buf + 16, SECTOR_LEN - 16, NULL, 0);
     gcry_cipher_close(gcry_h);
 }
 
@@ -930,9 +928,8 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
 
     if (aacs->bee && aacs->bec) {
         for (i = 0; i < ALIGNED_UNIT_LEN; i += SECTOR_LEN) {
-            _decrypt_bus(aacs, out_buf + i, buf + i);
+            _decrypt_bus(aacs, buf + i);
         }
-        memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
     }
 
     if (_decrypt_unit(aacs, out_buf, buf, aacs->current_cps_unit)) {
