@@ -70,6 +70,10 @@ struct aacs {
     int       bee;        /* bus encryption enabled flag in content certificate */
     int       bec;        /* bus encryption capable flag in drive certificate */
     uint8_t   read_data_key[16];
+
+    /* AACS Online (BD-J) */
+    uint8_t   device_nonce[16];
+    uint8_t   device_binding_id[16];
 };
 
 static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -1054,6 +1058,31 @@ const uint8_t *aacs_get_pmsn(AACS *aacs)
     }
 
     return aacs->pmsn;
+}
+
+const uint8_t *aacs_get_device_binding_id(AACS *aacs)
+{
+  /* Device binding ID is used to encrypt online content.
+   * It needs to be cached so that downloaded content can be played later.
+   */
+    static const char config_file_name[] = "device_binding_id";
+    uint32_t len = sizeof(aacs->device_binding_id);
+
+    DEBUG(DBG_AACS, "reading device binding id\n");
+    if (!config_get(config_file_name, &len, aacs->device_binding_id) || len != sizeof(aacs->device_binding_id)) {
+        DEBUG(DBG_AACS, "creating device binding id\n");
+        crypto_create_nonce(aacs->device_binding_id, sizeof(aacs->device_binding_id));
+        config_save(config_file_name, aacs->device_binding_id, sizeof(aacs->device_binding_id));
+    }
+
+   return aacs->device_binding_id;
+}
+
+const uint8_t *aacs_get_device_nonce(AACS *aacs)
+{
+    DEBUG(DBG_AACS, "creating device nonce\n");
+    crypto_create_nonce(aacs->device_nonce, sizeof(aacs->device_nonce));
+    return aacs->device_nonce;
 }
 
 static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkbv)

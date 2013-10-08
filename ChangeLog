@@ -1,3 +1,4 @@
+ - Added aacs_get_device_binding_id() and aacs_get_device_nonce()
  - Fixed reading PMSN
  - Dropped support for compile-time PATCHED_DRIVE flag.
  - Bus encryption support

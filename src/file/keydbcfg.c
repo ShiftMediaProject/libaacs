@@ -550,6 +550,61 @@ void *cache_get_or_update(const char *type, const void *data, uint32_t *len, uin
     return cache_data;
 }
 
+int config_save(const char *name, const void *data, uint32_t len)
+{
+    char *path = NULL;
+    FILE *fp = _open_cfg_file_user(name, &path, "w");
+    int result = 0;
+
+    if (fp) {
+        if (fwrite(&len, 1, 4, fp) == 4 &&
+            fwrite(data, 1, len, fp) == len) {
+          DEBUG(DBG_FILE, "Wrote %d bytes to %s\n", len + 4, path);
+          result = 1;
+
+        } else {
+            DEBUG(DBG_FILE | DBG_CRIT, "Error writing to %s\n", path);
+        }
+
+        fclose(fp);
+    }
+
+    X_FREE(path);
+
+    return result;
+}
+
+int config_get(const char *name, uint32_t *len, void *buf)
+{
+    char *path = NULL;
+    FILE *fp = _open_cfg_file_user(name, &path, "r");
+    int result = 0;
+    uint32_t size = *len;
+
+    *len = 0;
+
+    if (fp) {
+        DEBUG(DBG_FILE, "Reading %s\n", path);
+
+        if (fread(len, 1, 4, fp) == 4 && (size <= *len) &&
+            (!buf || fread(buf, 1, *len, fp) == *len)) {
+
+            DEBUG(DBG_FILE, "Read %d bytes from %s\n", 4 + (buf ? *len : 0), path);
+            result = 1;
+
+        } else {
+            DEBUG(DBG_FILE | DBG_CRIT, "Error reading from %s\n", path);
+        }
+
+        fclose(fp);
+    }
+
+    X_FREE(path);
+
+    return result;
+}
+
+
 static char *_find_config_file(void)
 {
     static const char cfg_file_name[] = CFG_FILE_NAME;

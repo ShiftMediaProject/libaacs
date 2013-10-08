@@ -112,6 +112,7 @@ int main (int argc, char **argv)
     const uint8_t *id  = aacs_get_disc_id(aacs);
     const uint8_t *pmsn = aacs_get_pmsn(aacs);
     const int      bec  = aacs_get_bus_encryption(aacs);
+    const uint8_t *binding_id = aacs_get_device_binding_id(aacs);
     printf("Disc ID: %s\n", id  ? _hex2str(id,  20) : "???");
     printf("VID    : %s\n", vid ? _hex2str(vid, 16) : "???");
     printf("MKBv   : %d\n", aacs_get_mkb_version(aacs));
@@ -119,6 +120,7 @@ int main (int argc, char **argv)
     printf("Bus encryption:\n");
     printf("  Device support:   %s\n", (bec & AACS_BUS_ENCRYPTION_CAPABLE) ? "yes" : "no");
     printf("  Enabled in media: %s\n", (bec & AACS_BUS_ENCRYPTION_ENABLED) ? "yes" : "no");
+    printf("Device binding ID:  %s\n", binding_id ? _hex2str(binding_id, 16) : "???");
 
     aacs_close(aacs);
 
