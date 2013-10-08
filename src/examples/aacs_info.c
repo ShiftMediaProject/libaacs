@@ -17,8 +17,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "../libaacs/aacs.h"
-#include "../util/macro.h"  /* MKINT_BE48 */
+#include "libaacs/aacs.h"
+#include "util/macro.h"  /* MKINT_BE48 */
 
 #include <stdio.h>
 #include <stdlib.h>
