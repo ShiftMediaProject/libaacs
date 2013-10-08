@@ -144,7 +144,6 @@ struct mmc {
 
     uint8_t drive_cert[92];
 
-    uint8_t bus_encryption;
     uint8_t read_drive_cert;
 };
 
@@ -513,7 +512,6 @@ static int _mmc_check_aacs(MMC *mmc)
             DEBUG(DBG_MMC, "  Read drive certificate: %d\n", buf[4+8] & 0x10);
             DEBUG(DBG_MMC, "  AGID count: %d\n", buf[6+8] & 0xf);
 
-            mmc->bus_encryption = !!(buf[4+8] & 2);
             mmc->read_drive_cert = !!(buf[4+8] & 0x10);
 
             return buf[2+8] & 1;
