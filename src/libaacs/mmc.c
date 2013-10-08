@@ -504,7 +504,7 @@ static int _mmc_check_aacs(MMC *mmc)
         uint16_t feature = MKINT_BE16(buf+8);
         if (feature == 0x010d) {
             DEBUG(DBG_MMC, "AACS feature descriptor:\n");
-            DEBUG(DBG_MMC, "  AACS version: %d\n", buf[5+8]);
+            DEBUG(DBG_MMC, "  AACS version: %d\n", buf[7+8]);
             DEBUG(DBG_MMC, "  AACS active: %d\n", buf[2+8] & 1);
             DEBUG(DBG_MMC, "  Binding Nonce generation support: %d\n", buf[4+8] & 1);
             DEBUG(DBG_MMC, "  Binding Nonce block count: %d\n", buf[5+8]);
