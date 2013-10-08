@@ -34,14 +34,14 @@ EXTRA_libaacs_la_SOURCES=\
 
 if HAVE_DARWIN
 libaacs_la_SOURCES+= \
-	file/darwin.c
+	file/dirs_darwin.c
 else
 if HAVE_WIN32
 libaacs_la_SOURCES+= \
-	file/win32.c
+	file/dirs_win32.c
 else
 libaacs_la_SOURCES+= \
-	file/xdg.c
+	file/dirs_xdg.c
 endif
 endif
 
