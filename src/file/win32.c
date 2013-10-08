@@ -17,7 +17,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "win32.h"
+#include "dirs.h"
 
 #include "util/logging.h"
 
@@ -41,7 +41,12 @@ int win32_mkdir(const char *dir)
     return _wmkdir(wdir);
 }
 
-const char *win32_get_config_home(void)
+const char *get_cache_home(void)
+{
+    return get_config_home();
+}
+
+const char *get_config_home(void)
 {
     static char appdir[PATH_MAX] = "";
     wchar_t wdir[MAX_PATH];
@@ -60,7 +65,7 @@ const char *win32_get_config_home(void)
     return NULL;
 }
 
-const char *win32_get_config_system(const char *dir)
+const char *get_config_system(const char *dir)
 {
     static char appdir[PATH_MAX] = "";
     wchar_t wdir[MAX_PATH];

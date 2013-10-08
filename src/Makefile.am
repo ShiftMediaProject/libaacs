@@ -14,6 +14,7 @@ libaacs_la_SOURCES=\
 	libaacs/crypto.c \
 	libaacs/crypto.h \
 	libaacs/mkb.c \
+	file/dirs.h \
 	file/file.h \
 	file/filesystem.h \
 	file/file_posix.c \
@@ -33,17 +34,14 @@ EXTRA_libaacs_la_SOURCES=\
 
 if HAVE_DARWIN
 libaacs_la_SOURCES+= \
-	file/darwin.c \
-	file/darwin.h
+	file/darwin.c
 else
 if HAVE_WIN32
 libaacs_la_SOURCES+= \
-	file/win32.c \
-	file/win32.h
+	file/win32.c
 else
 libaacs_la_SOURCES+= \
-	file/xdg.c \
-	file/xdg.h
+	file/xdg.c
 endif
 endif
 

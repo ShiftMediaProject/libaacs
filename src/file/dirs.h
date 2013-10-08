@@ -17,13 +17,17 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef AACS_WIN32_H
-#define AACS_WIN32_H
+#ifndef AACS_DIRS_H
+#define AACS_DIRS_H
 
 #include <util/attributes.h>
 
+#ifdef _WIN32
 AACS_PRIVATE int         win32_mkdir(const char *dir);
-AACS_PRIVATE const char *win32_get_config_home(void);
-AACS_PRIVATE const char *win32_get_config_system(const char *dir);
+#endif
+
+AACS_PRIVATE const char *get_config_home(void);
+AACS_PRIVATE const char *get_config_system(const char *dir);
+AACS_PRIVATE const char *get_cache_home(void);
 
 #endif

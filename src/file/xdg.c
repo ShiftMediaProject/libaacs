@@ -17,7 +17,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "xdg.h"
+#include "dirs.h"
 
 #include "util/strutl.h"
 #include "util/logging.h"
@@ -36,7 +36,7 @@
 #define SYSTEM_CFG_DIR "/etc/xdg"
 
 
-const char *xdg_get_config_home(void)
+const char *get_config_home(void)
 {
     static char *dir       = NULL;
     static int   init_done = 0;
@@ -60,7 +60,7 @@ const char *xdg_get_config_home(void)
     return dir;
 }
 
-const char *xdg_get_cache_home(void)
+const char *get_cache_home(void)
 {
     static char *dir       = NULL;
     static int   init_done = 0;
@@ -84,7 +84,7 @@ const char *xdg_get_cache_home(void)
     return dir;
 }
 
-const char *xdg_get_config_system(const char *dir)
+const char *get_config_system(const char *dir)
 {
     static char *dirs = NULL; // "dir1\0dir2\0...\0dirN\0\0"
 

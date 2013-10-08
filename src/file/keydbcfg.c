@@ -19,22 +19,7 @@
 
 #include "keydbcfg.h"
 
-#if defined(__APPLE__)
-# include "darwin.h"
-# define get_config_home darwin_get_config_home
-# define get_cache_home darwin_get_cache_home
-# define get_config_system darwin_get_config_system
-#elif defined(_WIN32)
-# include "win32.h"
-# define get_config_home win32_get_config_home
-# define get_cache_home win32_get_config_home
-# define get_config_system win32_get_config_system
-#else
-# include "xdg.h"
-# define get_config_home xdg_get_config_home
-# define get_cache_home xdg_get_cache_home
-# define get_config_system xdg_get_config_system
-#endif
+#include "dirs.h"
 
 #include "util/strutl.h"
 #include "util/logging.h"

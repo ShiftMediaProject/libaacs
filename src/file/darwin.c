@@ -17,7 +17,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "darwin.h"
+#include "dirs.h"
 
 #include <CoreFoundation/CoreFoundation.h>
 
@@ -33,7 +33,7 @@
 #define SYSTEM_CFG_DIR "/Library/Preferences"
 
 
-const char *darwin_get_config_home(void)
+const char *get_config_home(void)
 {
     static char *dir       = NULL;
     static int   init_done = 0;
@@ -52,7 +52,7 @@ const char *darwin_get_config_home(void)
     return dir;
 }
 
-const char *darwin_get_cache_home(void)
+const char *get_cache_home(void)
 {
     static char *dir       = NULL;
     static int   init_done = 0;
@@ -71,7 +71,7 @@ const char *darwin_get_cache_home(void)
     return dir;
 }
 
-const char *darwin_get_config_system(const char *dir)
+const char *get_config_system(const char *dir)
 {
     static char *dirs = NULL; // "dir1\0dir2\0...\0dirN\0\0"
 
