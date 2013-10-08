@@ -177,5 +177,5 @@ AC_SUBST(LT_VERSION_INFO)
 
 dnl generate output files
 AC_SUBST(SET_FEATURES)
-AC_CONFIG_FILES([Makefile src/Makefile src/examples/Makefile src/libaacs.pc src/libaacs/aacs-version.h])
+AC_CONFIG_FILES([Makefile src/Makefile src/libaacs.pc src/libaacs/aacs-version.h])
 AC_OUTPUT
