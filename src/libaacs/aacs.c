@@ -459,14 +459,11 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk,
         return error_code;
     }
 
+    /* calculate VUK */
+
+    crypto_aes128d(mk, aacs->vid, vuk);
+
     int a;
-    gcry_cipher_hd_t gcry_h;
-
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, mk, 16);
-    gcry_cipher_decrypt(gcry_h, vuk, 16, aacs->vid, 16);
-    gcry_cipher_close(gcry_h);
-
     for (a = 0; a < 16; a++) {
         vuk[a] ^= aacs->vid[a];
     }
@@ -691,12 +688,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
                 break;
             }
 
-            gcry_cipher_hd_t gcry_h;
-            gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES,
-                             GCRY_CIPHER_MODE_ECB, 0);
-            gcry_cipher_setkey(gcry_h, vuk, 16);
-            gcry_cipher_decrypt(gcry_h, aacs->uks + 16*i, 16, buf, 16);
-            gcry_cipher_close(gcry_h);
+            crypto_aes128d(vuk, buf, aacs->uks + 16*i);
 
             char str[40];
             DEBUG(DBG_AACS, "Unit key %d: %s\n", i,

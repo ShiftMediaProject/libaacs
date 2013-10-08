@@ -103,15 +103,11 @@ static void _curve_free(elliptic_curve_t *c)
 static void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 {
     int a;
-    gcry_cipher_hd_t gcry_h;
     uint8_t seed[16] = { 0x7B, 0x10, 0x3C, 0x5D, 0xCB, 0x08, 0xC4, 0xE5,
                          0x1A, 0x27, 0xB0, 0x17, 0x99, 0x05, 0x3B, 0xD9 };
     seed[15] += inc;
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, src_key, 16);
-    gcry_cipher_decrypt (gcry_h, dst_key, 16, seed, 16);
-    gcry_cipher_close(gcry_h);
+    crypto_aes128d(src_key, seed, dst_key);
 
     for (a = 0; a < 16; a++) {
         dst_key[a] ^= seed[a];
