@@ -14,5 +14,5 @@ parser_test_SOURCES=parser_test.c \
 
 parser_test_LDADD = $(AACS_LIB)
 
-aacs_info_SOURCE=libaacs_test.c
+aacs_info_SOURCES=aacs_info.c
 aacs_info_LDADD = $(AACS_LIB)
