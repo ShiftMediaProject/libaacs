@@ -483,6 +483,10 @@ config_file *keydbcfg_new_config_file(void)
 /* Function that closes and frees a config file object */
 int keydbcfg_config_file_close(config_file *cfgfile)
 {
+  if (!cfgfile) {
+    return 0;
+  }
+
   /* free pk list */
   while (cfgfile->pkl)
   {

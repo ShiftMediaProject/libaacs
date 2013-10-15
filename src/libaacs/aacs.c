@@ -372,8 +372,7 @@ fprintf(stderr,"pmsn read 2\n");
     return error_code;
 }
 
-static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk,
-                     pk_list *pkl, cert_list *host_cert_list)
+static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
 {
     int error_code;
 
@@ -389,14 +388,18 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk,
         return AACS_SUCCESS;
     }
 
+    if (!cf) {
+        return AACS_ERROR_NO_CONFIG;
+    }
+
     /* make sure we have media key */
-    error_code = _calc_mk(aacs, mk, pkl);
+    error_code = _calc_mk(aacs, mk, cf->pkl);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }
 
     /* acquire VID */
-    error_code = _read_vid(aacs, host_cert_list);
+    error_code = _read_vid(aacs, cf->host_cert_list);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }
@@ -578,16 +581,18 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
     uint8_t mk[16] = {0}, vuk[16] = {0};
 
-    DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
-    _find_config_entry(aacs, cf->list, mk, vuk);
+    if (cf) {
+        DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
+        _find_config_entry(aacs, cf->list, mk, vuk);
 
-    /* Skip if retrieved from config file */
-    if (aacs->uks) {
-        return AACS_SUCCESS;
+        /* Skip if retrieved from config file */
+        if (aacs->uks) {
+            return AACS_SUCCESS;
+        }
     }
 
     /* Make sure we have VUK */
-    error_code = _calc_vuk(aacs, mk, vuk, cf->pkl, cf->host_cert_list);
+    error_code = _calc_vuk(aacs, mk, vuk, cf);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }
@@ -851,10 +856,6 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
     }
 
     cf = keydbcfg_config_load(configfile_path);
-    if (!cf) {
-        *error_code = AACS_ERROR_NO_CONFIG;
-        return aacs;
-    }
 
     DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
     *error_code = _calc_uks(aacs, cf);
@@ -866,6 +867,12 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
     aacs->bec = _get_bus_encryption_capable(path);
 
     if (*error_code == AACS_SUCCESS && aacs->bee && aacs->bec) {
+
+        if (!cf) {
+            *error_code = AACS_ERROR_NO_CONFIG;
+            return aacs;
+        }
+
         *error_code = _read_read_data_key(aacs, cf->host_cert_list);
         if (*error_code != AACS_SUCCESS) {
             DEBUG(DBG_AACS | DBG_CRIT, "Unable to initialize bus encryption required by drive and disc\n");
