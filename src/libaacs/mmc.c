@@ -971,6 +971,10 @@ MMC *mmc_open(const char *path)
     }
 #endif
 
+    if (mmc && mmc->read_drive_cert) {
+        mmc_read_drive_cert(mmc, mmc->drive_cert);
+    }
+
     return mmc;
 }
 
