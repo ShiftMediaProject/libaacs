@@ -1262,11 +1262,22 @@ int mmc_read_drive_cert(MMC *mmc, uint8_t *drive_cert)
         DEBUG(DBG_MMC | DBG_CRIT, "Drive does not support reading drive certificate\n");
     }
 
-    if (_mmc_report_key(mmc, 0, 0, 0, 0x38, buf, 116)) {
-        memcpy(drive_cert,  buf + 4, 92);
-        return MMC_SUCCESS;
+    if (!_mmc_report_key(mmc, 0, 0, 0, 0x38, buf, 116)) {
+        if (mmc->read_drive_cert) {
+            DEBUG(DBG_MMC | DBG_CRIT, "Failed reading drive certificate\n");
+        }
+        return MMC_ERROR;
     }
-    return MMC_ERROR;
+
+    if (!crypto_aacs_verify_drive_cert(buf + 4)) {
+        DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
+        return MMC_ERROR;
+    }
+
+    memcpy(mmc->drive_cert, buf + 4, 92);
+    memcpy(drive_cert, buf + 4, 92);
+
+    return MMC_SUCCESS;
 }
 
 uint8_t *mmc_read_mkb(MMC *mmc, int address, int *size)
