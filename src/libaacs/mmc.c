@@ -508,8 +508,8 @@ static int _mmc_check_aacs(MMC *mmc)
             DEBUG(DBG_MMC, "  AACS active: %d\n", buf[2+8] & 1);
             DEBUG(DBG_MMC, "  Binding Nonce generation support: %d\n", buf[4+8] & 1);
             DEBUG(DBG_MMC, "  Binding Nonce block count: %d\n", buf[5+8]);
-            DEBUG(DBG_MMC, "  Bus encryption support: %d\n", buf[4+8] & 2);
-            DEBUG(DBG_MMC, "  Read drive certificate: %d\n", buf[4+8] & 0x10);
+            DEBUG(DBG_MMC, "  Bus encryption support: %d\n", !!(buf[4+8] & 2));
+            DEBUG(DBG_MMC, "  Read drive certificate: %d\n", !!(buf[4+8] & 0x10));
             DEBUG(DBG_MMC, "  AGID count: %d\n", buf[6+8] & 0xf);
 
             mmc->read_drive_cert = !!(buf[4+8] & 0x10);
