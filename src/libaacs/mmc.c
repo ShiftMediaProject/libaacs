@@ -1015,6 +1015,10 @@ void mmc_close(MMC *mmc)
     }
 }
 
+/*
+ *
+ */
+
 static int _verify_signature(const uint8_t *cert, const uint8_t *signature,
                              const uint8_t *nonce, const uint8_t *point)
 {
@@ -1113,26 +1117,16 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     return MMC_SUCCESS;
 }
 
-int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *vid)
+/*
+ *
+ */
+
+static int _read_vid(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *vid)
 {
-    uint8_t agid = 0, mac[16], calc_mac[16], bus_key[16];
+    uint8_t mac[16], calc_mac[16];
     char str[512];
-    int error_code;
 
     DEBUG(DBG_MMC, "Reading VID from drive...\n");
-
-    _mmc_invalidate_agids(mmc);
-
-    if (!_mmc_report_agid(mmc, &agid)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive\n");
-        return MMC_ERROR;
-    }
-    DEBUG(DBG_MMC, "Got AGID from drive: %d\n", agid);
-
-    error_code = _mmc_aacs_auth(mmc, agid, host_priv_key, host_cert, bus_key);
-    if (error_code) {
-        return error_code;
-    }
 
     if (_mmc_read_vid(mmc, agid, vid, mac)) {
         if (DEBUG_KEYS) {
@@ -1146,38 +1140,20 @@ int mmc_read_vid(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cer
             DEBUG(DBG_MMC | DBG_CRIT, "VID MAC is incorrect. This means this Volume ID is not correct.\n");
         }
 
-        _mmc_invalidate_agid(mmc, agid);
-
         return MMC_SUCCESS;
     }
 
     DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive!\n");
 
-    _mmc_invalidate_agid(mmc, agid);
-
     return MMC_ERROR;
 }
 
-int mmc_read_pmsn(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *pmsn)
+static int _read_pmsn(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *pmsn)
 {
-    uint8_t agid = 0, mac[16], calc_mac[16], bus_key[16];
+    uint8_t mac[16], calc_mac[16];
     char str[512];
-    int error_code;
 
     DEBUG(DBG_MMC, "Reading PMSN from drive...\n");
-
-    _mmc_invalidate_agids(mmc);
-
-    if (!_mmc_report_agid(mmc, &agid)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive\n");
-        return MMC_ERROR;
-    }
-    DEBUG(DBG_MMC, "Got AGID from drive: %d\n", agid);
-
-    error_code = _mmc_aacs_auth(mmc, agid, host_priv_key, host_cert, bus_key);
-    if (error_code) {
-        return error_code;
-    }
 
     if (_mmc_read_pmsn(mmc, agid, pmsn, mac)) {
         if (DEBUG_KEYS) {
@@ -1191,25 +1167,49 @@ int mmc_read_pmsn(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_ce
             DEBUG(DBG_MMC | DBG_CRIT, "PMSN MAC is incorrect. This means this Pre-recorded Medial Serial Number is not correct.\n");
         }
 
-        _mmc_invalidate_agid(mmc, agid);
-
         return MMC_SUCCESS;
     }
 
     DEBUG(DBG_MMC | DBG_CRIT, "Unable to read PMSN from drive!\n");
 
-    _mmc_invalidate_agid(mmc, agid);
+    return MMC_ERROR;
+}
+
+static int _read_data_keys(MMC *mmc, uint8_t agid, const uint8_t *bus_key,
+                           uint8_t *read_data_key, uint8_t *write_data_key)
+{
+    uint8_t encrypted_read_data_key[16], encrypted_write_data_key[16];
+    char str[512];
+
+    DEBUG(DBG_MMC, "Reading data keys from drive...\n");
+
+    if (_mmc_read_data_keys(mmc, agid, encrypted_read_data_key, encrypted_write_data_key)) {
+        if (read_data_key) {
+            crypto_aes128d(bus_key, encrypted_read_data_key, read_data_key);
+            if (DEBUG_KEYS) {
+                DEBUG(DBG_MMC, "READ DATA KEY       : %s\n", print_hex(str, read_data_key, 16));
+            }
+        }
+        if (write_data_key) {
+            crypto_aes128d(bus_key, encrypted_write_data_key, write_data_key);
+            if (DEBUG_KEYS) {
+                DEBUG(DBG_MMC, "WRITE DATA KEY      : %s\n", print_hex(str, write_data_key, 16));
+            }
+        }
+
+        return MMC_SUCCESS;
+    }
+
+    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read data keys from drive!\n");
 
     return MMC_ERROR;
 }
 
-int mmc_read_data_keys(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *read_data_key, uint8_t *write_data_key)
+int mmc_read_auth(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert,
+                  int request, uint8_t *p1, uint8_t *p2)
 {
-    uint8_t agid = 0, bus_key[16], encrypted_read_data_key[16], encrypted_write_data_key[16];
-    char str[512];
+    uint8_t agid = 0, bus_key[16];
     int error_code;
-
-    DEBUG(DBG_MMC, "Reading data keys from drive...\n");
 
     _mmc_invalidate_agids(mmc);
 
@@ -1226,34 +1226,34 @@ int mmc_read_data_keys(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *ho
 
     error_code = _mmc_aacs_auth(mmc, agid, host_priv_key, host_cert, bus_key);
     if (error_code) {
+        _mmc_invalidate_agid(mmc, agid);
         return error_code;
     }
 
-    if (_mmc_read_data_keys(mmc, agid, encrypted_read_data_key, encrypted_write_data_key)) {
-        if (read_data_key) {
-            crypto_aes128d(bus_key, encrypted_read_data_key, read_data_key);
-            if (DEBUG_KEYS) {
-                DEBUG(DBG_MMC, "READ DATA KEY       : %s\n", print_hex(str, read_data_key, 16));
-            }
-        }
-        if (write_data_key) {
-            crypto_aes128d(bus_key, encrypted_write_data_key, write_data_key);
-            if (DEBUG_KEYS) {
-                DEBUG(DBG_MMC, "WRITE DATA KEY      : %s\n", print_hex(str, write_data_key, 16));
-            }
-        }
-
-        _mmc_invalidate_agid(mmc, agid);
-
-        return MMC_SUCCESS;
+    switch (request) {
+        case MMC_READ_VID:
+            error_code = _read_vid(mmc, agid, bus_key, p1);
+            break;
+        case MMC_READ_PMSN:
+            error_code = _read_pmsn(mmc, agid, bus_key, p1);
+            break;
+        case MMC_READ_DATA_KEYS:
+            error_code = _read_data_keys(mmc, agid, bus_key, p1, p2);
+            break;
+        default:
+            DEBUG(DBG_MMC | DBG_CRIT, "unknown mmc_read_auth() request %d\n", request);
+            error_code = MMC_ERROR;
+            break;
     }
-
-    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read data keys from drive!\n");
 
     _mmc_invalidate_agid(mmc, agid);
 
-    return MMC_ERROR;
+    return error_code;
 }
+
+/*
+ *
+ */
 
 int mmc_read_drive_cert(MMC *mmc, uint8_t *drive_cert)
 {
