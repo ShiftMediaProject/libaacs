@@ -288,6 +288,7 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
     int error_code = AACS_ERROR_NO_CERT;
 
     MKB *hrl_mkb = _get_hrl_mkb(mmc);
+    const uint8_t *drive_cert = mmc_get_drive_cert(mmc);
 
     for (;hcl && hcl->host_priv_key && hcl->host_cert; hcl = hcl->next) {
 
@@ -302,10 +303,16 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
             continue;
         }
 
-        if (mkb_host_cert_is_revoked(hrl_mkb, cert + 4)) {
+        if (mkb_host_cert_is_revoked(hrl_mkb, cert + 4) > 0) {
             DEBUG(DBG_AACS | DBG_CRIT, "Host certificate %s has been revoked.\n",
                   print_hex(tmp_str, cert + 4, 6));
             error_code = AACS_ERROR_CERT_REVOKED;
+            //continue;
+        }
+
+        if (drive_cert && (drive_cert[1] & 0x01) && !(cert[1] & 0x01)) {
+            DEBUG(DBG_AACS, "Certificate (id 0x%s) does not support bus encryption\n",
+                  print_hex(tmp_str, cert + 4, 6));
             //continue;
         }
 
@@ -392,6 +399,7 @@ static int _read_pmsn(AACS *aacs, cert_list *hcl)
     }
 
     int error_code = AACS_ERROR_NO_CERT;
+    const uint8_t *drive_cert = mmc_get_drive_cert(mmc);
 
     for (;hcl && hcl->host_priv_key && hcl->host_cert; hcl = hcl->next) {
 
@@ -404,6 +412,12 @@ static int _read_pmsn(AACS *aacs, cert_list *hcl)
             DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
                   print_hex(tmp_str, cert, 92));
             continue;
+        }
+
+        if (drive_cert && (drive_cert[1] & 0x01) && !(cert[1] & 0x01)) {
+            DEBUG(DBG_AACS, "Certificate (id 0x%s) does not support bus encryption\n",
+                  print_hex(tmp_str, cert + 4, 6));
+            //continue;
         }
 
         DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",

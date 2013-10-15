@@ -40,6 +40,7 @@ AACS_PRIVATE int  mmc_read_pmsn(MMC *mmc, const uint8_t *host_priv_key, const ui
 AACS_PRIVATE int  mmc_read_data_keys(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_cert,
                                      uint8_t *read_data_key, uint8_t *write_data_key);
 AACS_PRIVATE int  mmc_read_drive_cert(MMC *mmc, uint8_t *drive_cert);
+AACS_PRIVATE const uint8_t *mmc_get_drive_cert(MMC *mmc);
 
 /* read partial MKB */
 AACS_PRIVATE uint8_t *mmc_read_mkb(MMC *mmc, int address, int *size);
