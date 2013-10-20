@@ -66,12 +66,13 @@ enum
 };
 
 static dk_list *new_dk_list(void);
-static dk_list *add_dk_list_entry(dk_list *list, char *key, char *node);
 static pk_list *new_pk_list(void);
-static pk_list *add_pk_list_entry(pk_list *list, char *key);
 static cert_list *new_cert_list(void);
-static cert_list *add_cert_list(cert_list *list, char *host_priv_key,
-                         char *host_cert);
+
+static void add_dk_entry(config_file *cf, char *key, char *node);
+static void add_pk_entry(config_file *cf, char *key);
+static void add_cert_entry(config_file *cf, char *host_priv_key, char *host_cert);
+
 static title_entry_list *new_title_entry_list(void);
 static int add_entry(title_entry_list *list, int type, char *entry);
 static digit_key_pair_list *new_digit_key_pair_list(void);
@@ -79,7 +80,7 @@ static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
                               int type, unsigned int digit, char *key);
 static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
-void yyerror (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist,
+void yyerror (void *scanner, config_file *cf,
               title_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg);
 extern int libaacs_yyget_lineno  (void *scanner);
@@ -97,9 +98,7 @@ extern int libaacs_yyget_lineno  (void *scanner);
 %yacc
 %lex-param{void *scanner}
 %parse-param{void *scanner}
-%parse-param{dk_list *dklist}
-%parse-param{pk_list *pklist}
-%parse-param{cert_list *clist}
+%parse-param{config_file *cf}
 %parse-param{title_entry_list *celist}
 %parse-param{digit_key_pair_list *dkplist}
 
@@ -171,11 +170,11 @@ config_entry
 dk_entry
   : newline_list ENTRY_ID_DK device_key PUNCT_VERTICAL_BAR device_node NEWLINE
     {
-      dklist = add_dk_list_entry(dklist, $3, $5);
+      add_dk_entry(cf, $3, $5);
     }
   | ENTRY_ID_DK device_key PUNCT_VERTICAL_BAR device_node NEWLINE
     {
-      dklist = add_dk_list_entry(dklist, $2, $4);
+      add_dk_entry(cf, $2, $4);
     }
   ;
 
@@ -192,11 +191,11 @@ device_node
 pk_entry
   : newline_list ENTRY_ID_PK hexstring_list NEWLINE
     {
-      pklist = add_pk_list_entry(pklist, $3);
+      add_pk_entry(cf, $3);
     }
   | ENTRY_ID_PK hexstring_list NEWLINE
     {
-      pklist = add_pk_list_entry(pklist, $2);
+      add_pk_entry(cf, $2);
     }
   ;
 
@@ -206,22 +205,22 @@ host_cert_entry
       /* host_nonce and host_key_point are ignored, keep this for backward compatibility */
       X_FREE($7);
       X_FREE($9);
-      clist = add_cert_list(clist, $3, $5);
+      add_cert_entry(cf, $3, $5);
     }
   | ENTRY_ID_HC host_priv_key PUNCT_VERTICAL_BAR host_cert PUNCT_VERTICAL_BAR host_nonce PUNCT_VERTICAL_BAR host_key_point NEWLINE
     {
       /* host_nonce and host_key_point are ignored, keep this for backward compatibility */
       X_FREE($6);
       X_FREE($8);
-      clist = add_cert_list(clist, $2, $4);
+      add_cert_entry(cf, $2, $4);
     }
   | newline_list ENTRY_ID_HC host_priv_key PUNCT_VERTICAL_BAR host_cert NEWLINE
     {
-      clist = add_cert_list(clist, $3, $5);
+      add_cert_entry(cf, $3, $5);
     }
   | ENTRY_ID_HC host_priv_key PUNCT_VERTICAL_BAR host_cert NEWLINE
     {
-      clist = add_cert_list(clist, $2, $4);
+      add_cert_entry(cf, $2, $4);
     }
   ;
 
@@ -248,13 +247,21 @@ host_key_point
 title_entry
   : newline_list disc_info entry_list NEWLINE
     {
+      if (!cf->list) {
+        celist = cf->list = new_title_entry_list();
+      } else {
       celist->next = new_title_entry_list();
       celist = celist->next;
+      }
     }
   | disc_info entry_list NEWLINE
     {
+      if (!cf->list) {
+        celist = cf->list = new_title_entry_list();
+      } else {
       celist->next = new_title_entry_list();
       celist = celist->next;
+      }
     }
   ;
 
@@ -446,23 +453,11 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   if (!fp)
     return 0;
 
-  dk_list *head_dklist = new_dk_list();
-  pk_list *head_pklist = new_pk_list();
-  cert_list *head_clist = new_cert_list();
-  title_entry_list *head_celist = new_title_entry_list();
-  digit_key_pair_list *dkplist = NULL;
-
   void *scanner;
   libaacs_yylex_init(&scanner);
   libaacs_yyset_in(fp, scanner);
-  int retval = yyparse(scanner, head_dklist, head_pklist, head_clist,
-                       head_celist, dkplist);
+  int retval = yyparse(scanner, cfgfile, NULL, NULL);
   libaacs_yylex_destroy(scanner);
-
-  cfgfile->dkl = head_dklist;
-  cfgfile->pkl = head_pklist;
-  cfgfile->host_cert_list = head_clist;
-  cfgfile->list = head_celist;
 
   fclose(fp);
 
@@ -547,27 +542,26 @@ static dk_list *new_dk_list(void)
 }
 
 /* Function to add dk to config file */
-static dk_list *add_dk_list_entry(dk_list *list, char *key, char *node)
+static void add_dk_entry(config_file *cf, char *key, char *node)
 {
-  if (!list)
-  {
-    printf("Error: No dk list passed as parameter.\n");
-    return NULL;
-  }
-
   if (strlen(key) != 32) {
     fprintf(stderr, "ignoring bad DK entry %s\n", key);
     X_FREE(key);
-    return list;
+    return;
   }
 
-  list->key  = key;
-  list->node = strtoul(node, NULL, 16);
-  list->next = new_dk_list();
+  dk_list *entry = cf->dkl;
+  if (!entry) {
+    entry = cf->dkl = new_dk_list();
+  } else {
+    for (; entry->next; entry = entry->next);
+    entry->next = new_dk_list();
+    entry = entry->next;
+  }
 
+  entry->key  = key;
+  entry->node = strtoul(node, NULL, 16);
   X_FREE(node);
-
-  return list->next;
 }
 
 /* Function to return new pk_list object */
@@ -579,24 +573,24 @@ static pk_list *new_pk_list(void)
 }
 
 /* Function to add pk to config file */
-static pk_list *add_pk_list_entry(pk_list *list, char *key)
+static void add_pk_entry(config_file *cf, char *key)
 {
-  if (!list)
-  {
-    printf("Error: No pk list passed as parameter.\n");
-    return NULL;
-  }
-
   if (strlen(key) != 32) {
     fprintf(stderr, "ignoring bad PK entry %s\n", key);
     X_FREE(key);
-    return list;
+    return;
   }
 
-  list->key  = key;
-  list->next = new_pk_list();
+  pk_list *entry = cf->pkl;
+  if (!entry) {
+    entry = cf->pkl = new_pk_list();
+  } else {
+    for (; entry->next; entry = entry->next);
+    entry->next = new_pk_list();
+    entry = entry->next;
+  }
 
-  return list->next;
+  entry->key  = key;
 }
 
 /* Function to create new certificate list */
@@ -615,34 +609,32 @@ static cert_list *new_cert_list(void)
 }
 
 /* Function to add certificate list entry into config file object */
-static cert_list *add_cert_list(cert_list *list, char *host_priv_key,
-                         char *host_cert)
+static void add_cert_entry(config_file *cf, char *host_priv_key, char *host_cert)
 {
-  if (!list)
-  {
-    printf("Error: no certificate list object passed as parameter.\n");
-    return NULL;
-  }
-
   if (strlen(host_priv_key) != 40) {
     fprintf(stderr, "ignoring bad private key entry %s\n", host_priv_key);
     X_FREE(host_priv_key);
     X_FREE(host_cert);
-    return list;
+    return;
   }
   if (strlen(host_cert) != 184) {
     fprintf(stderr, "ignoring bad certificate entry %s\n", host_cert);
     X_FREE(host_priv_key);
     X_FREE(host_cert);
-    return list;
+    return;
   }
 
-  list->host_priv_key = host_priv_key;
-  list->host_cert = host_cert;
+  cert_list *entry = cf->host_cert_list;
+  if (!entry) {
+    entry = cf->host_cert_list = new_cert_list();
+  } else {
+    for (; entry->next; entry = entry->next);
+    entry->next = new_cert_list();
+    entry = entry->next;
+  }
 
-  list->next = new_cert_list();
-
-  return list->next;
+  entry->host_priv_key = host_priv_key;
+  entry->host_cert = host_cert;
 }
 
 /* Function that returns pointer to new title entry list */
@@ -768,7 +760,7 @@ static int add_date_entry(title_entry_list *list, unsigned int year,
 }
 
 /* Our definition of yyerror */
-void yyerror (void *scanner, dk_list *dklist, pk_list *pklist, cert_list *clist,
+void yyerror (void *scanner, config_file *cf,
               title_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg)
 {
