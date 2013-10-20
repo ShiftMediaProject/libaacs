@@ -365,7 +365,6 @@ static int _read_read_data_key(AACS *aacs, cert_list *hcl)
 static int _read_pmsn(AACS *aacs, cert_list *hcl)
 {
     int error_code = _mmc_read_auth(aacs, hcl, MMC_READ_PMSN, aacs->pmsn, NULL);
-fprintf(stderr,"pmsn read 2\n");
     if (error_code != AACS_SUCCESS) {
         DEBUG(DBG_AACS, "Error reading PMSN!\n");
     }
