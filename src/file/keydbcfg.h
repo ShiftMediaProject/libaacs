@@ -53,7 +53,7 @@ struct date_entry_t
 typedef struct dk_entry dk_list;
 struct dk_entry
 {
-  char *key;
+  uint8_t key[16];
   unsigned long node;
   dk_list *next;
 };
@@ -62,7 +62,7 @@ struct dk_entry
 typedef struct pk_entry pk_list;
 struct pk_entry
 {
-  char *key;
+  uint8_t key[16];
   pk_list *next;
 };
 
@@ -70,8 +70,8 @@ struct pk_entry
 typedef struct cert_entry cert_list;
 struct cert_entry
 {
-  char *host_priv_key;
-  char *host_cert;
+  uint8_t host_priv_key[20];
+  uint8_t host_cert[92];
   cert_list *next;
 };
 
@@ -79,7 +79,7 @@ struct cert_entry
 typedef struct title_entry_t title_entry;
 struct title_entry_t
 {
-  char *discid;
+  uint8_t discid[20];
   char *title;
   date_entry date;
   char *mek;

@@ -45,7 +45,6 @@
 #define MIN_FILE_SIZE  20
 #define MAX_FILE_SIZE  65535
 
-
 static int _mkpath(const char *path)
 {
     struct stat s;
@@ -172,13 +171,11 @@ static FILE *_open_cfg_file_system(const char *file_name, char **path)
     return NULL;
 }
 
-static int _is_duplicate_pk(pk_list *list, const char *e)
+static int _is_duplicate_pk(pk_list *list, const uint8_t *e)
 {
     while (list) {
-        if (list->key) {
-            if (!memcmp(list->key, e, 2*16)) {
-                return 1;
-            }
+        if (!memcmp(list->key, e, 16)) {
+            return 1;
         }
         list = list->next;
     }
@@ -197,22 +194,24 @@ static int _parse_pk_file(config_file *cf, FILE *fp)
         while (*p) {
             char *str = str_get_hex_string(p, 2*16);
 
-            if (str && _is_duplicate_pk(cf->pkl, str)) {
-                DEBUG(DBG_FILE, "Skipping duplicate processing key %s\n", str);
-                X_FREE(str);
-
-            } else if (str) {
+            if (str) {
                 DEBUG(DBG_FILE, "Found processing key %s\n", str);
 
                 pk_list *e = calloc(1, sizeof(pk_list));
 
-                e->key  = str;
-                e->next = cf->pkl;
+                hexstring_to_hex_array(e->key, 16, str);
 
-                cf->pkl = e;
+                if (_is_duplicate_pk(cf->pkl, e->key)) {
+                    DEBUG(DBG_FILE, "Skipping duplicate processing key %s\n", str);
+                    X_FREE(e);
+                } else {
+                    e->next = cf->pkl;
+                    cf->pkl = e;
+                }
 
                 result++;
             }
+            X_FREE(str);
 
             p = str_next_line(p);
         }
@@ -226,25 +225,15 @@ static int _parse_pk_file(config_file *cf, FILE *fp)
 static int _is_duplicate_cert(cert_list *list, cert_list *e)
 {
     while (list) {
-        if (list->host_priv_key && list->host_cert) {
+        if (!memcmp(list->host_priv_key, e->host_priv_key, 20) &&
+            !memcmp(list->host_cert,     e->host_cert,     92)) {
 
-            if (!memcmp(list->host_priv_key, e->host_priv_key, 2*20) &&
-                !memcmp(list->host_cert,     e->host_cert,     2*92)) {
-
-                return 1;
-            }
+            return 1;
         }
         list = list->next;
     }
 
   return 0;
-}
-
-static void _free_cert_entry(cert_list *e)
-{
-    X_FREE(e->host_priv_key);
-    X_FREE(e->host_cert);
-    X_FREE(e);
 }
 
 static int _parse_cert_file(config_file *cf, FILE *fp)
@@ -254,28 +243,35 @@ static int _parse_cert_file(config_file *cf, FILE *fp)
 
     if (data) {
         const char *p = data;
-        cert_list  *e = calloc(1, sizeof(cert_list));
 
-        e->host_priv_key = str_get_hex_string(p, 2*20);
+        char *host_cert, *host_priv_key;
+        host_priv_key = str_get_hex_string(p, 2*20);
         p = str_next_line(p);
-        e->host_cert = str_get_hex_string(p, 2*92);
+        host_cert = str_get_hex_string(p, 2*92);
 
         X_FREE(data);
 
-        if (!e->host_priv_key || !e->host_cert) {
+        if (!host_priv_key || !host_cert) {
             DEBUG(DBG_FILE, "Invalid file\n");
-            _free_cert_entry(e);
-
-        } else if (_is_duplicate_cert(cf->host_cert_list, e)) {
-            DEBUG(DBG_FILE, "Skipping duplicate certificate entry %s %s\n", e->host_priv_key, e->host_cert);
-            _free_cert_entry(e);
 
         } else {
-            DEBUG(DBG_FILE, "Found certificate: %s %s\n", e->host_priv_key, e->host_cert);
-            e->next = cf->host_cert_list;
-            cf->host_cert_list = e;
-            result = 1;
+            DEBUG(DBG_FILE, "Found certificate: %s %s\n", host_priv_key, host_cert);
+
+            cert_list  *e = calloc(1, sizeof(cert_list));
+            hexstring_to_hex_array(e->host_priv_key, 20, host_priv_key);
+            hexstring_to_hex_array(e->host_cert, 92, host_cert);
+
+            if (_is_duplicate_cert(cf->host_cert_list, e)) {
+                DEBUG(DBG_FILE, "Skipping duplicate certificate entry %s %s\n", host_priv_key, host_cert);
+                X_FREE(e);
+            } else {
+                e->next = cf->host_cert_list;
+                cf->host_cert_list = e;
+                result = 1;
+            }
         }
+        X_FREE(host_priv_key);
+        X_FREE(host_cert);
     }
 
     return result;

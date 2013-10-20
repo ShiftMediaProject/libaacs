@@ -75,7 +75,9 @@ bin_PROGRAMS = aacs_info
 
 parser_test_SOURCES = examples/parser_test.c \
 	file/keydbcfg-parser.y \
-	file/keydbcfg-lexer.l
+	file/keydbcfg-lexer.l \
+	util/strutl.c \
+	util/logging.c
 parser_test_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES)
 
 aacs_info_SOURCES = examples/aacs_info.c

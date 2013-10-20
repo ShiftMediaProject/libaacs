@@ -187,13 +187,11 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl)
         DEBUG(DBG_AACS, "Get cvalues...\n");
         rec = mkb_cvalues(mkb, &len);
 
-        for (; pkl && pkl->key; pkl = pkl->next) {
-                uint8_t pk[16];
-                hexstring_to_hex_array(pk, sizeof(pk), pkl->key);
+        for (; pkl; pkl = pkl->next) {
                 DEBUG(DBG_AACS, "Trying processing key...\n");
 
                 for (a = 0; a < num_uvs; a++) {
-                    if (AACS_SUCCESS == _validate_pk(pk, rec + a * 16, uvs + 1 + a * 5,
+                    if (AACS_SUCCESS == _validate_pk(pkl->key, rec + a * 16, uvs + 1 + a * 5,
                       mkb_mk_dv(mkb), mk)) {
                         mkb_close(mkb);
                         X_FREE(buf);
@@ -285,36 +283,33 @@ static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uin
     MKB *hrl_mkb = _get_hrl_mkb(mmc);
     const uint8_t *drive_cert = mmc_get_drive_cert(mmc);
 
-    for (;hcl && hcl->host_priv_key && hcl->host_cert; hcl = hcl->next) {
+    for (; hcl ; hcl = hcl->next) {
 
         char tmp_str[2*92+1];
-        uint8_t priv_key[20], cert[92];
-        hexstring_to_hex_array(priv_key, sizeof(priv_key), hcl->host_priv_key);
-        hexstring_to_hex_array(cert,     sizeof(cert),     hcl->host_cert);
 
-        if (!crypto_aacs_verify_host_cert(cert)) {
+        if (!crypto_aacs_verify_host_cert(hcl->host_cert)) {
             DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
-                  print_hex(tmp_str, cert, 92));
+                  print_hex(tmp_str, hcl->host_cert, 92));
             continue;
         }
 
-        if (mkb_host_cert_is_revoked(hrl_mkb, cert + 4) > 0) {
+        if (mkb_host_cert_is_revoked(hrl_mkb, hcl->host_cert + 4) > 0) {
             DEBUG(DBG_AACS | DBG_CRIT, "Host certificate %s has been revoked.\n",
-                  print_hex(tmp_str, cert + 4, 6));
+                  print_hex(tmp_str, hcl->host_cert + 4, 6));
             error_code = AACS_ERROR_CERT_REVOKED;
             //continue;
         }
 
-        if (drive_cert && (drive_cert[1] & 0x01) && !(cert[1] & 0x01)) {
+        if (drive_cert && (drive_cert[1] & 0x01) && !(hcl->host_cert[1] & 0x01)) {
             DEBUG(DBG_AACS, "Certificate (id 0x%s) does not support bus encryption\n",
-                  print_hex(tmp_str, cert + 4, 6));
+                  print_hex(tmp_str, hcl->host_cert + 4, 6));
             //continue;
         }
 
         DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
-              print_hex(tmp_str, cert + 4, 6));
+              print_hex(tmp_str, hcl->host_cert + 4, 6));
 
-        int mmc_result = mmc_read_auth(mmc, priv_key, cert, type, p1, p2);
+        int mmc_result = mmc_read_auth(mmc, hcl->host_priv_key, hcl->host_cert, type, p1, p2);
         switch (mmc_result) {
             case MMC_SUCCESS:
                 mkb_close(hrl_mkb);
@@ -506,19 +501,15 @@ static AACS_FILE_H *_open_content_certificate_file(const char *path)
 static void _find_config_entry(AACS *aacs, title_entry_list *ce,
                                uint8_t *mk, uint8_t *vuk)
 {
-    uint8_t discid[20];
     char str[48];
 
     aacs->uks = NULL;
     aacs->num_uks = 0;
 
         while (ce && ce->entry.discid) {
-            memset(discid, 0, sizeof(discid));
-            hexstring_to_hex_array(discid, sizeof(discid),
-                                   ce->entry.discid);
-            if (!memcmp(aacs->disc_id, discid, 20)) {
+            if (!memcmp(aacs->disc_id, ce->entry.discid, 20)) {
                 DEBUG(DBG_AACS, "Found config entry for discid %s\n",
-                      ce->entry.discid);
+                      print_hex(str, ce->entry.discid, 20));
                 break;
             }
 

@@ -18,6 +18,7 @@
  */
 
 #include "file/keydbcfg.h"
+#include "util/logging.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +52,8 @@ static int print_digit_key_pair_enties(digit_key_pair_list *list)
 /* Function that prints all entries parsed from a config file */
 static int print_title_entries(title_entry_list *list)
 {
+  char tmp[256];
+
   if (!list)
   {
     printf("Error: No title list passed as parameter.\n");
@@ -63,7 +66,7 @@ static int print_title_entries(title_entry_list *list)
     if (!cursor->entry.discid)
       break;
 
-    printf("DISCID: %s\n", cursor->entry.discid);
+    printf("DISCID: %s\n", print_hex(tmp, cursor->entry.discid, 20));
     printf("  Title: %s\n", cursor->entry.title);
     printf("  Date: %u-%u-%u\n", cursor->entry.date.year,
       cursor->entry.date.month, cursor->entry.date.day);
@@ -103,21 +106,14 @@ static int print_title_entries(title_entry_list *list)
 /* Function to print certificate list from config file */
 static int print_cert_list(cert_list *list)
 {
-  if (!list)
-  {
-    printf("Error: no certificate list object passed in as parameter\n");
-    return 0;
-  }
+  char tmp[256];
 
   printf("Available certificates:\n");
   cert_list *cursor = list;
   while (cursor)
   {
-    if (!cursor->host_priv_key)
-      break;
-
-    printf("  Host private key: %s\n", cursor->host_priv_key);
-    printf("  Host certificate: %s\n", cursor->host_cert);
+    printf("  Host private key: %s\n", print_hex(tmp, cursor->host_priv_key, 20));
+    printf("  Host certificate: %s\n", print_hex(tmp, cursor->host_cert, 92));
     printf("\n");
 
     cursor = cursor->next;
@@ -131,14 +127,13 @@ static int print_cert_list(cert_list *list)
 /* Function to print config file */
 static int print_config_file(config_file *cfgfile)
 {
+  char tmp[256];
+
   printf("Available device keys:\n");
   dk_list *dkcursor = cfgfile->dkl;
   while (dkcursor)
   {
-    if (!dkcursor->key)
-      break;
-
-    printf("  Device key: %s\n", dkcursor->key);
+    printf("  Device key: %s\n", print_hex(tmp, dkcursor->key, 16));
     printf("  Device node: %lu\n", dkcursor->node);
 
     dkcursor = dkcursor->next;
@@ -151,10 +146,7 @@ static int print_config_file(config_file *cfgfile)
   pk_list *cursor = cfgfile->pkl;
   while (cursor)
   {
-    if (!cursor->key)
-      break;
-
-    printf("  %s\n", cursor->key);
+    printf("  %s\n", print_hex(tmp, cursor->key, 16));
 
     cursor = cursor->next;
   }

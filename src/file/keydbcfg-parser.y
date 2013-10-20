@@ -486,7 +486,6 @@ int keydbcfg_config_file_close(config_file *cfgfile)
   while (cfgfile->pkl)
   {
     pk_list *next = cfgfile->pkl->next;
-    X_FREE(cfgfile->pkl->key);
     X_FREE(cfgfile->pkl);
     cfgfile->pkl = next;
   }
@@ -495,7 +494,6 @@ int keydbcfg_config_file_close(config_file *cfgfile)
   while (cfgfile->dkl)
   {
     dk_list *next = cfgfile->dkl->next;
-    X_FREE(cfgfile->dkl->key);
     X_FREE(cfgfile->dkl);
     cfgfile->dkl = next;
   }
@@ -504,8 +502,6 @@ int keydbcfg_config_file_close(config_file *cfgfile)
   while (cfgfile->host_cert_list)
   {
     cert_list *next = cfgfile->host_cert_list->next;
-    X_FREE(cfgfile->host_cert_list->host_priv_key);
-    X_FREE(cfgfile->host_cert_list->host_cert);
     X_FREE(cfgfile->host_cert_list);
     cfgfile->host_cert_list = next;
   }
@@ -514,7 +510,6 @@ int keydbcfg_config_file_close(config_file *cfgfile)
   while (cfgfile->list)
   {
     title_entry_list *next = cfgfile->list->next;
-    X_FREE(cfgfile->list->entry.discid);
     X_FREE(cfgfile->list->entry.title);
     X_FREE(cfgfile->list->entry.mek);
     X_FREE(cfgfile->list->entry.vid);
@@ -559,7 +554,8 @@ static void add_dk_entry(config_file *cf, char *key, char *node)
     entry = entry->next;
   }
 
-  entry->key  = key;
+  hexstring_to_hex_array(entry->key, 16, key);
+  X_FREE(key);
   entry->node = strtoul(node, NULL, 16);
   X_FREE(node);
 }
@@ -590,7 +586,8 @@ static void add_pk_entry(config_file *cf, char *key)
     entry = entry->next;
   }
 
-  entry->key  = key;
+  hexstring_to_hex_array(entry->key, 16, key);
+  X_FREE(key);
 }
 
 /* Function to create new certificate list */
@@ -633,8 +630,10 @@ static void add_cert_entry(config_file *cf, char *host_priv_key, char *host_cert
     entry = entry->next;
   }
 
-  entry->host_priv_key = host_priv_key;
-  entry->host_cert = host_cert;
+  hexstring_to_hex_array(entry->host_priv_key, 20, host_priv_key);
+  X_FREE(host_priv_key);
+  hexstring_to_hex_array(entry->host_cert, 92, host_cert);
+  X_FREE(host_cert);
 }
 
 /* Function that returns pointer to new title entry list */
@@ -672,8 +671,8 @@ static int add_entry(title_entry_list *list, int type, char *entry)
   {
     case ENTRY_TYPE_DISCID:
       CHECK_KEY_LENGTH("discid", 20)
-      X_FREE(list->entry.discid);
-      list->entry.discid = entry;
+      hexstring_to_hex_array(list->entry.discid, 20, entry);
+      X_FREE(entry);
       break;
 
     case ENTRY_TYPE_TITLE:
