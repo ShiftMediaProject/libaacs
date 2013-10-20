@@ -71,8 +71,7 @@ static pk_list *new_pk_list(void);
 static pk_list *add_pk_list_entry(pk_list *list, char *key);
 static cert_list *new_cert_list(void);
 static cert_list *add_cert_list(cert_list *list, char *host_priv_key,
-                         char *host_cert, char *host_nonce,
-                         char *host_key_point);
+                         char *host_cert);
 static title_entry_list *new_title_entry_list(void);
 static int add_entry(title_entry_list *list, int type, char *entry);
 static digit_key_pair_list *new_digit_key_pair_list(void);
@@ -204,11 +203,25 @@ pk_entry
 host_cert_entry
   : newline_list ENTRY_ID_HC host_priv_key PUNCT_VERTICAL_BAR host_cert PUNCT_VERTICAL_BAR host_nonce PUNCT_VERTICAL_BAR host_key_point NEWLINE
     {
-      clist = add_cert_list(clist, $3, $5, $7, $9);
+      /* host_nonce and host_key_point are ignored, keep this for backward compatibility */
+      X_FREE($7);
+      X_FREE($9);
+      clist = add_cert_list(clist, $3, $5);
     }
   | ENTRY_ID_HC host_priv_key PUNCT_VERTICAL_BAR host_cert PUNCT_VERTICAL_BAR host_nonce PUNCT_VERTICAL_BAR host_key_point NEWLINE
     {
-      clist = add_cert_list(clist, $2, $4, $6, $8);
+      /* host_nonce and host_key_point are ignored, keep this for backward compatibility */
+      X_FREE($6);
+      X_FREE($8);
+      clist = add_cert_list(clist, $2, $4);
+    }
+  | newline_list ENTRY_ID_HC host_priv_key PUNCT_VERTICAL_BAR host_cert NEWLINE
+    {
+      clist = add_cert_list(clist, $3, $5);
+    }
+  | ENTRY_ID_HC host_priv_key PUNCT_VERTICAL_BAR host_cert NEWLINE
+    {
+      clist = add_cert_list(clist, $2, $4);
     }
   ;
 
@@ -494,8 +507,6 @@ int keydbcfg_config_file_close(config_file *cfgfile)
     cert_list *next = cfgfile->host_cert_list->next;
     X_FREE(cfgfile->host_cert_list->host_priv_key);
     X_FREE(cfgfile->host_cert_list->host_cert);
-    X_FREE(cfgfile->host_cert_list->host_nonce);
-    X_FREE(cfgfile->host_cert_list->host_key_point);
     X_FREE(cfgfile->host_cert_list);
     cfgfile->host_cert_list = next;
   }
@@ -589,8 +600,7 @@ static cert_list *new_cert_list(void)
 
 /* Function to add certificate list entry into config file object */
 static cert_list *add_cert_list(cert_list *list, char *host_priv_key,
-                         char *host_cert, char *host_nonce,
-                         char *host_key_point)
+                         char *host_cert)
 {
   if (!list)
   {
@@ -600,8 +610,6 @@ static cert_list *add_cert_list(cert_list *list, char *host_priv_key,
 
   list->host_priv_key = host_priv_key;
   list->host_cert = host_cert;
-  list->host_nonce = host_nonce;
-  list->host_key_point = host_key_point;
 
   list->next = new_cert_list();
 

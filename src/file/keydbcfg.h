@@ -72,8 +72,6 @@ struct cert_entry
 {
   char *host_priv_key;
   char *host_cert;
-  char *host_nonce;
-  char *host_key_point;
   cert_list *next;
 };
 
