@@ -555,6 +555,12 @@ static dk_list *add_dk_list_entry(dk_list *list, char *key, char *node)
     return NULL;
   }
 
+  if (strlen(key) != 32) {
+    fprintf(stderr, "ignoring bad DK entry %s\n", key);
+    X_FREE(key);
+    return list;
+  }
+
   list->key  = key;
   list->node = strtoul(node, NULL, 16);
   list->next = new_dk_list();
@@ -579,6 +585,12 @@ static pk_list *add_pk_list_entry(pk_list *list, char *key)
   {
     printf("Error: No pk list passed as parameter.\n");
     return NULL;
+  }
+
+  if (strlen(key) != 32) {
+    fprintf(stderr, "ignoring bad PK entry %s\n", key);
+    X_FREE(key);
+    return list;
   }
 
   list->key  = key;
@@ -612,6 +624,19 @@ static cert_list *add_cert_list(cert_list *list, char *host_priv_key,
     return NULL;
   }
 
+  if (strlen(host_priv_key) != 40) {
+    fprintf(stderr, "ignoring bad private key entry %s\n", host_priv_key);
+    X_FREE(host_priv_key);
+    X_FREE(host_cert);
+    return list;
+  }
+  if (strlen(host_cert) != 184) {
+    fprintf(stderr, "ignoring bad certificate entry %s\n", host_cert);
+    X_FREE(host_priv_key);
+    X_FREE(host_cert);
+    return list;
+  }
+
   list->host_priv_key = host_priv_key;
   list->host_cert = host_cert;
 
@@ -635,6 +660,13 @@ title_entry_list *new_title_entry_list(void)
   return list;
 }
 
+#define CHECK_KEY_LENGTH(name, len)                               \
+  if (strlen(entry) != len) {                                     \
+    fprintf(stderr, "Ignoring bad "name" entry %s\n", entry);     \
+    X_FREE(entry);                                                \
+    break;                                                        \
+  }
+
 /* Function to add standard string entries to a config entry */
 static int add_entry(title_entry_list *list, int type, char *entry)
 {
@@ -647,6 +679,7 @@ static int add_entry(title_entry_list *list, int type, char *entry)
   switch (type)
   {
     case ENTRY_TYPE_DISCID:
+      CHECK_KEY_LENGTH("discid", 20)
       X_FREE(list->entry.discid);
       list->entry.discid = entry;
       break;
@@ -658,16 +691,19 @@ static int add_entry(title_entry_list *list, int type, char *entry)
       break;
 
     case ENTRY_TYPE_MEK:
+      CHECK_KEY_LENGTH("mek", 16)
       X_FREE(list->entry.mek);
       list->entry.mek = entry;
       break;
 
     case ENTRY_TYPE_VID:
+      CHECK_KEY_LENGTH("vid", 16)
       X_FREE(list->entry.vid);
       list->entry.vid = entry;
       break;
 
     case ENTRY_TYPE_VUK:
+      CHECK_KEY_LENGTH("vuk", 16)
       X_FREE(list->entry.vuk);
       list->entry.vuk = entry;
       break;
