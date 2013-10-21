@@ -261,7 +261,6 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
         /* find next device */
 
         if (device_number == dk_num->node) {
-            dk_num = dk_num->next;
             continue;
         }
         device_number = dkl->node;
