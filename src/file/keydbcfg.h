@@ -56,6 +56,10 @@ struct dk_entry
   uint8_t key[16];
   unsigned long node;
   dk_list *next;
+
+  /* optional, can be calculated */
+  uint32_t uv;
+  uint8_t  u_mask_shift;
 };
 
 /* pk entry */

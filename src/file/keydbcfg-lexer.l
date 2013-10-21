@@ -59,6 +59,8 @@ DIGIT                   ([0-9]+)
 
 KEYWORD_DEVICE_KEY      ([Dd][Ee][Vv][Ii][Cc][Ee]_[Kk][Ee][Yy])
 KEYWORD_DEVICE_NODE     ([Dd][Ee][Vv][Ii][Cc][Ee]_[Nn][Oo][Dd][Ee])
+KEYWORD_KEY_UV          ([Kk][Ee][Yy]_[Uu][Vv])
+KEYWORD_KEY_U_MASK_SHIFT ([Kk][Ee][Yy]_[Uu]_[Mm][Aa][Ss][Kk]_[Ss][Hh][Ii][Ff][Tt])
 KEYWORD_HOST_PRIV_KEY   ([Hh][Oo][Ss][Tt]_[Pp][Rr][Ii][Vv]_[Kk][Ee][Yy][ \t]+)
 KEYWORD_HOST_CERT       ([Hh][Oo][Ss][Tt]_[Cc][Ee][Rr][Tt][ \t]+)
 KEYWORD_HOST_NONCE      ([Hh][Oo][Ss][Tt]_[Nn][Oo][Nn][Cc][Ee][ \t]+)
@@ -112,6 +114,8 @@ BAD_ENTRY               ([^\n])
 
 {KEYWORD_DEVICE_KEY}      { return KEYWORD_DEVICE_KEY; }
 {KEYWORD_DEVICE_NODE}     { return KEYWORD_DEVICE_NODE; }
+{KEYWORD_KEY_UV}          { return KEYWORD_KEY_UV; }
+{KEYWORD_KEY_U_MASK_SHIFT} { return KEYWORD_KEY_U_MASK_SHIFT; }
 {KEYWORD_HOST_PRIV_KEY}   { return KEYWORD_HOST_PRIV_KEY; }
 {KEYWORD_HOST_CERT}       { return KEYWORD_HOST_CERT; }
 {KEYWORD_HOST_NONCE}      { return KEYWORD_HOST_NONCE; }

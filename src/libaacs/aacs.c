@@ -156,11 +156,195 @@ static void _update_drl(MKB *mkb)
     }
 }
 
-static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl)
+static uint32_t _calc_v_mask(uint32_t uv)
+{
+    uint32_t v_mask = 0xffffffff;
+
+    while (!(uv & ~v_mask)) {
+        v_mask <<= 1;
+    }
+
+    return v_mask;
+}
+
+static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mask, uint32_t dev_key_v_mask)
+{
+    unsigned char left_child[16], right_child[16];
+
+    crypto_aesg3(dk, left_child, right_child, pk);
+
+    while (dev_key_v_mask != v_mask) {
+
+        int i;
+        for (i = 31; i >= 0; i--) {
+            if (!(dev_key_v_mask & (1ul << i))) {
+                break;
+            }
+        }
+
+        uint8_t curr_key[16];
+        if (!(uv & (1ul << i))) {
+            memcpy(curr_key, left_child, 16);
+        } else {
+            memcpy(curr_key, right_child, 16);
+        }
+
+        crypto_aesg3(curr_key, left_child, right_child, pk);
+
+        dev_key_v_mask = ((int) dev_key_v_mask) >> 1;
+    }
+
+    char str[40];
+    DEBUG(DBG_AACS, "Processing key: %s\n",  print_hex(str, pk, 16));
+}
+
+static dk_list *_find_dk(dk_list *dkl, uint32_t *p_dev_key_v_mask, uint32_t uv, uint32_t u_mask)
+{
+    uint32_t device_number = dkl->node;
+    uint32_t dev_key_uv, dev_key_u_mask, dev_key_v_mask;
+    unsigned key_idx = 0;
+
+    for (; dkl; dkl = dkl->next) {
+        if (device_number != dkl->node) {
+            /* wrong device */
+            continue;
+        }
+        key_idx++;
+        dev_key_uv     = dkl->uv;
+        dev_key_u_mask = 0xffffffff << dkl->u_mask_shift;
+        dev_key_v_mask = _calc_v_mask(dev_key_uv);
+
+        if ((u_mask == dev_key_u_mask) &&
+            ((uv & dev_key_v_mask) == (dev_key_uv & dev_key_v_mask))) {
+            break;
+        }
+    }
+
+    if (!dkl) {
+        DEBUG(DBG_AACS | DBG_CRIT, "could not find applying device key (device 0x%x)\n", device_number);
+    } else {
+        char str[128];
+        DEBUG(DBG_AACS, "Applying device key is #%d %s\n", key_idx, print_hex(str, dkl->key, 16));
+        DEBUG(DBG_AACS, "  UV: 0x%08x  U mask: 0x%08x  V mask: 0x%08x\n", dev_key_uv, dev_key_u_mask, dev_key_v_mask);
+        *p_dev_key_v_mask = dev_key_v_mask;
+    }
+
+    return dkl;
+}
+
+static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
+{
+    /* calculate processing key and media key using device keys */
+
+    const uint8_t *uvs, *cvalues;
+    unsigned num_uvs;
+    size_t len;
+    char str[128];
+
+    /* get mkb data */
+
+    uvs     = mkb_subdiff_records(mkb, &len);
+    cvalues = mkb_cvalues(mkb, &len);
+    num_uvs = len / 5;
+
+    if (num_uvs < 1) {
+        return AACS_ERROR_CORRUPTED_DISC;
+    }
+
+    /* loop over all known devices */
+
+    dk_list *dk_num;
+    uint32_t device_number = (uint32_t)-1;
+
+    for (dk_num = dkl; dk_num; dk_num = dk_num->next) {
+
+        /* find next device */
+
+        if (device_number == dk_num->node) {
+            dk_num = dk_num->next;
+            continue;
+        }
+        device_number = dkl->node;
+
+        /* find applying subset difference */
+
+        unsigned uvs_idx;
+        uint32_t u_mask, v_mask, uv;
+
+        for (uvs_idx = 0; uvs_idx < num_uvs; uvs_idx++) {
+            const uint8_t *p_uv = uvs + 1 + 5 * uvs_idx;
+            uint8_t u_mask_shift = p_uv[-1];
+
+            uv = MKINT_BE32(p_uv);
+            if (!uv) {
+                continue;
+            }
+
+            if (u_mask_shift & 0xc0) {
+                DEBUG(DBG_AACS | DBG_CRIT, "device 0x%x is revoked\n", device_number);
+                uvs_idx = num_uvs;
+
+            } else {
+
+                u_mask = 0xffffffff << u_mask_shift;
+                v_mask = _calc_v_mask(uv);
+
+                if (((device_number & u_mask) == (uv & u_mask)) && ((device_number & v_mask) != (uv & v_mask))) {
+                    break;
+                }
+            }
+        }
+
+        if (uvs_idx >= num_uvs) {
+            DEBUG(DBG_AACS | DBG_CRIT, "could not find applying subset-difference for device 0x%x\n", device_number);
+            /* try next device */
+            continue;
+        }
+
+        DEBUG(DBG_AACS, "Applying subset-difference for device 0x%x is #%d:\n", device_number, uvs_idx);
+        DEBUG(DBG_AACS,"  UV: 0x%08x  U mask: 0x%08x  V mask: 0x%08x\n", uv, u_mask, v_mask);
+
+        /* find applying device key */
+
+        uint32_t dev_key_v_mask = 0;
+        dk_list *dk;
+
+        dk = _find_dk(dk_num, &dev_key_v_mask, uv, u_mask);
+        if (!dk) {
+            /* try next device */
+            continue;
+        }
+
+        /* calculate processing key */
+
+        uint8_t pk[16];
+        _calc_pk(dk->key, pk, uv, v_mask, dev_key_v_mask);
+
+        /* calculate and verify media key */
+
+        if ( _validate_pk(pk,
+                          cvalues + uvs_idx * 16,
+                          uvs + 1 + uvs_idx * 5,
+                          mkb_mk_dv(mkb),
+                          mk)
+             == AACS_SUCCESS) {
+
+            DEBUG(DBG_AACS, "Media key: %s\n", print_hex(str, mk, 16));
+            return AACS_SUCCESS;
+        }
+
+        DEBUG(DBG_AACS | DBG_CRIT, "Processing key %s is invalid!\n", print_hex(str, pk, 16));
+
+        /* try next device */
+    }
+
+    return AACS_ERROR_NO_DK;
+}
+
+static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 {
     int a, num_uvs = 0;
     size_t len;
-    uint8_t *buf = NULL;
     MKB *mkb = NULL;
     const uint8_t *rec, *uvs;
 
@@ -172,9 +356,17 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl)
     DEBUG(DBG_AACS, "Calculate media key...\n");
 
     if ((mkb = mkb_open(aacs->path))) {
-        DEBUG(DBG_AACS, "Get UVS...\n");
-        _update_drl(mkb);
+
         aacs->mkb_version = mkb_version(mkb);
+        _update_drl(mkb);
+
+        /* try device keys first */
+        if (dkl && _calc_pk_mk(mkb, dkl, mk) == AACS_SUCCESS) {
+            mkb_close(mkb);
+            return AACS_SUCCESS;
+        }
+
+        DEBUG(DBG_AACS, "Get UVS...\n");
         uvs = mkb_subdiff_records(mkb, &len);
         rec = uvs;
         while (rec < uvs + len) {
@@ -194,7 +386,6 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl)
                     if (AACS_SUCCESS == _validate_pk(pkl->key, rec + a * 16, uvs + 1 + a * 5,
                       mkb_mk_dv(mkb), mk)) {
                         mkb_close(mkb);
-                        X_FREE(buf);
 
                         char str[40];
                         DEBUG(DBG_AACS, "Media key: %s\n", print_hex(str, mk, 16));
@@ -204,7 +395,6 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl)
             }
 
         mkb_close(mkb);
-        X_FREE(buf);
 
         DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key. Missing right processing key ?\n");
         return AACS_ERROR_NO_PK;
@@ -387,7 +577,7 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
     }
 
     /* make sure we have media key */
-    error_code = _calc_mk(aacs, mk, cf->pkl);
+    error_code = _calc_mk(aacs, mk, cf->pkl, cf->dkl);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }

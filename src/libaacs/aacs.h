@@ -35,6 +35,7 @@
 #define AACS_ERROR_CERT_REVOKED   -5 /* certificate has been revoked */
 #define AACS_ERROR_MMC_OPEN       -6 /* MMC open failed (no MMC drive ?) */
 #define AACS_ERROR_MMC_FAILURE    -7 /* MMC failed */
+#define AACS_ERROR_NO_DK          -8 /* no matching device key */
 
 typedef struct aacs AACS;
 

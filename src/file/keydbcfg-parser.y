@@ -69,7 +69,7 @@ static dk_list *new_dk_list(void);
 static pk_list *new_pk_list(void);
 static cert_list *new_cert_list(void);
 
-static void add_dk_entry(config_file *cf, char *key, char *node);
+static void add_dk_entry(config_file *cf, char *key, char *node, char *uv, char *u_mask_shift);
 static void add_pk_entry(config_file *cf, char *key);
 static void add_cert_entry(config_file *cf, char *host_priv_key, char *host_cert);
 
@@ -114,6 +114,8 @@ extern int libaacs_yyget_lineno  (void *scanner);
 
 %token KEYWORD_DEVICE_KEY
 %token KEYWORD_DEVICE_NODE
+%token KEYWORD_KEY_UV
+%token KEYWORD_KEY_U_MASK_SHIFT
 %token KEYWORD_HOST_PRIV_KEY
 %token KEYWORD_HOST_CERT
 %token KEYWORD_HOST_NONCE
@@ -140,7 +142,7 @@ extern int libaacs_yyget_lineno  (void *scanner);
 
 %type <string> discid disc_title
 %type <string> host_priv_key host_cert host_nonce host_key_point hexstring_list
-%type <string> device_key device_node
+%type <string> device_key device_node key_uv key_u_mask_shift
 %%
 config_file
   : config_entry_list newline_list
@@ -168,13 +170,21 @@ config_entry
   ;
 
 dk_entry
-  : newline_list ENTRY_ID_DK device_key PUNCT_VERTICAL_BAR device_node NEWLINE
+  : newline_list ENTRY_ID_DK device_key PUNCT_VERTICAL_BAR device_node PUNCT_VERTICAL_BAR key_uv PUNCT_VERTICAL_BAR key_u_mask_shift NEWLINE
     {
-      add_dk_entry(cf, $3, $5);
+      add_dk_entry(cf, $3, $5, $7, $9);
+    }
+  | newline_list ENTRY_ID_DK device_key PUNCT_VERTICAL_BAR device_node NEWLINE
+    {
+      add_dk_entry(cf, $3, $5, NULL, NULL);
+    }
+  | ENTRY_ID_DK device_key PUNCT_VERTICAL_BAR device_node PUNCT_VERTICAL_BAR key_uv PUNCT_VERTICAL_BAR key_u_mask_shift NEWLINE
+    {
+      add_dk_entry(cf, $2, $4, $6, $8);
     }
   | ENTRY_ID_DK device_key PUNCT_VERTICAL_BAR device_node NEWLINE
     {
-      add_dk_entry(cf, $2, $4);
+      add_dk_entry(cf, $2, $4, NULL, NULL);
     }
   ;
 
@@ -185,6 +195,16 @@ device_key
 
 device_node
   : KEYWORD_DEVICE_NODE hexstring_list
+    { $$ = $2; }
+  ;
+
+key_uv
+  : KEYWORD_KEY_UV hexstring_list
+    { $$ = $2; }
+  ;
+
+key_u_mask_shift
+  : KEYWORD_KEY_U_MASK_SHIFT hexstring_list
     { $$ = $2; }
   ;
 
@@ -537,7 +557,7 @@ static dk_list *new_dk_list(void)
 }
 
 /* Function to add dk to config file */
-static void add_dk_entry(config_file *cf, char *key, char *node)
+static void add_dk_entry(config_file *cf, char *key, char *node, char *uv, char *u_mask_shift)
 {
   if (strlen(key) != 32) {
     fprintf(stderr, "ignoring bad DK entry %s\n", key);
@@ -558,6 +578,15 @@ static void add_dk_entry(config_file *cf, char *key, char *node)
   X_FREE(key);
   entry->node = strtoul(node, NULL, 16);
   X_FREE(node);
+
+  if (uv) {
+    entry->uv = strtoul(uv, NULL, 16);
+    X_FREE(uv);
+  }
+  if (u_mask_shift) {
+    entry->u_mask_shift = strtoul(u_mask_shift, NULL, 16);
+    X_FREE(u_mask_shift);
+  }
 }
 
 /* Function to return new pk_list object */
