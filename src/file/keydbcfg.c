@@ -277,6 +277,18 @@ static int _parse_cert_file(config_file *cf, FILE *fp)
     return result;
 }
 
+static int _is_duplicate_dk(dk_list *list, dk_list *e)
+{
+    while (list) {
+      if (!memcmp(list, e, sizeof(*e))) {
+            return 1;
+        }
+        list = list->next;
+    }
+
+    return 0;
+}
+
 static int _load_pk_file(config_file *cf)
 {
     static const char pk_file_name[] = PK_FILE_NAME;
@@ -606,6 +618,66 @@ static char *_find_config_file(void)
     return cfg_file;
 }
 
+#include "keydb.h"
+
+static int _parse_embedded(config_file *cf)
+{
+    int result = 0, jj;
+    unsigned ii;
+
+    /* reverse order to maintain key positions (items are added to list head) */
+    for (jj = sizeof(internal_dk_list) / sizeof(internal_dk_list[0]) - 1; jj >= 0; --jj) {
+        dk_list *e = calloc(1, sizeof(dk_list));
+
+        decrypt_key(e->key, internal_dk_list[jj], 16);
+        e->node = internal_device_number;
+        e->uv   = MKINT_BE32(internal_dk_list[jj] + 16);
+        e->u_mask_shift = internal_dk_list[jj][20];
+
+        if (_is_duplicate_dk(cf->dkl, e)) {
+            X_FREE(e);
+
+        } else {
+            e->next = cf->dkl;
+            cf->dkl = e;
+            result++;
+        }
+    }
+
+    for (ii = 0; ii < sizeof(internal_pk_list) / sizeof(internal_pk_list[0]); ii++) {
+        pk_list *e = calloc(1, sizeof(pk_list));
+
+        decrypt_key(e->key, internal_pk_list[ii], 16);
+
+        if (_is_duplicate_pk(cf->pkl, e->key)) {
+            X_FREE(e);
+
+        } else {
+            e->next = cf->pkl;
+            cf->pkl = e;
+            result++;
+        }
+    }
+
+    for (ii = 0; ii < sizeof(internal_hc_list) / sizeof(internal_hc_list[0]); ii++) {
+        cert_list  *e = calloc(1, sizeof(cert_list));
+
+        decrypt_key(e->host_priv_key, internal_hc_list[ii],      20);
+        decrypt_key(e->host_cert,     internal_hc_list[ii] + 20, 92);
+
+        if (_is_duplicate_cert(cf->host_cert_list, e)) {
+            X_FREE(e);
+
+        } else {
+            e->next = cf->host_cert_list;
+            cf->host_cert_list = e;
+            result++;
+        }
+    }
+
+    return result;
+}
+
 config_file *keydbcfg_config_load(const char *configfile_path)
 {
     int config_ok = 0;
@@ -630,6 +702,9 @@ config_file *keydbcfg_config_load(const char *configfile_path)
 
     config_ok = _load_pk_file(cf)   || config_ok;
     config_ok = _load_cert_file(cf) || config_ok;
+
+    /* embedded keys */
+    config_ok = _parse_embedded(cf) || config_ok;
 
     if (!config_ok) {
         DEBUG(DBG_AACS | DBG_CRIT, "No valid AACS configuration files found\n");

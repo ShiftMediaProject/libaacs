@@ -20,6 +20,7 @@ libaacs_la_SOURCES=\
 	file/file_posix.c \
 	file/keydbcfg.c \
 	file/keydbcfg.h \
+	file/keydb.h \
 	file/keydbcfg-parser.y \
 	file/keydbcfg-lexer.l \
 	util/attributes.h \
