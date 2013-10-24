@@ -25,6 +25,7 @@
 
 #include "mmc.h"
 #include "crypto.h"
+#include "file/path.h"
 #include "util/macro.h"
 #include "util/logging.h"
 
@@ -872,18 +873,12 @@ MMC *mmc_open(const char *path)
 
 #elif defined(HAVE_MNTENT_H)
 
-#ifdef HAVE_REALPATH
-    char *file_path = malloc(PATH_MAX);
-    if (!file_path || !realpath(path, file_path)) {
+    char file_path [AACS_PATH_MAX];
+    if (!aacs_resolve_path(path, file_path)) {
         DEBUG(DBG_MMC | DBG_CRIT, "Failed resolving path %s\n", path);
         X_FREE(mmc);
-        X_FREE(file_path);
         return NULL;
     }
-#else
-    char *file_path = (char*)malloc(strlen(path) + 1);
-    strcpy(file_path, path);
-#endif
 
     int   path_len  = strlen(file_path);
     FILE *proc_mounts;
@@ -923,8 +918,6 @@ MMC *mmc_open(const char *path)
         DEBUG(DBG_MMC | DBG_CRIT, "Error opening LINUX MMC drive mounted to %s\n", file_path);
         X_FREE(mmc);
     }
-
-    X_FREE(file_path);
 
 #elif defined(_WIN32)
     char drive[] = { path[0], ':', '\\', 0 };

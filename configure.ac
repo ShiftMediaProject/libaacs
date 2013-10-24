@@ -104,8 +104,6 @@ AC_SYS_LARGEFILE
 dnl required functions
 AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
-AC_CHECK_FUNC([realpath],[AC_DEFINE([HAVE_REALPATH],[1],[realpath])])
-
 dnl required libraries
 
 dnl pthread check (not on win32)

@@ -23,6 +23,7 @@ libaacs_la_SOURCES=\
 	file/keydb.h \
 	file/keydbcfg-parser.y \
 	file/keydbcfg-lexer.l \
+	file/path.h \
 	util/attributes.h \
 	util/macro.h \
 	util/logging.c \
@@ -42,7 +43,8 @@ libaacs_la_SOURCES+= \
 	file/dirs_win32.c
 else
 libaacs_la_SOURCES+= \
-	file/dirs_xdg.c
+	file/dirs_xdg.c \
+	file/path.c
 endif
 endif
 
