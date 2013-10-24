@@ -17,7 +17,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "file.h"
+#include "path.h"
 
 #include <unistd.h>
 #include <string.h>
