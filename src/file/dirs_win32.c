@@ -1,5 +1,5 @@
 /*
- * This file is part of libaacs
+ * This file is part of libbluray
  * Copyright (C) 2011  VideoLAN
  *
  * This library is free software; you can redistribute it and/or
@@ -17,21 +17,22 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "dirs.h"
-
-#include "util/logging.h"
-
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#include "dirs.h"
+
+#include "util/logging.h"
 
 #include <stdio.h>
 #include <string.h>
 
 #include <shlobj.h>
-#include <w32api.h>
+#include <windows.h>
 #include <limits.h>
 #include <direct.h>
+
 
 int win32_mkdir(const char *dir)
 {
@@ -41,23 +42,25 @@ int win32_mkdir(const char *dir)
     return _wmkdir(wdir);
 }
 
-const char *get_cache_home(void)
+const char *file_get_config_home(void)
 {
-    return get_config_home();
+    return file_get_data_home();
 }
 
-const char *get_config_home(void)
+const char *file_get_data_home(void)
 {
-    static char appdir[PATH_MAX] = "";
+    static char *appdir = NULL;
     wchar_t wdir[MAX_PATH];
 
-    if (*appdir)
+    if (appdir)
         return appdir;
 
     /* Get the "Application Data" folder for the user */
     if (S_OK == SHGetFolderPathW(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE,
-                NULL, SHGFP_TYPE_CURRENT, wdir)) {
-        WideCharToMultiByte (CP_UTF8, 0, wdir, -1, appdir, PATH_MAX, NULL, NULL);
+                                 NULL, SHGFP_TYPE_CURRENT, wdir)) {
+        int len = WideCharToMultiByte (CP_UTF8, 0, wdir, -1, NULL, 0, NULL, NULL);
+        appdir = malloc(len);
+        WideCharToMultiByte (CP_UTF8, 0, wdir, -1, appdir, len, NULL, NULL);
         return appdir;
     }
 
@@ -65,9 +68,14 @@ const char *get_config_home(void)
     return NULL;
 }
 
-const char *get_config_system(const char *dir)
+const char *file_get_cache_home(void)
 {
-    static char appdir[PATH_MAX] = "";
+    return file_get_data_home();
+}
+
+const char *file_get_config_system(const char *dir)
+{
+    static char *appdir = NULL;
     wchar_t wdir[MAX_PATH];
 
     if (!dir) {
@@ -79,7 +87,9 @@ const char *get_config_system(const char *dir)
         /* Get the "Application Data" folder for all users */
         if (S_OK == SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE,
                     NULL, SHGFP_TYPE_CURRENT, wdir)) {
-            WideCharToMultiByte (CP_UTF8, 0, wdir, -1, appdir, PATH_MAX, NULL, NULL);
+            int len = WideCharToMultiByte (CP_UTF8, 0, wdir, -1, NULL, 0, NULL, NULL);
+            appdir = malloc(len);
+            WideCharToMultiByte (CP_UTF8, 0, wdir, -1, appdir, len, NULL, NULL);
             return appdir;
         } else {
             DEBUG(DBG_FILE, "Can't find common configuration directory !\n");

@@ -1,5 +1,5 @@
 /*
- * This file is part of libaacs
+ * This file is part of libbluray
  * Copyright (C) 2012   Konstantin Pavlov
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,10 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "dirs.h"
 
 #include <CoreFoundation/CoreFoundation.h>
@@ -30,10 +34,11 @@
 
 #define USER_CFG_DIR   "Library/Preferences"
 #define USER_CACHE_DIR "Library/Caches"
+#define USER_DATA_DIR  "Library"
 #define SYSTEM_CFG_DIR "/Library/Preferences"
 
 
-const char *get_config_home(void)
+const char *file_get_config_home(void)
 {
     static char *dir       = NULL;
     static int   init_done = 0;
@@ -52,7 +57,26 @@ const char *get_config_home(void)
     return dir;
 }
 
-const char *get_cache_home(void)
+const char *file_get_data_home(void)
+{
+    static char *dir       = NULL;
+    static int   init_done = 0;
+
+    if (!init_done) {
+        init_done = 1;
+
+        const char *user_home = getenv("HOME");
+        if (user_home && *user_home) {
+            return dir = str_printf("%s/%s", user_home, USER_DATA_DIR);
+        }
+
+        DEBUG(DBG_FILE, "Can't find user home directory ($HOME) !\n");
+    }
+
+    return dir;
+}
+
+const char *file_get_cache_home(void)
 {
     static char *dir       = NULL;
     static int   init_done = 0;
@@ -71,7 +95,7 @@ const char *get_cache_home(void)
     return dir;
 }
 
-const char *get_config_system(const char *dir)
+const char *file_get_config_system(const char *dir)
 {
     static char *dirs = NULL; // "dir1\0dir2\0...\0dirN\0\0"
 

@@ -1,6 +1,6 @@
 /*
- * This file is part of libaacs
- * Copyright (C) 2010  npzacs
+ * This file is part of libbluray
+ * Copyright (C) 2013  Petri Hintukainen <phintuka@users.sourceforge.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +16,10 @@
  * License along with this library. If not, see
  * <http://www.gnu.org/licenses/>.
  */
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #include "dirs.h"
 
@@ -33,10 +37,11 @@
 
 #define USER_CFG_DIR   ".config"
 #define USER_CACHE_DIR ".cache"
+#define USER_DATA_DIR  ".local/share"
 #define SYSTEM_CFG_DIR "/etc/xdg"
 
 
-const char *get_config_home(void)
+const char *file_get_config_home(void)
 {
     static char *dir       = NULL;
     static int   init_done = 0;
@@ -60,7 +65,31 @@ const char *get_config_home(void)
     return dir;
 }
 
-const char *get_cache_home(void)
+const char *file_get_data_home(void)
+{
+    static char *dir       = NULL;
+    static int   init_done = 0;
+
+    if (!init_done) {
+        init_done = 1;
+
+        const char *xdg_home = getenv("XDG_DATA_HOME");
+        if (xdg_home && *xdg_home) {
+            return dir = str_printf("%s", xdg_home);
+        }
+
+        const char *user_home = getenv("HOME");
+        if (user_home && *user_home) {
+            return dir = str_printf("%s/%s", user_home, USER_DATA_DIR);
+        }
+
+        DEBUG(DBG_FILE, "Can't find user home directory ($HOME) !\n");
+    }
+
+    return dir;
+}
+
+const char *file_get_cache_home(void)
 {
     static char *dir       = NULL;
     static int   init_done = 0;
@@ -84,7 +113,7 @@ const char *get_cache_home(void)
     return dir;
 }
 
-const char *get_config_system(const char *dir)
+const char *file_get_config_system(const char *dir)
 {
     static char *dirs = NULL; // "dir1\0dir2\0...\0dirN\0\0"
 

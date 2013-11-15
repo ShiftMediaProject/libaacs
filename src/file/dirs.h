@@ -1,6 +1,6 @@
 /*
- * This file is part of libaacs
- * Copyright (C) 2011  VideoLAN
+ * This file is part of libbluray
+ * Copyright (C) 2011-2013  VideoLAN
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,8 +17,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef AACS_DIRS_H
-#define AACS_DIRS_H
+#ifndef BLURAY_DIRS_H
+#define BLURAY_DIRS_H
 
 #include <util/attributes.h>
 
@@ -26,8 +26,13 @@
 AACS_PRIVATE int         win32_mkdir(const char *dir);
 #endif
 
-AACS_PRIVATE const char *get_config_home(void);
-AACS_PRIVATE const char *get_config_system(const char *dir);
-AACS_PRIVATE const char *get_cache_home(void);
+/*
+ * Config, cache and data dirs
+ */
+
+AACS_PRIVATE const char *file_get_config_home(void);
+AACS_PRIVATE const char *file_get_config_system(const char *dir);
+AACS_PRIVATE const char *file_get_cache_home(void);
+AACS_PRIVATE const char *file_get_data_home(void);
 
 #endif

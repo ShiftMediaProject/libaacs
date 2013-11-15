@@ -106,7 +106,7 @@ static char *_load_file(FILE *fp)
 
 static char *_config_file_user(const char *file_name)
 {
-    const char *cfg_dir = get_config_home();
+    const char *cfg_dir = file_get_config_home();
 
     if (!cfg_dir) {
         return NULL;
@@ -147,7 +147,7 @@ static FILE *_open_cfg_file_system(const char *file_name, char **path)
 {
     const char *dir = NULL;
 
-    while (NULL != (dir = get_config_system(dir))) {
+    while (NULL != (dir = file_get_config_system(dir))) {
 
         char *cfg_file = str_printf("%s/%s/%s", dir, CFG_DIR, file_name);
 
@@ -333,7 +333,7 @@ static int _load_cert_file(config_file *cf)
 
 static char *_keycache_file(const char *type, const uint8_t *disc_id)
 {
-    const char *cache_dir = get_cache_home();
+    const char *cache_dir = file_get_cache_home();
     char disc_id_str[41];
 
     if (!cache_dir) {
@@ -418,7 +418,7 @@ int keycache_find(const char *type, const uint8_t *disc_id, uint8_t *key, unsign
 
 static char *_cache_file(const char *name)
 {
-    const char *cache_dir = get_cache_home();
+    const char *cache_dir = file_get_cache_home();
 
     if (!cache_dir) {
         return NULL;
