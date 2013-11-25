@@ -1,7 +1,7 @@
 SET_FEATURES = @SET_FEATURES@
 SET_INCLUDES = -I$(top_srcdir) -Ifile -Ilibaacs
 
-AM_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES) $(LIBGCRYPT_CFLAGS)
+AM_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES) $(LIBGCRYPT_CFLAGS) $(GPG_ERROR_CFLAGS)
 AM_YFLAGS = -d -p libaacs_yy
 
 lib_LTLIBRARIES = libaacs.la
@@ -54,7 +54,7 @@ pkginclude_HEADERS = \
 	libaacs/aacs-version.h
 
 libaacs_la_LDFLAGS= -no-undefined -version-info $(LT_VERSION_INFO)
-libaacs_la_LIBADD = $(LIBGCRYPT_LIBS)
+libaacs_la_LIBADD = $(LIBGCRYPT_LIBS) $(GPG_ERROR_LIBS)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libaacs.pc
 

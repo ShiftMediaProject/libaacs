@@ -136,8 +136,28 @@ else
   AC_SUBST(LIBGCRYPT_LIBS)
 fi
 AC_FUNC_STRERROR_R
-AC_CHECK_LIB([gpg-error], [gpg_strerror_r])
 
+# use re-entrant version of gcrypt_error() from gpg-error
+
+AC_ARG_WITH(gpg-error-prefix,
+            AC_HELP_STRING([--with-gpg-error-prefix=PFX],
+                           [prefix where gpg-error is installed (optional)]),
+     gpg_error_config_prefix="$withval", gpg_error_config_prefix="")
+if test x$gpg_error_config_prefix != x ; then
+   if test x${GPG_ERROR_CONFIG+set} != xset ; then
+      GPG_ERROR_CONFIG=$gpg_error_config_prefix/bin/gpg-error-config
+   fi
+fi
+
+AC_PATH_PROG(GPG_ERROR_CONFIG, gpg-error-config, no)
+if test x"$GPG_ERROR_CONFIG" = xno; then
+  AC_MSG_ERROR([gpg-error not found on system])
+else
+  GPG_ERROR_CFLAGS=`$GPG_ERROR_CONFIG --cflags`
+  GPG_ERROR_LIBS=`$GPG_ERROR_CONFIG --libs`
+  AC_SUBST(GPG_ERROR_CFLAGS)
+  AC_SUBST(GPG_ERROR_LIBS)
+fi
 
 CC_CHECK_CFLAGS_APPEND([-Wall -Wdisabled-optimization -Wpointer-arith ]dnl
 [-Wredundant-decls -Wcast-qual -Wwrite-strings -Wtype-limits -Wundef ]dnl
