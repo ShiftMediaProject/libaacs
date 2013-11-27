@@ -157,6 +157,7 @@ else
   GPG_ERROR_LIBS=`$GPG_ERROR_CONFIG --libs`
   AC_SUBST(GPG_ERROR_CFLAGS)
   AC_SUBST(GPG_ERROR_LIBS)
+  AC_DEFINE(HAVE_LIBGPG_ERROR, 1, [Define to 1 if you have the gpg-error library])
 fi
 
 CC_CHECK_CFLAGS_APPEND([-Wall -Wdisabled-optimization -Wpointer-arith ]dnl
