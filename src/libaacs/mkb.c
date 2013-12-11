@@ -76,7 +76,7 @@ MKB *mkb_open(const char *path)
 
         file_read(fp, mkb->buf, mkb->size);
 
-        DEBUG(DBG_MKB, "MKB size: %zd\n", mkb->size);
+        DEBUG(DBG_MKB, "MKB size: %u\n", (unsigned)mkb->size);
         DEBUG(DBG_MKB, "MKB version: %d\n", mkb_version(mkb));
 
         file_close(fp);

@@ -1018,7 +1018,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
 
 AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
 {
-    DEBUG(DBG_AACS, "libaacs "AACS_VERSION_STRING" [%zd]\n", sizeof(AACS));
+    DEBUG(DBG_AACS, "libaacs "AACS_VERSION_STRING" [%u]\n", (unsigned)sizeof(AACS));
 
     DEBUG(DBG_AACS, "Initializing libgcrypt...\n");
     if (!crypto_init()) {
