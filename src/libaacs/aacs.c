@@ -1008,7 +1008,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
     AACS *aacs;
 
     aacs = aacs_open2(path, configfile_path, &error_code);
-    if (error_code == AACS_SUCCESS) {
+    if (!aacs || error_code == AACS_SUCCESS) {
         return aacs;
     }
 
