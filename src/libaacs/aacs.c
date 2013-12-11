@@ -209,6 +209,9 @@ static dk_list *_find_dk(dk_list *dkl, uint32_t *p_dev_key_v_mask, uint32_t uv, 
             /* wrong device */
             continue;
         }
+        if (!dkl->uv) {
+            continue;
+        }
         key_idx++;
         dev_key_uv     = dkl->uv;
         dev_key_u_mask = 0xffffffff << dkl->u_mask_shift;

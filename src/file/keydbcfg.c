@@ -634,7 +634,7 @@ static int _parse_embedded(config_file *cf)
         e->uv   = MKINT_BE32(internal_dk_list[jj] + 16);
         e->u_mask_shift = internal_dk_list[jj][20];
 
-        if (_is_duplicate_dk(cf->dkl, e)) {
+        if (!e->uv || _is_duplicate_dk(cf->dkl, e)) {
             X_FREE(e);
 
         } else {
