@@ -863,7 +863,7 @@ static int _calc_title_hash(const char *path, uint8_t *title_hash)
 
     } else {
         result = AACS_ERROR_CORRUPTED_DISC;
-        DEBUG(DBG_AACS | DBG_CRIT, "Failed to read %"PRIu64" bytes from unit key file %s/AACS/Unit_Key_RO.inf", f_size, path);
+        DEBUG(DBG_AACS | DBG_CRIT, "Failed to read %lu bytes from unit key file %s/AACS/Unit_Key_RO.inf", (unsigned long)f_size, path);
     }
 
     file_close(fp);
