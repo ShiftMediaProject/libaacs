@@ -1,6 +1,6 @@
 dnl library version number
 m4_define([aacs_major], 0)
-m4_define([aacs_minor], 6)
+m4_define([aacs_minor], 7)
 m4_define([aacs_micro], 0)
 m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 
@@ -14,8 +14,8 @@ dnl - If ABI is broken, increase current and set age and revision to 0.
 #
 dnl Library file name will be libaacs.(current-age).age.revision
 #
-m4_define([lt_current],  3)
-m4_define([lt_age],      3)
+m4_define([lt_current],  4)
+m4_define([lt_age],      4)
 m4_define([lt_revision], 0)
 
 dnl initilization

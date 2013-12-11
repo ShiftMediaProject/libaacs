@@ -1,7 +1,18 @@
- - Added aacs_get_device_binding_id() and aacs_get_device_nonce()
- - Fixed reading PMSN
- - Dropped support for compile-time PATCHED_DRIVE flag.
- - Bus encryption support
+2013-12-11: Version 0.7.0
+ - Add aacs_get_device_binding_id() and aacs_get_device_nonce().
+ - Add support for bus encryption.
+ - Add support for device keys.
+ - Add support for internal keys.
+ - Fix reading PMSN.
+ - Fix reporting AACS version from AACS drive feature.
+ - Calculate bus key and use it to verify message authentication codes.
+ - Do not fail if VID is known but config file does not exist.
+ - Improve validating keys in KEYDB.cfg.
+ - Update KEYDB.cfg format (still backwards compatible):
+   * Host nonce and host key point are optional.
+   * Add device key UV values and masks.
+ - Build system updates.
+ - Drop support for compile-time PATCHED_DRIVE flag.
 
 2013-03-04: Version 0.6.0
  - Added reading of PMSN (Pre-recorded Media Serial Number)
