@@ -496,6 +496,7 @@ static int _mmc_read_drive_key(MMC *mmc, uint8_t agid, uint8_t *drive_key_point,
 }
 
 
+#ifndef _WIN32
 static int _mmc_check_aacs(MMC *mmc)
 {
     uint8_t buf[16];
@@ -523,6 +524,7 @@ static int _mmc_check_aacs(MMC *mmc)
     DEBUG(DBG_MMC, "_mmc_get_configuration() failed\n");
     return 0;
 }
+#endif
 
 static uint8_t *_mmc_read_mkb(MMC *mmc, uint8_t agid, int address, int *size)
 {
