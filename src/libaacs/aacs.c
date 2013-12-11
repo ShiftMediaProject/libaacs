@@ -266,7 +266,7 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
         if (device_number == dk_num->node) {
             continue;
         }
-        device_number = dkl->node;
+        device_number = dk_num->node;
 
         /* find applying subset difference */
 
