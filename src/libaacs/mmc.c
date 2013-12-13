@@ -496,7 +496,6 @@ static int _mmc_read_drive_key(MMC *mmc, uint8_t agid, uint8_t *drive_key_point,
 }
 
 
-#ifndef _WIN32
 static int _mmc_check_aacs(MMC *mmc)
 {
     uint8_t buf[16];
@@ -524,7 +523,6 @@ static int _mmc_check_aacs(MMC *mmc)
     DEBUG(DBG_MMC, "_mmc_get_configuration() failed\n");
     return 0;
 }
-#endif
 
 static uint8_t *_mmc_read_mkb(MMC *mmc, uint8_t agid, int address, int *size)
 {
@@ -958,13 +956,13 @@ MMC *mmc_open(const char *path)
 
 #endif
 
-#ifndef _WIN32
     if (mmc && !_mmc_check_aacs(mmc)) {
         DEBUG(DBG_MMC | DBG_CRIT, "AACS not active or supported by the drive\n");
+#ifndef _WIN32
         mmc_close (mmc);
         return NULL;
-    }
 #endif
+    }
 
     if (mmc && mmc->read_drive_cert) {
         mmc_read_drive_cert(mmc, mmc->drive_cert);
