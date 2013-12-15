@@ -699,7 +699,7 @@ static int add_entry(title_entry_list *list, int type, char *entry)
   switch (type)
   {
     case ENTRY_TYPE_DISCID:
-      CHECK_KEY_LENGTH("discid", 20)
+      CHECK_KEY_LENGTH("discid", 40)
       hexstring_to_hex_array(list->entry.discid, 20, entry);
       X_FREE(entry);
       break;
@@ -711,19 +711,19 @@ static int add_entry(title_entry_list *list, int type, char *entry)
       break;
 
     case ENTRY_TYPE_MEK:
-      CHECK_KEY_LENGTH("mek", 16)
+      CHECK_KEY_LENGTH("mek", 32)
       X_FREE(list->entry.mek);
       list->entry.mek = entry;
       break;
 
     case ENTRY_TYPE_VID:
-      CHECK_KEY_LENGTH("vid", 16)
+      CHECK_KEY_LENGTH("vid", 32)
       X_FREE(list->entry.vid);
       list->entry.vid = entry;
       break;
 
     case ENTRY_TYPE_VUK:
-      CHECK_KEY_LENGTH("vuk", 16)
+      CHECK_KEY_LENGTH("vuk", 32)
       X_FREE(list->entry.vuk);
       list->entry.vuk = entry;
       break;
