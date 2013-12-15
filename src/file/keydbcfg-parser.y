@@ -266,23 +266,7 @@ host_key_point
 
 title_entry
   : newline_list disc_info entry_list NEWLINE
-    {
-      if (!cf->list) {
-        celist = cf->list = new_title_entry_list();
-      } else {
-      celist->next = new_title_entry_list();
-      celist = celist->next;
-      }
-    }
   | disc_info entry_list NEWLINE
-    {
-      if (!cf->list) {
-        celist = cf->list = new_title_entry_list();
-      } else {
-      celist->next = new_title_entry_list();
-      celist = celist->next;
-      }
-    }
   ;
 
 newline_list
@@ -293,6 +277,12 @@ newline_list
 disc_info
   : discid PUNCT_EQUALS_SIGN disc_title
     {
+      if (!cf->list) {
+        celist = cf->list = new_title_entry_list();
+      } else {
+        celist->next = new_title_entry_list();
+        celist = celist->next;
+      }
       add_entry(celist, ENTRY_TYPE_DISCID, $1);
       add_entry(celist, ENTRY_TYPE_TITLE, $3);
     }
