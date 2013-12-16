@@ -85,6 +85,8 @@ MKB *mkb_open(const char *path)
 
     DEBUG(DBG_MKB, "Error opening MKB!\n");
 
+    X_FREE(mkb);
+
     return NULL;
 }
 
