@@ -1,6 +1,6 @@
 /*
  * This file is part of libaacs
- * Copyright (C) 2010  npzacs
+ * Copyright (C) 2010-2013  npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -499,7 +499,7 @@ int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf)
 int cache_remove(const char *name)
 {
     char *file = _cache_file(name);
-    int result = !remove(name);
+    int result = !remove(file);
     if (!result) {
         DEBUG(DBG_FILE, "Error removing %s\n", file);
     }
