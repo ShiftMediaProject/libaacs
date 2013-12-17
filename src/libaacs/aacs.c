@@ -1,7 +1,7 @@
 /*
  * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
- * Copyright (C) 2009-2010  npzacs
+ * Copyright (C) 2009-2013  npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -131,29 +131,50 @@ static int _rl_verify_signature(const uint8_t *rl, size_t size)
     return crypto_aacs_verify_aacsla(rl + len, rl, len);
 }
 
-static void _update_drl(MKB *mkb)
+static void _save_rl(const char *name, uint32_t version, const uint8_t *version_rec,
+                     const uint8_t *rl_rec, size_t rl_len)
+{
+    int len     = MKINT_BE24(rl_rec - 3);
+    int entries = MKINT_BE32(rl_rec + 4); /* entries in first signature block */
+    if (len < 4 || !entries) {
+        DEBUG(DBG_AACS | DBG_CRIT, "ignoring empty %s\n", name);
+        return;
+    }
+
+    if (rl_rec && version_rec) {
+        rl_rec -= 4;
+        rl_len += 4;
+
+        uint8_t *data = malloc(12 + rl_len);
+        memcpy(data,      version_rec, 12);
+        memcpy(data + 12, rl_rec,      rl_len);
+        if (!_rl_verify_signature(data, rl_len + 12)) {
+          DEBUG(DBG_AACS | DBG_CRIT, "invalid %s signature, not using it\n", name);
+        } else {
+          cache_save(name, version, data, rl_len + 12);
+        }
+        X_FREE(data);
+    }
+}
+
+static void _update_rl(MKB *mkb)
 {
     uint32_t version = mkb_version(mkb);
     uint32_t cache_version;
+    size_t   rl_len;
 
     if (!cache_get("drl", &cache_version, NULL, NULL) || cache_version < version) {
-        size_t drl_len;
-        const uint8_t *drl_rec = mkb_drive_revokation_entries(mkb, &drl_len);
-        const uint8_t *v_rec   = mkb_type_and_version_record(mkb);
-
-        if (drl_rec && v_rec) {
-            drl_rec -= 4;
-            drl_len += 4;
-
-            uint8_t *data = malloc(12 + drl_len);
-            memcpy(data,      v_rec,   12);
-            memcpy(data + 12, drl_rec, drl_len);
-            if (!_rl_verify_signature(data, drl_len + 12)) {
-                DEBUG(DBG_AACS | DBG_CRIT, "invalid drive revocation list signature, not using it\n");
-            } else {
-                cache_save("drl", version, data, drl_len + 12);
-            }
-            X_FREE(data);
+        const uint8_t *version_rec = mkb_type_and_version_record(mkb);
+        const uint8_t *drl_rec     = mkb_drive_revokation_entries(mkb, &rl_len);
+        if (drl_rec && rl_len > 8) {
+            _save_rl("drl", version, version_rec, drl_rec, rl_len);
+        }
+    }
+    if (!cache_get("hrl", &cache_version, NULL, NULL) || cache_version < version) {
+        const uint8_t *version_rec = mkb_type_and_version_record(mkb);
+        const uint8_t *hrl_rec     = mkb_host_revokation_entries(mkb, &rl_len);
+        if (hrl_rec && rl_len > 8) {
+            _save_rl("hrl", version, version_rec, hrl_rec, rl_len);
         }
     }
 }
@@ -362,7 +383,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
     if ((mkb = mkb_open(aacs->path))) {
 
         aacs->mkb_version = mkb_version(mkb);
-        _update_drl(mkb);
+        _update_rl(mkb);
 
         /* try device keys first */
         if (dkl && _calc_pk_mk(mkb, dkl, mk) == AACS_SUCCESS) {
@@ -436,7 +457,7 @@ static MKB *_get_hrl_mkb(MMC *mmc)
         data = cache_get_or_update("hrl", mkb_data(mkb), &size, mkb_version(mkb));
 
         if (!_rl_verify_signature(data, size)) {
-            DEBUG(DBG_AACS | DBG_CRIT, "invalid cached revocation list signature, replacing it\n");
+            DEBUG(DBG_AACS | DBG_CRIT, "invalid cached host revocation list signature, replacing it\n");
             cache_save("hrl", mkb_version(mkb), mkb_data(mkb), mkb_data_size(mkb));
             X_FREE(data);
         } else {
@@ -450,10 +471,10 @@ static MKB *_get_hrl_mkb(MMC *mmc)
         uint32_t size;
         data = cache_get_or_update("hrl", NULL, &size, 0);
         if (data && size > 0) {
-            if (!_rl_verify_signature(data, size)) {
+            if (_rl_verify_signature(data, size)) {
                 mkb = mkb_init(data, size);
             } else {
-                DEBUG(DBG_AACS | DBG_CRIT, "invalid cached revocation list signature, deleting cache\n");
+                DEBUG(DBG_AACS | DBG_CRIT, "invalid cached host revocation list signature, deleting cache\n");
                 cache_remove("hrl");
             }
         }
