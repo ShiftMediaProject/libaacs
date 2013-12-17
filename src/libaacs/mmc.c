@@ -388,6 +388,8 @@ static int _mmc_report_disc_structure(MMC *mmc, uint8_t agid, uint8_t format,
     memset(cmd, 0, sizeof(cmd));
     memset(buf, 0, len);
 
+    DEBUG(DBG_MMC, "MMC report disc structure [format 0x%x layer %d address %d] ...\n", format, layer, address);
+
     cmd[0] = 0xad; // operation code
     cmd[1] = 0x01; // BluRay
     cmd[2] = (address >> 24) & 0xff;
@@ -408,6 +410,8 @@ static int _mmc_get_configuration(MMC *mmc, uint16_t feature, uint8_t *buf, uint
     uint8_t cmd[16];
     memset(cmd, 0, sizeof(cmd));
     memset(buf, 0, len);
+
+    DEBUG(DBG_MMC, "MMC get configuration [feature 0x%x] ...\n", feature);
 
     cmd[0] = 0x46; // operation code
     cmd[1] = 0x01; // BluRay
