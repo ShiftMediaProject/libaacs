@@ -1177,11 +1177,11 @@ const uint8_t *aacs_get_vid(AACS *aacs)
 
             keydbcfg_config_file_close(cf);
         }
-    }
 
-    if (!memcmp(aacs->vid, empty_key, 16)) {
-        DEBUG(DBG_AACS | DBG_CRIT, "aacs_get_vid() failed\n");
-        return NULL;
+        if (!memcmp(aacs->vid, empty_key, 16)) {
+            DEBUG(DBG_AACS | DBG_CRIT, "aacs_get_vid() failed\n");
+            return NULL;
+        }
     }
 
     return aacs->vid;
@@ -1196,11 +1196,11 @@ const uint8_t *aacs_get_pmsn(AACS *aacs)
 
             keydbcfg_config_file_close(cf);
         }
-    }
 
-    if (!memcmp(aacs->pmsn, empty_key, 16)) {
-        DEBUG(DBG_AACS, "aacs_get_pmsn() failed\n");
-        return NULL;
+        if (!memcmp(aacs->pmsn, empty_key, 16)) {
+            DEBUG(DBG_AACS, "aacs_get_pmsn() failed\n");
+            return NULL;
+        }
     }
 
     return aacs->pmsn;
