@@ -1,6 +1,7 @@
 /*
  * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
+ * Copyright (C) 2009-2013  npzacz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -52,6 +53,7 @@ AACS_PUBLIC int aacs_get_mkb_version(AACS *aacs);
 AACS_PUBLIC const uint8_t *aacs_get_disc_id(AACS *aacs);
 AACS_PUBLIC const uint8_t *aacs_get_vid(AACS *aacs);  /* may fail even if disc can be decrypted */
 AACS_PUBLIC const uint8_t *aacs_get_pmsn(AACS *aacs); /* may fail even if disc can be decrypted */
+AACS_PUBLIC const uint8_t *aacs_get_mk(AACS *aacs);   /* may fail even if disc can be decrypted */
 
 /* AACS Online */
 AACS_PUBLIC const uint8_t *aacs_get_device_binding_id(AACS *aacs);

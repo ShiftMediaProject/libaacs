@@ -54,6 +54,8 @@ struct aacs {
     uint8_t   vid[16];
     /* PMSN is cached for BD-J */
     uint8_t   pmsn[16];
+    /* Media key is cached for BD+ */
+    uint8_t   mk[16];
 
     /* unit key for each CPS unit */
     uint32_t  num_uks;
@@ -364,6 +366,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 
         /* try device keys first */
         if (dkl && _calc_pk_mk(mkb, dkl, mk) == AACS_SUCCESS) {
+            memcpy(aacs->mk, mk, sizeof(aacs->mk));
             mkb_close(mkb);
             return AACS_SUCCESS;
         }
@@ -391,6 +394,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 
                         char str[40];
                         DEBUG(DBG_AACS, "Media key: %s\n", print_hex(str, mk, 16));
+                        memcpy(aacs->mk, mk, sizeof(aacs->mk));
                         return AACS_SUCCESS;
                     }
                 }
@@ -1137,6 +1141,25 @@ int aacs_get_mkb_version(AACS *aacs)
 const uint8_t *aacs_get_disc_id(AACS *aacs)
 {
     return aacs->disc_id;
+}
+
+const uint8_t *aacs_get_mk(AACS *aacs)
+{
+    if (!memcmp(aacs->mk, empty_key, 16)) {
+        config_file *cf = keydbcfg_config_load(NULL);
+        if (cf) {
+            _calc_mk(aacs, aacs->mk, cf->pkl, cf->dkl);
+
+            keydbcfg_config_file_close(cf);
+        }
+
+        if (!memcmp(aacs->mk, empty_key, 16)) {
+            DEBUG(DBG_AACS | DBG_CRIT, "aacs_get_mk() failed\n");
+            return NULL;
+        }
+    }
+
+    return aacs->mk;
 }
 
 const uint8_t *aacs_get_vid(AACS *aacs)

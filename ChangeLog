@@ -1,5 +1,6 @@
-2013-12-11: Version 0.7.0
+2013-12-18: Version 0.7.0
  - Add aacs_get_device_binding_id() and aacs_get_device_nonce().
+ - Add aacs_get_mk().
  - Add support for bus encryption.
  - Add support for device keys.
  - Add support for internal keys.
