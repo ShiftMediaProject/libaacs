@@ -127,6 +127,9 @@ int crypto_init()
         if (!gcry_check_version(GCRYPT_VERSION)) {
             crypto_init_check = 0;
         }
+        if(GCRYPT_DEBUG) {
+            gcry_control(GCRYCTL_SET_DEBUG_FLAGS, 3);
+        }
     }
 
     return crypto_init_check;
@@ -297,14 +300,14 @@ static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
     char *strfmt = str_printf(
       "(%s"
       "(ecdsa"
-      "(p #"AACS_EC_p"#)"
-      "(a #"AACS_EC_a"#)"
-      "(b #"AACS_EC_b"#)"
+      "(p #00"AACS_EC_p"#)"
+      "(a #00"AACS_EC_a"#)"
+      "(b #00"AACS_EC_b"#)"
       "(g #04"
           AACS_EC_G_x
           AACS_EC_G_y
           "#)"
-      "(n #"AACS_EC_n"#)"
+      "(n #00"AACS_EC_n"#)"
       "(q #%s#)"
       "%s))",
       mpi_d ? "private-key" : "public-key",
@@ -352,7 +355,16 @@ static gcry_error_t _aacs_sexp_sha1(gcry_sexp_t *p_sexp_data,
     GCRY_VERIFY("gcry_sexp_build",
                 gcry_sexp_build(p_sexp_data, NULL,
                                 "(data"
+#if defined(GCRYPT_VERSION_NUMBER) && GCRYPT_VERSION_NUMBER >= 0x010600
+                                /*
+                                 * For some reason gcrypt 1.6.0
+                                 * requires 'param' flag here and not
+                                 * in key, probably a bug.
+                                 */
+                                "  (flags raw param)"
+#else
                                 "  (flags raw)"
+#endif
                                 "  (value %m))",
                                 mpi_md
                                 ));

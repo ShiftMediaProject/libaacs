@@ -1,3 +1,5 @@
+ - Add support for gcrypt 1.6.0.
+
 2013-12-18: Version 0.7.0
  - Add aacs_get_device_binding_id() and aacs_get_device_nonce().
  - Add aacs_get_mk().
