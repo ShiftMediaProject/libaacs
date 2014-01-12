@@ -431,63 +431,6 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
     return AACS_ERROR_CORRUPTED_DISC;
 }
 
-static MKB *_get_hrl_mkb(MMC *mmc)
-{
-    MKB     *mkb = NULL;
-    uint8_t *data;
-    int      mkb_size;
-
-    data = mmc_read_mkb(mmc, 0, &mkb_size);
-
-    /* check acquired hrl signature */
-    if (data && mkb_size > 0) {
-        if (_rl_verify_signature(data, mkb_size)) {
-            mkb = mkb_init(data, mkb_size);
-            DEBUG(DBG_AACS, "Partial hrl mkb read. Version: %d\n", mkb_version(mkb));
-        } else {
-            DEBUG(DBG_AACS | DBG_CRIT, "invalid host revocation list signature, not using it\n");
-            X_FREE(data);
-        }
-    }
-
-    if (mkb) {
-        /* use latest version, keep cache up-to-date */
-        uint32_t size;
-        size = mkb_data_size(mkb);
-        data = cache_get_or_update("hrl", mkb_data(mkb), &size, mkb_version(mkb));
-
-        if (!_rl_verify_signature(data, size)) {
-            DEBUG(DBG_AACS | DBG_CRIT, "invalid cached host revocation list signature, replacing it\n");
-            cache_save("hrl", mkb_version(mkb), mkb_data(mkb), mkb_data_size(mkb));
-            X_FREE(data);
-        } else {
-            /* use cached version */
-            mkb_close(mkb);
-            mkb = mkb_init(data, size);
-        }
-
-    } else {
-        /* use cached version */
-        uint32_t size;
-        data = cache_get_or_update("hrl", NULL, &size, 0);
-        if (data && size > 0) {
-            if (_rl_verify_signature(data, size)) {
-                mkb = mkb_init(data, size);
-            } else {
-                DEBUG(DBG_AACS | DBG_CRIT, "invalid cached host revocation list signature, deleting cache\n");
-                cache_remove("hrl");
-            }
-        }
-    }
-
-
-    if (mkb) {
-        DEBUG(DBG_AACS, "Using hrl version %d\n", mkb_version(mkb));
-    }
-
-    return mkb;
-}
-
 static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uint8_t *p2)
 {
     MMC* mmc = NULL;
@@ -497,7 +440,6 @@ static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uin
 
     int error_code = AACS_ERROR_NO_CERT;
 
-    MKB *hrl_mkb = _get_hrl_mkb(mmc);
     const uint8_t *drive_cert = mmc_get_drive_cert(mmc);
 
     for (; hcl ; hcl = hcl->next) {
@@ -508,13 +450,6 @@ static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uin
             DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
                   print_hex(tmp_str, hcl->host_cert, 92));
             continue;
-        }
-
-        if (mkb_host_cert_is_revoked(hrl_mkb, hcl->host_cert + 4) > 0) {
-            DEBUG(DBG_AACS | DBG_CRIT, "Host certificate %s has been revoked.\n",
-                  print_hex(tmp_str, hcl->host_cert + 4, 6));
-            error_code = AACS_ERROR_CERT_REVOKED;
-            //continue;
         }
 
         if (drive_cert && (drive_cert[1] & 0x01) && !(hcl->host_cert[1] & 0x01)) {
@@ -529,7 +464,6 @@ static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uin
         int mmc_result = mmc_read_auth(mmc, hcl->host_priv_key, hcl->host_cert, type, p1, p2);
         switch (mmc_result) {
             case MMC_SUCCESS:
-                mkb_close(hrl_mkb);
                 mmc_close(mmc);
                 return AACS_SUCCESS;
             case MMC_ERROR_CERT_REVOKED:
@@ -542,7 +476,6 @@ static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uin
         }
     }
 
-    mkb_close(hrl_mkb);
     mmc_close(mmc);
 
     return error_code;
