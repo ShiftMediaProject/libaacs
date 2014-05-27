@@ -58,7 +58,7 @@ libaacs_la_LIBADD = $(LIBGCRYPT_LIBS) $(GPG_ERROR_LIBS)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libaacs.pc
 
-BUILT_SOURCES = keydbcfg-parser.h keydbcfg-parser.c keydbcfg-lexer.c
+BUILT_SOURCES = file/keydbcfg-parser.h file/keydbcfg-parser.c file/keydbcfg-lexer.c
 
 CLEANFILES = $(BUILT_SOURCES)
 
