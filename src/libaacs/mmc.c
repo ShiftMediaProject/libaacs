@@ -1167,7 +1167,7 @@ static int _read_pmsn(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *p
         return MMC_SUCCESS;
     }
 
-    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read PMSN from drive!\n");
+    DEBUG(DBG_MMC, "Unable to read PMSN from drive!\n");
 
     return MMC_ERROR;
 }
