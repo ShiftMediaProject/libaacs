@@ -1,0 +1,52 @@
+2014-05-27: Version 0.7.1
+ - Add support for gcrypt 1.6.0.
+ - Do not retrieve MKB using MMC commands during AACS-Auth
+
+2013-12-18: Version 0.7.0
+ - Add aacs_get_device_binding_id() and aacs_get_device_nonce().
+ - Add aacs_get_mk().
+ - Add support for bus encryption.
+ - Add support for device keys.
+ - Add support for internal keys.
+ - Fix reading PMSN.
+ - Fix reporting AACS version from AACS drive feature.
+ - Calculate bus key and use it to verify message authentication codes.
+ - Do not fail if VID is known but config file does not exist.
+ - Improve validating keys in KEYDB.cfg.
+ - Update KEYDB.cfg format (still backwards compatible):
+   * Host nonce and host key point are optional.
+   * Add device key UV values and masks.
+ - Build system updates.
+ - Drop support for compile-time PATCHED_DRIVE flag.
+
+2013-03-04: Version 0.6.0
+ - Added reading of PMSN (Pre-recorded Media Serial Number)
+ - Fix resource leak
+ - Use proper paths to search for keydb and friends on Darwin.
+ - Build fixes and improvements
+
+2012-08-17: Version 0.5.0
+ - Support for Mac OS X using IOKit
+ - Fix AACS detection failure in some Win32 systems
+
+2012-05-07: Version 0.4.0
+ - Added aacs_open2() and error codes
+ - Renamed libaacs_test to aacs_info
+ - Added aacs_get_mkb_version()
+ - Fixed memory leaks
+ - Fixed buffer overflow
+ - Added revocation list caching
+ - Check host certificates against latest seen revocation list
+
+2012-03-21: Version 0.3.1
+ - Added configure option for libgcrypt prefix
+ - Fixed building Win32 DLL
+ - Fixed segfault when mount point path can't be resolved
+ - Do not export internal symbols from generated parser/lexer
+ - Do not distribute generated parser files
+ - Check for libgpg-error. Link against it when needed.
+ - Distribute README.txt
+ - Added ChangeLog
+
+2011-11-30: Version 0.3.0
+ - First release
