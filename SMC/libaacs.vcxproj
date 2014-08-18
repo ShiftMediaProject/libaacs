@@ -1,0 +1,1297 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugDLLStaticDeps|Win32">
+      <Configuration>DebugDLLStaticDeps</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DebugDLLStaticDeps|x64">
+      <Configuration>DebugDLLStaticDeps</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DebugDLL|Win32">
+      <Configuration>DebugDLL</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DebugDLL|x64">
+      <Configuration>DebugDLL</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseDLLStaticDeps|Win32">
+      <Configuration>ReleaseDLLStaticDeps</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseDLLStaticDeps|x64">
+      <Configuration>ReleaseDLLStaticDeps</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseDLL|Win32">
+      <Configuration>ReleaseDLL</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseDLL|x64">
+      <Configuration>ReleaseDLL</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseLTO|Win32">
+      <Configuration>ReleaseLTO</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseLTO|x64">
+      <Configuration>ReleaseLTO</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\file\dirs_win32.c" />
+    <ClCompile Include="..\src\file\file_posix.c" />
+    <ClCompile Include="..\src\file\keydbcfg.c" />
+    <ClCompile Include="..\src\libaacs\aacs.c" />
+    <ClCompile Include="..\src\libaacs\crypto.c" />
+    <ClCompile Include="..\src\libaacs\mkb.c" />
+    <ClCompile Include="..\src\libaacs\mmc.c" />
+    <ClCompile Include="..\src\util\logging.c" />
+    <ClCompile Include="..\src\util\strutl.c" />
+    <ClCompile Include="src\file\keydbcfg-lexer.c" />
+    <ClCompile Include="src\file\keydbcfg-parser.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\file\dirs.h" />
+    <ClInclude Include="..\src\file\file.h" />
+    <ClInclude Include="..\src\file\filesystem.h" />
+    <ClInclude Include="..\src\file\keydb.h" />
+    <ClInclude Include="..\src\file\keydbcfg.h" />
+    <ClInclude Include="..\src\file\path.h" />
+    <ClInclude Include="..\src\libaacs\aacs.h" />
+    <ClInclude Include="..\src\libaacs\crypto.h" />
+    <ClInclude Include="..\src\libaacs\mkb.h" />
+    <ClInclude Include="..\src\libaacs\mmc.h" />
+    <ClInclude Include="..\src\util\attributes.h" />
+    <ClInclude Include="..\src\util\logging.h" />
+    <ClInclude Include="..\src\util\macro.h" />
+    <ClInclude Include="..\src\util\strutl.h" />
+    <ClInclude Include="config.h" />
+    <ClInclude Include="libaacs\aacs-version.h" />
+    <ClInclude Include="version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="libaacs.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{5C430557-42AD-438B-A8AE-CB70183D2F85}</ProjectGuid>
+    <RootNamespace>libaacs</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLStaticDeps|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLStaticDeps|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLStaticDeps|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLStaticDeps|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLStaticDeps|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLStaticDeps|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLStaticDeps|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLStaticDeps|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>..\..\..\msvc32\</OutDir>
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacsd</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacsd</TargetName>
+    <OutDir>..\..\..\msvc64\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">
+    <OutDir>..\..\..\msvc32\</OutDir>
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacsd</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLStaticDeps|Win32'">
+    <OutDir>..\..\..\msvc32\</OutDir>
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacsd</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacsd</TargetName>
+    <OutDir>..\..\..\msvc64\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLStaticDeps|x64'">
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacsd</TargetName>
+    <OutDir>..\..\..\msvc64\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>..\..\..\msvc32\</OutDir>
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacs</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|Win32'">
+    <OutDir>..\..\..\msvc32\</OutDir>
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacs</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacs</TargetName>
+    <OutDir>..\..\..\msvc64\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacs</TargetName>
+    <OutDir>..\..\..\msvc64\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">
+    <OutDir>..\..\..\msvc32\</OutDir>
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacs</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLStaticDeps|Win32'">
+    <OutDir>..\..\..\msvc32\</OutDir>
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacs</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'">
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacs</TargetName>
+    <OutDir>..\..\..\msvc64\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLStaticDeps|x64'">
+    <IntDir>$(SolutionDir)\obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <TargetName>libaacs</TargetName>
+    <OutDir>..\..\..\msvc64\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)\lib\$(TargetName)$(TargetExt)</OutputFile>
+      <TargetMachine>MachineX86</TargetMachine>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)\lib\$(TargetName)$(TargetExt)</OutputFile>
+      <TargetMachine>MachineX64</TargetMachine>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(OutDir)\bin\$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(OutDir)\bin\$(TargetName).lib</ImportLibrary>
+      <ProfileGuidedDatabase>$(OutDir)\bin\$(TargetName).pgd</ProfileGuidedDatabase>
+      <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
+      <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLStaticDeps|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(OutDir)\bin\$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(OutDir)\bin\$(TargetName).lib</ImportLibrary>
+      <ProfileGuidedDatabase>$(OutDir)\bin\$(TargetName).pgd</ProfileGuidedDatabase>
+      <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
+      <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(OutDir)\bin\$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(OutDir)\bin\$(TargetName).lib</ImportLibrary>
+      <ProfileGuidedDatabase>$(OutDir)\bin\$(TargetName).pgd</ProfileGuidedDatabase>
+      <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
+      <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLStaticDeps|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(OutDir)\bin\$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(OutDir)\bin\$(TargetName).lib</ImportLibrary>
+      <ProfileGuidedDatabase>$(OutDir)\bin\$(TargetName).pgd</ProfileGuidedDatabase>
+      <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
+      <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)\lib\$(TargetName)$(TargetExt)</OutputFile>
+      <TargetMachine>MachineX86</TargetMachine>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)\lib\$(TargetName)$(TargetExt)</OutputFile>
+      <TargetMachine>MachineX86</TargetMachine>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)\lib\$(TargetName)$(TargetExt)</OutputFile>
+      <TargetMachine>MachineX64</TargetMachine>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)\lib\$(TargetName)$(TargetExt)</OutputFile>
+      <TargetMachine>MachineX64</TargetMachine>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(OutDir)\bin\$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(OutDir)\bin\$(TargetName).lib</ImportLibrary>
+      <ProfileGuidedDatabase>$(OutDir)\bin\$(TargetName).pgd</ProfileGuidedDatabase>
+      <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
+      <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLStaticDeps|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(OutDir)\bin\$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(OutDir)\bin\$(TargetName).lib</ImportLibrary>
+      <ProfileGuidedDatabase>$(OutDir)\bin\$(TargetName).pgd</ProfileGuidedDatabase>
+      <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
+      <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(OutDir)\bin\$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(OutDir)\bin\$(TargetName).lib</ImportLibrary>
+      <ProfileGuidedDatabase>$(OutDir)\bin\$(TargetName).pgd</ProfileGuidedDatabase>
+      <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
+      <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLStaticDeps|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(OutDir)\bin\$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(OutDir)\bin\$(TargetName).lib</ImportLibrary>
+      <ProfileGuidedDatabase>$(OutDir)\bin\$(TargetName).pgd</ProfileGuidedDatabase>
+      <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
+      <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>mkdir $(OutDir)\include
+mkdir $(OutDir)\include\libaacs
+copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
+copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
+copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+mkdir $(OutDir)\licenses
+copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>if exist ..\config.h (
+del ..\config.h
+)
+if exist ..\src\libaacs\aacs-version.h (
+del ..\src\libaacs\aacs-version.h
+)
+if exist ..\src\file\keydbcfg-lexer.c (
+del ..\src\file\keydbcfg-lexer.c
+)
+if exist ..\src\file\keydbcfg-parser.c (
+del ..\src\file\keydbcfg-parser.c
+)
+if exist ..\src\file\keydbcfg-parser.h (
+del ..\src\file\keydbcfg-parser.h
+)
+if exist $(OutDir)\include\libaacs (
+rd /s /q $(OutDir)\include\libaacs
+cd ../
+cd $(ProjectDir)
+)
+if not exist .\src\file\keydbcfg-lexer.c (
+mkdir src
+mkdir src\file
+win_flex.exe -L ../src/file/keydbcfg-lexer.l
+move .\lex.yy.c .\src\file\keydbcfg-lexer.c
+)
+if not exist .\src\file\keydbcfg-parser.c (
+win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file/keydbcfg-parser.y
+)</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

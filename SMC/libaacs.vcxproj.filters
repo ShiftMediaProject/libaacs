@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{e850f24d-093f-4c30-a99c-413a7dfa71b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{f18cd969-acc3-480c-9147-ea3ae1c8ba92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{bdd0568e-d423-4fcc-affe-6ba0c2a40f78}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\libaacs">
+      <UniqueIdentifier>{888e43ee-2b0a-4876-9b68-0f0ed5136809}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\libaacs">
+      <UniqueIdentifier>{041d79d7-e5ac-4965-bea4-fb3dbf1df9dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\file">
+      <UniqueIdentifier>{23cc7741-988f-48c4-8fbd-6c7bae324cad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\file">
+      <UniqueIdentifier>{8ddf9dc5-5884-455b-8e7d-3d74a16038a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\util">
+      <UniqueIdentifier>{02455133-b0a1-4273-9c53-2ccd87dc6f7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{0eaa9dc4-7e85-4b10-bef9-f5453687dd0d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\libaacs\crypto.c">
+      <Filter>Source Files\libaacs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libaacs\mkb.c">
+      <Filter>Source Files\libaacs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libaacs\mmc.c">
+      <Filter>Source Files\libaacs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libaacs\aacs.c">
+      <Filter>Source Files\libaacs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\file\dirs_win32.c">
+      <Filter>Source Files\file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\file\file_posix.c">
+      <Filter>Source Files\file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\file\keydbcfg.c">
+      <Filter>Source Files\file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\util\logging.c">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\util\strutl.c">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\file\keydbcfg-lexer.c">
+      <Filter>Source Files\file</Filter>
+    </ClCompile>
+    <ClCompile Include="src\file\keydbcfg-parser.c">
+      <Filter>Source Files\file</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\libaacs\aacs.h">
+      <Filter>Header Files\libaacs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libaacs\crypto.h">
+      <Filter>Header Files\libaacs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libaacs\mkb.h">
+      <Filter>Header Files\libaacs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libaacs\mmc.h">
+      <Filter>Header Files\libaacs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\file\dirs.h">
+      <Filter>Header Files\file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\file\file.h">
+      <Filter>Header Files\file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\file\filesystem.h">
+      <Filter>Header Files\file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\file\keydb.h">
+      <Filter>Header Files\file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\file\keydbcfg.h">
+      <Filter>Header Files\file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\file\path.h">
+      <Filter>Header Files\file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\util\attributes.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\util\logging.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\util\macro.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\util\strutl.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="libaacs\aacs-version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="libaacs.def">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+  </ItemGroup>
+</Project>
