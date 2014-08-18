@@ -47,7 +47,7 @@
 #    define AACS_PRIVATE
 #endif
 
-#if !defined(__GNUC__) || __GNUC__ < 3
+#if ( !defined(__GNUC__) || __GNUC__ < 3 ) && !defined(__INTEL_COMPILER)
 #  define AACS_LIKELY(x)   (x)
 #  define AACS_UNLIKELY(x) (x)
 #else

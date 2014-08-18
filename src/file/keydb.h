@@ -3,20 +3,11 @@
 
 static const uint32_t internal_device_number = 0;
 
-static const uint8_t internal_dk_list[][21] = {
-  {
-  },
-};
+static const uint8_t internal_dk_list[][21] = {0};
 
-static const uint8_t internal_pk_list[][16] = {
-  {
-  },
-};
+static const uint8_t internal_pk_list[][16] = {0};
 
-static const uint8_t internal_hc_list[][112] = {
-  {
-  },
-};
+static const uint8_t internal_hc_list[][112] = {0};
 
 /* customize this function to "hide" the keys in the binary */
 
