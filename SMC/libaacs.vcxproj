@@ -311,14 +311,13 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -375,14 +374,12 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -439,7 +436,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -447,7 +443,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
@@ -459,6 +455,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LargeAddressAware>true</LargeAddressAware>
+      <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
@@ -505,7 +502,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -513,7 +509,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
@@ -525,6 +521,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LargeAddressAware>true</LargeAddressAware>
+      <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
@@ -571,14 +568,12 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
@@ -589,6 +584,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
       <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
@@ -635,14 +631,13 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
@@ -653,6 +648,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
       <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
@@ -701,7 +697,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -716,7 +711,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
       <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
     </ClCompile>
     <Link>
@@ -778,7 +773,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -793,7 +787,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
       <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
     </ClCompile>
     <Link>
@@ -855,7 +849,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -864,13 +857,12 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
       <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
     </ClCompile>
     <Link>
@@ -932,7 +924,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -941,13 +932,12 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
       <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
     </ClCompile>
     <Link>
@@ -1009,7 +999,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1024,7 +1013,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -1038,6 +1027,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LargeAddressAware>true</LargeAddressAware>
+      <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
@@ -1086,7 +1076,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1101,7 +1090,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -1115,6 +1104,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LargeAddressAware>true</LargeAddressAware>
+      <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
@@ -1163,7 +1153,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1172,13 +1161,12 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -1191,6 +1179,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
       <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
@@ -1239,7 +1228,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1254,7 +1242,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
-      <DisableSpecificWarnings>4996;4267;4244</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -1267,6 +1255,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <ModuleDefinitionFile>libaacs.def</ModuleDefinitionFile>
       <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
