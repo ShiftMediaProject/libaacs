@@ -28,15 +28,3 @@ src/keydbcfg-lexer.c
 src/keydbcfg-parser.c
 src/keydbcfg-parser.h
 stamp-h1
-.dirstamp
-
-*.obj
-*.log
-*.tlog
-*.pdb
-*.ildb
-*.suo
-*.sdf
-[Oo]bj/
-*.exe
-SMC/data
