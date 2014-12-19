@@ -318,6 +318,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
+      <ProgramDataBaseFileName>$(OutDir)\lib\$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -380,6 +381,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
+      <ProgramDataBaseFileName>$(OutDir)\lib\$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -444,6 +446,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
+      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
@@ -456,6 +459,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <AdditionalLibraryDirectories>$(OutDir)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LargeAddressAware>true</LargeAddressAware>
       <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
@@ -522,6 +526,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LargeAddressAware>true</LargeAddressAware>
       <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
@@ -574,6 +579,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
+      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)\bin\$(TargetName)$(TargetExt)</OutputFile>
@@ -585,6 +591,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
@@ -649,6 +656,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/ignore:4197 %(AdditionalOptions)</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
       <Command>mkdir $(OutDir)\include
@@ -713,6 +721,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
       <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
+      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -789,6 +798,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
       <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
+      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -864,6 +874,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
       <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
+      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -939,6 +950,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
       <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
+      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -1014,6 +1026,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
+      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -1167,6 +1180,7 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005</DisableSpecificWarnings>
+      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
