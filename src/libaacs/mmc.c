@@ -74,6 +74,8 @@
 
 #ifdef HAVE_MNTENT_H
 #include <mntent.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #endif
 
 #ifdef HAVE_LIMITS_H
@@ -894,11 +896,18 @@ MMC *mmc_open(const char *path)
         file_path[path_len] = '\0';
     }
 
-    DEBUG(DBG_MMC, "Opening LINUX MMC drive %s...\n", file_path);
+    struct stat st;
+    if (!stat(file_path, &st) && S_ISBLK(st.st_mode)) {
+        DEBUG(DBG_MMC, "Opening block device %s\n", file_path);
+        mmc->fd = open(file_path, O_RDONLY | O_NONBLOCK);
+        if (mmc->fd < 0) {
+            DEBUG(DBG_MMC | DBG_CRIT, "Error opening block device %s\n", file_path);
+        }
 
-    if ((proc_mounts = setmntent("/proc/mounts", "r"))) {
+    } else if ((proc_mounts = setmntent("/proc/mounts", "r"))) {
         struct mntent* mount_entry;
 
+        DEBUG(DBG_MMC, "Opening LINUX MMC drive mounted to %s...\n", file_path);
         while ((mount_entry = getmntent(proc_mounts)) != NULL) {
             if (strcmp(mount_entry->mnt_dir, file_path) == 0) {
                 mmc->fd = open(mount_entry->mnt_fsname, O_RDONLY | O_NONBLOCK);
@@ -914,12 +923,16 @@ MMC *mmc_open(const char *path)
         }
 
         endmntent(proc_mounts);
+
+        if (mmc->fd < 0) {
+            DEBUG(DBG_MMC | DBG_CRIT, "Error opening LINUX MMC drive mounted to %s\n", file_path);
+        }
+
     } else {
-        DEBUG(DBG_MMC, "Error opening /proc/mounts\n");
+        DEBUG(DBG_MMC | DBG_CRIT, "Error opening /proc/mounts\n");
     }
 
     if (mmc->fd < 0) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Error opening LINUX MMC drive mounted to %s\n", file_path);
         X_FREE(mmc);
     }
 
