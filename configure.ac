@@ -14,9 +14,9 @@ dnl - If ABI is broken, increase current and set age and revision to 0.
 #
 dnl Library file name will be libaacs.(current-age).age.revision
 #
-m4_define([lt_current],  4)
-m4_define([lt_age],      4)
-m4_define([lt_revision], 1)
+m4_define([lt_current],  5)
+m4_define([lt_age],      5)
+m4_define([lt_revision], 0)
 
 dnl initilization
 AC_INIT([libaacs], aacs_version, [http://www.videolan.org/developers/libaacs.html])
