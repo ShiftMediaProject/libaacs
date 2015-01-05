@@ -27,7 +27,9 @@
 
 typedef struct mkb MKB;
 
-AACS_PRIVATE MKB *mkb_open(const char *path);    // init MKB
+struct aacs_file_s;
+
+AACS_PRIVATE MKB *mkb_read(struct aacs_file_s *fp);    // init MKB
 AACS_PRIVATE MKB *mkb_init(uint8_t *data, int len); // init MKB from data
 AACS_PRIVATE void mkb_close(MKB *mkb);           // free MKB
 

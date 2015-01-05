@@ -382,6 +382,23 @@ static AACS_FILE_H *_file_open(AACS *aacs, const char *file)
     return fp;
 }
 
+static MKB *_mkb_open(AACS *aacs)
+{
+    AACS_FILE_H *fp;
+    MKB         *mkb;
+
+    fp = _file_open(aacs, "AACS/MKB_RO.inf");
+    if (!fp) {
+        DEBUG(DBG_AACS | DBG_CRIT, "Error opening MKB file (AACS/MKB_RO.inf)\n");
+        return NULL;
+    }
+
+    mkb = mkb_read(fp);
+    file_close(fp);
+
+    return mkb;
+}
+
 static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 {
     int a, num_uvs = 0;
@@ -396,7 +413,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 
     DEBUG(DBG_AACS, "Calculate media key...\n");
 
-    if ((mkb = mkb_open(aacs->path))) {
+    if ((mkb = _mkb_open(aacs))) {
 
         aacs->mkb_version = mkb_version(mkb);
         _update_rl(mkb);
@@ -443,7 +460,6 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
         return AACS_ERROR_NO_PK;
     }
 
-    DEBUG(DBG_AACS | DBG_CRIT, "Error opening %s/AACS/MKB_RO.inf\n", aacs->path);
     return AACS_ERROR_CORRUPTED_DISC;
 }
 
@@ -1046,7 +1062,7 @@ int aacs_get_mkb_version(AACS *aacs)
 {
     if (!aacs->mkb_version) {
         MKB *mkb;
-        if ((mkb = mkb_open(aacs->path))) {
+        if ((mkb = _mkb_open(aacs))) {
             aacs->mkb_version = mkb_version(mkb);
             mkb_close(mkb);
         }
