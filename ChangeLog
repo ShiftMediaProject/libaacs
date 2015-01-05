@@ -1,3 +1,8 @@
+ - Add improved file system interface
+ - Support opening raw devices
+ - Reduce log level of failed PMSN query
+ - Optimizations
+
 2014-05-27: Version 0.7.1
  - Add support for gcrypt 1.6.0.
  - Do not retrieve MKB using MMC commands during AACS-Auth
