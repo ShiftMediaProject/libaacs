@@ -44,6 +44,10 @@
 #include <gcrypt.h>
 
 
+#define SECTOR_LEN       2048  /* bus encryption block size */
+#define ALIGNED_UNIT_LEN 6144  /* aacs block size */
+
+
 struct aacs {
     /* current disc */
     char     *path;
@@ -856,38 +860,20 @@ static int _get_bus_encryption_capable(const char *path)
     return bec;
 }
 
-static int _verify_ts(uint8_t *buf, size_t size)
+static int _verify_ts(uint8_t *buf)
 {
-    uint8_t *ptr;
-
-    if (size < 192) {
-        return 1;
-    }
-
-    for (ptr=buf; ptr < buf+192; ptr++) {
-        int failed = 0;
-        if (*ptr == 0x47) {
-            uint8_t *ptr2;
-
-            for (ptr2=ptr; ptr2 < buf + size; ptr2 += 192) {
-                if (*ptr2 != 0x47) {
-                    failed = 1;
-                    break;
-                }
-            }
-            if (!failed) {
-                return 1;
-            }
+    int i;
+    for (i = 0; i < ALIGNED_UNIT_LEN; i += 192) {
+        if (AACS_UNLIKELY(buf[i + 4] != 0x47)) {
+            return 0;
         }
-        ptr++;
+
+        /* Clear copy_permission_indicator bits */
+        buf[i] &= ~0xc0;
     }
-
-    DEBUG(DBG_AACS, "Failed to verify TS!\n");
-
-    return 0;
+    return 1;
 }
 
-#define ALIGNED_UNIT_LEN 6144
 static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, uint32_t curr_uk)
 {
     gcry_cipher_hd_t gcry_h;
@@ -911,7 +897,7 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
     gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
     gcry_cipher_close(gcry_h);
 
-    if (_verify_ts(out_buf, ALIGNED_UNIT_LEN)) {
+    if (_verify_ts(out_buf)) {
         return 1;
     }
 
@@ -922,7 +908,6 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
     return 0;
 }
 
-#define SECTOR_LEN 2048
 static void _decrypt_bus(AACS *aacs, uint8_t *buf)
 {
     gcry_cipher_hd_t gcry_h;
@@ -1048,11 +1033,6 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
 
     if (_decrypt_unit(aacs, out_buf, buf, aacs->current_cps_unit)) {
         memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
-
-        // Clear copy_permission_indicator bits
-        for (i = 0; i < 6144; i += 192) {
-            buf[i] &= ~0xc0;
-        }
 
         return 1;
     }
