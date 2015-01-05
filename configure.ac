@@ -4,16 +4,16 @@ m4_define([aacs_minor], 7)
 m4_define([aacs_micro], 1)
 m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 
-dnl library (.so) version
-#
+dnl shared library version (.so version)
+dnl
 dnl update when making new release
-#
+dnl
 dnl - If there are no ABI changes, increase revision.
 dnl - If ABI is changed backwards-compatible way, increase current and age. Set revision to 0.
 dnl - If ABI is broken, increase current and set age and revision to 0.
-#
+dnl
 dnl Library file name will be libaacs.(current-age).age.revision
-#
+
 m4_define([lt_current],  5)
 m4_define([lt_age],      5)
 m4_define([lt_revision], 0)
@@ -140,7 +140,7 @@ else
 fi
 AC_FUNC_STRERROR_R
 
-# use re-entrant version of gcrypt_error() from gpg-error
+dnl use re-entrant version of gcrypt_error() from gpg-error
 
 AC_ARG_WITH(gpg-error-prefix,
             AC_HELP_STRING([--with-gpg-error-prefix=PFX],
