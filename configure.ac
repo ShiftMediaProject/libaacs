@@ -1,7 +1,7 @@
 dnl library version number
 m4_define([aacs_major], 0)
-m4_define([aacs_minor], 7)
-m4_define([aacs_micro], 1)
+m4_define([aacs_minor], 8)
+m4_define([aacs_micro], 0)
 m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 
 dnl shared library version (.so version)
