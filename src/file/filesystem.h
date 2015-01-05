@@ -45,5 +45,28 @@ typedef AACS_FILE_H* (*AACS_FILE_OPEN)(const char* filename, const char *mode);
  */
 AACS_FILE_OPEN aacs_register_file(AACS_FILE_OPEN p);
 
+/**
+ *
+ *  Function that will be used to open a file
+ *
+ *  NOTE: file name is relative to disc root directory !
+ *
+ * @param handle application-specific handle
+ * @param filename file to open
+ * @return pointer to AACS_FILE_H, NULL if error
+ */
+typedef AACS_FILE_H* (*AACS_FILE_OPEN2)(void *handle, const char* filename);
+
+/**
+ *
+ *  Register function pointer that will be used to open a file
+ *
+ * @param aacs aacs instance
+ * @param handle handle that will be passed to file open function
+ * @param p function pointer
+ */
+struct aacs;
+void aacs_set_fopen(struct aacs *aacs, void *handle, AACS_FILE_OPEN2 p);
+
 
 #endif /* AACS_FILESYSTEM_H_ */

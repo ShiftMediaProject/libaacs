@@ -49,6 +49,9 @@
 
 
 struct aacs {
+    void           *fopen_handle;
+    AACS_FILE_OPEN2 fopen;
+
     /* current disc */
     char     *path;
     int       mkb_version;
@@ -374,6 +377,10 @@ static AACS_FILE_H *_file_open(AACS *aacs, const char *file)
 {
     AACS_FILE_H *fp;
     char        *f_name;
+
+    if (aacs->fopen) {
+        return aacs->fopen(aacs->fopen_handle, file);
+    }
 
     f_name = str_printf("%s/%s", aacs->path, file);
     fp = file_open(f_name, "rb");
@@ -957,7 +964,17 @@ AACS *aacs_open(const char *path, const char *configfile_path)
     return NULL;
 }
 
+/* aacs_open_device() wrapper for backward compability */
 AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
+{
+    AACS *aacs = aacs_init();
+    if (aacs) {
+        *error_code = aacs_open_device(aacs, path, configfile_path);
+    }
+    return aacs;
+}
+
+AACS *aacs_init()
 {
     DEBUG(DBG_AACS, "libaacs "AACS_VERSION_STRING" [%u]\n", (unsigned)sizeof(AACS));
 
@@ -967,37 +984,49 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
         return NULL;
     }
 
-    AACS *aacs = calloc(1, sizeof(AACS));
+    return calloc(1, sizeof(AACS));
+}
+
+void aacs_set_fopen(AACS *aacs, void *handle, AACS_FILE_OPEN2 p)
+{
+    if (aacs) {
+        aacs->fopen = p;
+        aacs->fopen_handle = handle;
+    }
+}
+
+int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
+{
     config_file *cf;
+    int error_code;
 
     aacs->path = str_printf("%s", path);
 
-    *error_code = _calc_title_hash(aacs);
-    if (*error_code != AACS_SUCCESS) {
+    error_code = _calc_title_hash(aacs);
+    if (error_code != AACS_SUCCESS) {
         aacs_close(aacs);
-        return NULL;
+        return error_code;
     }
 
     cf = keydbcfg_config_load(configfile_path);
 
     DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
-    *error_code = _calc_uks(aacs, cf);
-    if (*error_code != AACS_SUCCESS) {
+    error_code = _calc_uks(aacs, cf);
+    if (error_code != AACS_SUCCESS) {
         DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
     }
 
     aacs->bee = _get_bus_encryption_enabled(aacs);
     aacs->bec = _get_bus_encryption_capable(path);
 
-    if (*error_code == AACS_SUCCESS && aacs->bee && aacs->bec) {
+    if (error_code == AACS_SUCCESS && aacs->bee && aacs->bec) {
 
         if (!cf) {
-            *error_code = AACS_ERROR_NO_CONFIG;
-            return aacs;
+            return AACS_ERROR_NO_CONFIG;
         }
 
-        *error_code = _read_read_data_key(aacs, cf->host_cert_list);
-        if (*error_code != AACS_SUCCESS) {
+        error_code = _read_read_data_key(aacs, cf->host_cert_list);
+        if (error_code != AACS_SUCCESS) {
             DEBUG(DBG_AACS | DBG_CRIT, "Unable to initialize bus encryption required by drive and disc\n");
         }
     }
@@ -1006,7 +1035,7 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
 
     DEBUG(DBG_AACS, "AACS initialized!\n");
 
-    return aacs;
+    return error_code;
 }
 
 void aacs_close(AACS *aacs)
