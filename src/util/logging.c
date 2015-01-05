@@ -66,8 +66,14 @@ void aacs_debug(const char *file, int line, uint32_t mask, const char *format, .
     }
 
     if (mask & debug_mask) {
+        const char *filename;
         char buffer[512];
         va_list args;
+
+        filename = strrchr(file, '/');
+        if (filename) {
+            file = filename + 1;
+        }
 
         va_start(args, format);
         sprintf(buffer, "libaacs: %s:%d: %s", file, line, format);
