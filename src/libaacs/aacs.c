@@ -366,6 +366,18 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
     return AACS_ERROR_NO_DK;
 }
 
+static AACS_FILE_H *_file_open(AACS *aacs, const char *file)
+{
+    AACS_FILE_H *fp;
+    char        *f_name;
+
+    f_name = str_printf("%s/%s", aacs->path, file);
+    fp = file_open(f_name, "rb");
+    X_FREE(f_name);
+
+    return fp;
+}
+
 static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 {
     int a, num_uvs = 0;
@@ -615,38 +627,6 @@ static void _read_uks_map(AACS *aacs, AACS_FILE_H *fp)
     }
 }
 
-static AACS_FILE_H *_open_unit_key_file(const char *path)
-{
-    AACS_FILE_H *fp;
-    char        *f_name;
-
-    f_name = str_printf("%s/AACS/Unit_Key_RO.inf", path);
-    fp = file_open(f_name, "rb");
-
-    if (!fp) {
-        DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file %s\n", f_name);
-    }
-
-    X_FREE(f_name);
-    return fp;
-}
-
-static AACS_FILE_H *_open_content_certificate_file(const char *path)
-{
-    AACS_FILE_H *fp;
-    char        *f_name;
-
-    f_name = str_printf("%s/AACS/Content000.cer", path);
-    fp = file_open(f_name, "rb");
-
-    if (!fp) {
-        DEBUG(DBG_AACS | DBG_CRIT, "Error opening content certificate file %s\n", f_name);
-    }
-
-    X_FREE(f_name);
-    return fp;
-}
-
 /* Function that collects keys from keydb config entry */
 static void _find_config_entry(AACS *aacs, title_entry_list *ce,
                                uint8_t *mk, uint8_t *vuk)
@@ -739,8 +719,9 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
     DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
-    fp = _open_unit_key_file(aacs->path);
+    fp = _file_open(aacs, "AACS/Unit_Key_RO.inf");
     if (!fp) {
+        DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file (AACS/Unit_Key_RO.inf)\n");
         return AACS_ERROR_CORRUPTED_DISC;
     }
 
@@ -796,7 +777,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
     return AACS_ERROR_CORRUPTED_DISC;
 }
 
-static int _calc_title_hash(const char *path, uint8_t *title_hash)
+static int _calc_title_hash(AACS *aacs)
 {
     AACS_FILE_H *fp = NULL;
     uint8_t *ukf_buf;
@@ -804,8 +785,9 @@ static int _calc_title_hash(const char *path, uint8_t *title_hash)
     int64_t  f_size;
     int      result = AACS_SUCCESS;
 
-    fp = _open_unit_key_file(path);
+    fp = _file_open(aacs, "AACS/Unit_Key_RO.inf");
     if (!fp) {
+        DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file (AACS/Unit_Key_RO.inf)\n");
         return AACS_ERROR_CORRUPTED_DISC;
     }
 
@@ -816,12 +798,12 @@ static int _calc_title_hash(const char *path, uint8_t *title_hash)
     ukf_buf = malloc(f_size);
 
     if ((file_read(fp, ukf_buf, f_size)) == f_size) {
-        crypto_aacs_title_hash(ukf_buf, f_size, title_hash);
-        DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(str, title_hash, 20));
+        crypto_aacs_title_hash(ukf_buf, f_size, aacs->disc_id);
+        DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(str, aacs->disc_id, 20));
 
     } else {
         result = AACS_ERROR_CORRUPTED_DISC;
-        DEBUG(DBG_AACS | DBG_CRIT, "Failed to read %lu bytes from unit key file %s/AACS/Unit_Key_RO.inf", (unsigned long)f_size, path);
+        DEBUG(DBG_AACS | DBG_CRIT, "Failed to read %lu bytes from unit key file (AACS/Unit_Key_RO.inf)", (unsigned long)f_size);
     }
 
     file_close(fp);
@@ -830,15 +812,15 @@ static int _calc_title_hash(const char *path, uint8_t *title_hash)
     return result;
 }
 
-static int _get_bus_encryption_enabled(const char *path)
+static int _get_bus_encryption_enabled(AACS *aacs)
 {
     AACS_FILE_H *fp = NULL;
     uint8_t buf[2];
     int bee = 0;
 
-    fp = _open_content_certificate_file(path);
+    fp = _file_open(aacs, "AACS/Content000.cer");
     if (!fp) {
-        DEBUG(DBG_AACS | DBG_CRIT, "Unable to open content certificate\n");
+        DEBUG(DBG_AACS | DBG_CRIT, "Unable to open content certificate (AACS/Content000.cer)\n");
         return 0;
     }
 
@@ -989,7 +971,7 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
 
     aacs->path = str_printf("%s", path);
 
-    *error_code = _calc_title_hash(path, aacs->disc_id);
+    *error_code = _calc_title_hash(aacs);
     if (*error_code != AACS_SUCCESS) {
         aacs_close(aacs);
         return NULL;
@@ -1003,7 +985,7 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
         DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
     }
 
-    aacs->bee = _get_bus_encryption_enabled(path);
+    aacs->bee = _get_bus_encryption_enabled(aacs);
     aacs->bec = _get_bus_encryption_capable(path);
 
     if (*error_code == AACS_SUCCESS && aacs->bee && aacs->bec) {
