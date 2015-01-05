@@ -70,6 +70,7 @@ struct aacs {
 
     /* CPS unit of currently selected title */
     uint16_t  current_cps_unit;
+    uint8_t   cps_unit_selected;
 
     /* title -> CPS unit mappings */
     uint32_t  num_titles;
@@ -85,10 +86,10 @@ struct aacs {
     uint8_t   device_binding_id[16];
 };
 
-static const uint8_t empty_key[] = "\x00\x00\x00\x00\x00\x00\x00\x00"
-                                   "\x00\x00\x00\x00\x00\x00\x00\x00";
-static const uint8_t aacs_iv[]   = "\x0b\xa0\xf8\xdd\xfe\xa6\x1f\xb3"
-                                   "\xd8\xdf\x9f\x56\x6a\x05\x0f\x78";
+static const uint8_t empty_key[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+static const uint8_t aacs_iv[16]   = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
+                                       0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
 
 static int _validate_pk(const uint8_t *pk,
                         const uint8_t *cvalue, const uint8_t *uv, const uint8_t *vd,
@@ -899,33 +900,37 @@ static int _verify_ts(uint8_t *buf)
 
 static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, uint32_t curr_uk)
 {
+    /* inbuf == NULL means in-place decryption */
+
     gcry_cipher_hd_t gcry_h;
     int a;
     uint8_t key[16];
 
+    if (AACS_UNLIKELY(in_buf != NULL)) {
+        memcpy(out_buf, in_buf, 16); /* first 16 bytes are plain */
+    }
+
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
     gcry_cipher_setkey(gcry_h, aacs->uks + curr_uk * 16, 16);
-    gcry_cipher_encrypt(gcry_h, key, 16, in_buf, 16);
+    gcry_cipher_encrypt(gcry_h, key, 16, out_buf, 16); /* here out_buf is plain data fron in_buf */
     gcry_cipher_close(gcry_h);
 
     for (a = 0; a < 16; a++) {
-        key[a] ^= in_buf[a];
+        key[a] ^= out_buf[a]; /* here out_buf is plain data fron in_buf */
     }
-
-    memcpy(out_buf, in_buf, 16); /* first 16 bytes are plain */
 
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
     gcry_cipher_setkey(gcry_h, key, 16);
     gcry_cipher_setiv(gcry_h, aacs_iv, 16);
-    gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
+    if (AACS_UNLIKELY(in_buf != NULL)) {
+        gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
+    } else {
+        gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, NULL, 0);
+    }
     gcry_cipher_close(gcry_h);
 
     if (_verify_ts(out_buf)) {
         return 1;
-    }
-
-    if (curr_uk < aacs->num_uks - 1) {
-        return _decrypt_unit(aacs, out_buf, in_buf, curr_uk++);
     }
 
     return 0;
@@ -1062,28 +1067,42 @@ void aacs_close(AACS *aacs)
 
 int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
 {
-    uint8_t out_buf[ALIGNED_UNIT_LEN];
-    int i;
+    unsigned int i;
 
     if (!(buf[0] & 0xc0)) {
         // TP_extra_header Copy_permission_indicator == 0, unit is not encrypted
         return 1;
     }
 
+    /* handle bus encryption first */
     if (aacs->bee && aacs->bec) {
         for (i = 0; i < ALIGNED_UNIT_LEN; i += SECTOR_LEN) {
             _decrypt_bus(aacs, buf + i);
         }
     }
 
-    if (_decrypt_unit(aacs, out_buf, buf, aacs->current_cps_unit)) {
-        memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
+    /* decrypt in-place if current unit key is known */
+    if (AACS_LIKELY(aacs->cps_unit_selected) || AACS_LIKELY(aacs->num_uks == 1)) {
+        if (AACS_LIKELY(_decrypt_unit(aacs, buf, NULL, aacs->current_cps_unit))) {
+            return 1;
+        }
 
-        return 1;
+    } else {
+
+        /* unit key is unknown (playback without menus), try each key until right key is found */
+        uint8_t out_buf[ALIGNED_UNIT_LEN];
+        for (i = 0; i < aacs->num_uks; i++) {
+            if (_decrypt_unit(aacs, out_buf, buf, i)) {
+                DEBUG(DBG_AACS, "autodetected current CPS unit (%d)\n", i);
+                aacs->current_cps_unit  = i;
+                aacs->cps_unit_selected = 1;
+                memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
+                return 1;
+            }
+        }
     }
 
     DEBUG(DBG_AACS, "Failed decrypting unit [6144 bytes]\n");
-
     return 0;
 }
 
@@ -1264,12 +1283,14 @@ void aacs_select_title(AACS *aacs, uint32_t title)
     if (title == 0xffff) {
         /* first play */
         aacs->current_cps_unit = aacs->cps_units[0];
+        aacs->cps_unit_selected = 0;
         DEBUG(DBG_AACS, "aacs_set_title(first_play): CPS unit %d\n", aacs->current_cps_unit);
         return;
     }
 
     if (title <= aacs->num_titles) {
         aacs->current_cps_unit = aacs->cps_units[title + 1];
+        aacs->cps_unit_selected = 1;
         DEBUG(DBG_AACS, "aacs_set_title(%d): CPS unit %d\n", title, aacs->current_cps_unit);
         return;
     }
