@@ -110,10 +110,7 @@
     <ClInclude Include="config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libaacs\aacs-version.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="version.h">
+    <ClInclude Include="src\libaacs\aacs-version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -87,8 +87,7 @@
     <ClInclude Include="..\src\util\macro.h" />
     <ClInclude Include="..\src\util\strutl.h" />
     <ClInclude Include="config.h" />
-    <ClInclude Include="libaacs\aacs-version.h" />
-    <ClInclude Include="version.h" />
+    <ClInclude Include="src\libaacs\aacs-version.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libaacs.def" />
