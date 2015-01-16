@@ -62,33 +62,21 @@ static int64_t file_tell_linux(AACS_FILE_H *file)
 #endif
 }
 
-static int file_eof_linux(AACS_FILE_H *file)
-{
-    return feof((FILE *)file->internal);
-}
-
 static int64_t file_read_linux(AACS_FILE_H *file, uint8_t *buf, int64_t size)
 {
     return fread(buf, 1, size, (FILE *)file->internal);
 }
 
-static int64_t file_write_linux(AACS_FILE_H *file, const uint8_t *buf, int64_t size)
-{
-    return fwrite(buf, 1, size, (FILE *)file->internal);
-}
-
 static AACS_FILE_H *file_open_linux(const char* filename, const char *mode)
 {
     FILE *fp = NULL;
-    AACS_FILE_H *file = malloc(sizeof(AACS_FILE_H));
+    AACS_FILE_H *file = calloc(1, sizeof(AACS_FILE_H));
 
     DEBUG(DBG_FILE, "Opening LINUX file %s... (%p)\n", filename, (void*)file);
     file->close = file_close_linux;
     file->seek = file_seek_linux;
     file->read = file_read_linux;
-    file->write = file_write_linux;
     file->tell = file_tell_linux;
-    file->eof = file_eof_linux;
 
     if ((fp = fopen(filename, mode))) {
         file->internal = fp;
@@ -107,7 +95,7 @@ AACS_FILE_H* (*file_open)(const char* filename, const char *mode) = file_open_li
 
 AACS_FILE_OPEN aacs_register_file(AACS_FILE_OPEN p)
 {
-  AACS_FILE_OPEN old = file_open;
-  file_open = p;
-  return old;
+    AACS_FILE_OPEN old = file_open;
+    file_open = p;
+    return old;
 }
