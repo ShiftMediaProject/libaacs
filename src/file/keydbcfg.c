@@ -33,6 +33,11 @@
 
 #ifdef _WIN32
 # define mkdir(p,m) win32_mkdir(p)
+# define DIR_SEP_CHAR '\\'
+# define DIR_SEP      "\\"
+#else
+# define DIR_SEP_CHAR '/'
+# define DIR_SEP      "/"
 #endif
 
 
@@ -52,10 +57,10 @@ static int _mkpath(const char *path)
     char *dir = str_printf("%s", path);
     char *end = dir;
 
-    while (*end == '/')
+    while (*end == DIR_SEP_CHAR)
         end++;
 
-    while ((end = strchr(end, '/'))) {
+    while ((end = strchr(end, DIR_SEP_CHAR))) {
         *end = 0;
 
         if (stat(dir, &s) != 0 || !S_ISDIR(s.st_mode)) {
@@ -68,7 +73,7 @@ static int _mkpath(const char *path)
             }
         }
 
-        *end++ = '/';
+        *end++ = DIR_SEP_CHAR;
     }
 
     X_FREE(dir);
@@ -112,7 +117,7 @@ static char *_config_file_user(const char *file_name)
         return NULL;
     }
 
-    return str_printf("%s/%s/%s", cfg_dir, CFG_DIR, file_name);
+    return str_printf("%s"DIR_SEP"%s"DIR_SEP"%s", cfg_dir, CFG_DIR, file_name);
 }
 
 static FILE *_open_cfg_file_user(const char *file_name, char **path, const char *mode)
@@ -149,7 +154,7 @@ static FILE *_open_cfg_file_system(const char *file_name, char **path)
 
     while (NULL != (dir = file_get_config_system(dir))) {
 
-        char *cfg_file = str_printf("%s/%s/%s", dir, CFG_DIR, file_name);
+        char *cfg_file = str_printf("%s"DIR_SEP"%s"DIR_SEP"%s", dir, CFG_DIR, file_name);
 
         FILE *fp = fopen(cfg_file, "r");
         if (fp) {
@@ -342,7 +347,7 @@ static char *_keycache_file(const char *type, const uint8_t *disc_id)
 
     hex_array_to_hexstring(disc_id_str, disc_id, 20);
 
-    return str_printf("%s/%s/%s/%s", cache_dir, CFG_DIR, type, disc_id_str);
+    return str_printf("%s"DIR_SEP"%s"DIR_SEP"%s"DIR_SEP"%s", cache_dir, CFG_DIR, type, disc_id_str);
 }
 
 int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, unsigned int len)
@@ -424,7 +429,7 @@ static char *_cache_file(const char *name)
         return NULL;
     }
 
-    return str_printf("%s/%s/%s", cache_dir, CFG_DIR, name);
+    return str_printf("%s"DIR_SEP"%s"DIR_SEP"%s", cache_dir, CFG_DIR, name);
 }
 
 int cache_save(const char *name, uint32_t version, const void *data, uint32_t len)

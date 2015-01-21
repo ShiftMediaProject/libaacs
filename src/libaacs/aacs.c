@@ -383,7 +383,7 @@ static AACS_FILE_H *_file_open(AACS *aacs, const char *file)
         return aacs->fopen(aacs->fopen_handle, file);
     }
 
-    f_name = str_printf("%s/%s", aacs->path, file);
+    f_name = str_printf("%s" DIR_SEP "%s", aacs->path, file);
     fp = file_open(f_name, "rb");
     X_FREE(f_name);
 
@@ -395,7 +395,7 @@ static MKB *_mkb_open(AACS *aacs)
     AACS_FILE_H *fp;
     MKB         *mkb;
 
-    fp = _file_open(aacs, "AACS/MKB_RO.inf");
+    fp = _file_open(aacs, "AACS" DIR_SEP "MKB_RO.inf");
     if (!fp) {
         DEBUG(DBG_AACS | DBG_CRIT, "Error opening MKB file (AACS/MKB_RO.inf)\n");
         return NULL;
@@ -747,7 +747,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
     DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
-    fp = _file_open(aacs, "AACS/Unit_Key_RO.inf");
+    fp = _file_open(aacs, "AACS" DIR_SEP "Unit_Key_RO.inf");
     if (!fp) {
         DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file (AACS/Unit_Key_RO.inf)\n");
         return AACS_ERROR_CORRUPTED_DISC;
@@ -813,7 +813,7 @@ static int _calc_title_hash(AACS *aacs)
     int64_t  f_size;
     int      result = AACS_SUCCESS;
 
-    fp = _file_open(aacs, "AACS/Unit_Key_RO.inf");
+    fp = _file_open(aacs, "AACS" DIR_SEP "Unit_Key_RO.inf");
     if (!fp) {
         DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file (AACS/Unit_Key_RO.inf)\n");
         return AACS_ERROR_CORRUPTED_DISC;
@@ -846,7 +846,7 @@ static int _get_bus_encryption_enabled(AACS *aacs)
     uint8_t buf[2];
     int bee = 0;
 
-    fp = _file_open(aacs, "AACS/Content000.cer");
+    fp = _file_open(aacs, "AACS" DIR_SEP "Content000.cer");
     if (!fp) {
         DEBUG(DBG_AACS | DBG_CRIT, "Unable to open content certificate (AACS/Content000.cer)\n");
         return 0;

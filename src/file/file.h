@@ -26,9 +26,15 @@
 
 #include <stdint.h>
 
-//#ifdef __LINUX__
-#define DIR_SEP "/"
-//#endif
+#ifdef _WIN32
+# define DIR_SEP "\\"
+#else
+# define DIR_SEP "/"
+#endif
+
+/*
+ * file access
+ */
 
 #define file_close(X) X->close(X)
 #define file_seek(X,Y,Z) X->seek(X,Y,Z)
