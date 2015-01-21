@@ -1009,7 +1009,6 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
 
     error_code = _calc_title_hash(aacs);
     if (error_code != AACS_SUCCESS) {
-        aacs_close(aacs);
         return error_code;
     }
 
