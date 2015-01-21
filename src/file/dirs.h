@@ -30,9 +30,10 @@ AACS_PRIVATE int         win32_mkdir(const char *dir);
  * Config, cache and data dirs
  */
 
-AACS_PRIVATE const char *file_get_config_home(void);
 AACS_PRIVATE const char *file_get_config_system(const char *dir);
-AACS_PRIVATE const char *file_get_cache_home(void);
-AACS_PRIVATE const char *file_get_data_home(void);
+
+AACS_PRIVATE char *file_get_config_home(void) AACS_ATTR_MALLOC;
+AACS_PRIVATE char *file_get_cache_home(void) AACS_ATTR_MALLOC;
+AACS_PRIVATE char *file_get_data_home(void) AACS_ATTR_MALLOC;
 
 #endif

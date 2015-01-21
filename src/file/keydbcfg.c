@@ -111,13 +111,16 @@ static char *_load_file(FILE *fp)
 
 static char *_config_file_user(const char *file_name)
 {
-    const char *cfg_dir = file_get_config_home();
+    char *cfg_dir = file_get_config_home();
+    char *result;
 
     if (!cfg_dir) {
         return NULL;
     }
 
-    return str_printf("%s"DIR_SEP"%s"DIR_SEP"%s", cfg_dir, CFG_DIR, file_name);
+    result = str_printf("%s"DIR_SEP"%s"DIR_SEP"%s", cfg_dir, CFG_DIR, file_name);
+    X_FREE(cfg_dir);
+    return result;
 }
 
 static FILE *_open_cfg_file_user(const char *file_name, char **path, const char *mode)
@@ -338,7 +341,8 @@ static int _load_cert_file(config_file *cf)
 
 static char *_keycache_file(const char *type, const uint8_t *disc_id)
 {
-    const char *cache_dir = file_get_cache_home();
+    char *cache_dir = file_get_cache_home();
+    char *result;
     char disc_id_str[41];
 
     if (!cache_dir) {
@@ -347,7 +351,9 @@ static char *_keycache_file(const char *type, const uint8_t *disc_id)
 
     hex_array_to_hexstring(disc_id_str, disc_id, 20);
 
-    return str_printf("%s"DIR_SEP"%s"DIR_SEP"%s"DIR_SEP"%s", cache_dir, CFG_DIR, type, disc_id_str);
+    result = str_printf("%s"DIR_SEP"%s"DIR_SEP"%s"DIR_SEP"%s", cache_dir, CFG_DIR, type, disc_id_str);
+    X_FREE(cache_dir);
+    return result;
 }
 
 int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, unsigned int len)
@@ -423,13 +429,16 @@ int keycache_find(const char *type, const uint8_t *disc_id, uint8_t *key, unsign
 
 static char *_cache_file(const char *name)
 {
-    const char *cache_dir = file_get_cache_home();
+    char *cache_dir = file_get_cache_home();
+    char *result;
 
     if (!cache_dir) {
         return NULL;
     }
 
-    return str_printf("%s"DIR_SEP"%s"DIR_SEP"%s", cache_dir, CFG_DIR, name);
+    result = str_printf("%s"DIR_SEP"%s"DIR_SEP"%s", cache_dir, CFG_DIR, name);
+    X_FREE(cache_dir);
+    return result;
 }
 
 int cache_save(const char *name, uint32_t version, const void *data, uint32_t len)
