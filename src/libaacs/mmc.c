@@ -49,12 +49,6 @@ struct mmc {
     uint8_t read_drive_cert;
 };
 
-static int _mmc_send_cmd(MMC *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx,
-                         size_t rx)
-{
-    return device_send_cmd(mmc->dev, cmd, buf, tx, rx);
-}
-
 /*
  *
  */
@@ -80,7 +74,7 @@ static int _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr,
     cmd[9] = len & 0xff;
     cmd[10] = (agid << 6) | (format & 0x3f);
 
-    return _mmc_send_cmd(mmc, cmd, buf, 0, len);
+    return device_send_cmd(mmc->dev, cmd, buf, 0, len);
 }
 
 static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
@@ -99,7 +93,7 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
     cmd[10] = (agid << 6) | (format & 0x3f);
 
     DEBUG(DBG_MMC, "cmd: %s\n", print_hex(str, cmd, 16));
-    return _mmc_send_cmd(mmc, cmd, buf, len, 0);
+    return device_send_cmd(mmc->dev, cmd, buf, len, 0);
 }
 
 static int _mmc_report_disc_structure(MMC *mmc, uint8_t agid, uint8_t format,
@@ -124,7 +118,7 @@ static int _mmc_report_disc_structure(MMC *mmc, uint8_t agid, uint8_t format,
     cmd[9] = len & 0xff;
     cmd[10] = (agid << 6);
 
-    return _mmc_send_cmd(mmc, cmd, buf, 0, len);
+    return device_send_cmd(mmc->dev, cmd, buf, 0, len);
 }
 
 static int _mmc_get_configuration(MMC *mmc, uint16_t feature, uint8_t *buf, uint16_t len)
@@ -142,7 +136,7 @@ static int _mmc_get_configuration(MMC *mmc, uint16_t feature, uint8_t *buf, uint
     cmd[7] = (len >> 8) & 0xff;
     cmd[8] = len & 0xff;
 
-    return _mmc_send_cmd(mmc, cmd, buf, 0, len);
+    return device_send_cmd(mmc->dev, cmd, buf, 0, len);
 }
 
 /*
@@ -338,6 +332,10 @@ static int _mmc_read_data_keys(MMC *mmc, uint8_t agid, uint8_t *read_data_key, u
 
     return 0;
 }
+
+/*
+ *
+ */
 
 MMC *mmc_open(const char *path)
 {
