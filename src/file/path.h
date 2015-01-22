@@ -20,7 +20,7 @@
 #ifndef AACS_PATH_H
 #define AACS_PATH_H
 
-#include <util/attributes.h>
+#include "util/attributes.h"
 
 #ifndef AACS_PATH_MAX
 #define AACS_PATH_MAX 1024

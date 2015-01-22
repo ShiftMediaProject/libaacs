@@ -17,11 +17,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "libaacs/aacs.h"
-#include "util/macro.h"  /* MKINT_BE48 */
+#include <libaacs/aacs.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "util/macro.h"  /* MKINT_BE48 */
 
 static const char *_hex2str(const uint8_t *s, unsigned n)
 {

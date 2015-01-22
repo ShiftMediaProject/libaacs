@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include <util/attributes.h>
+#include "util/attributes.h"
 
 #include "aacs-version.h"
 #include "aacs.h"

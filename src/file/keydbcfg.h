@@ -20,7 +20,7 @@
 #ifndef KEYDBCFG_H
 #define KEYDBCFG_H
 
-#include <util/attributes.h>
+#include "util/attributes.h"
 
 #include <stdint.h>
 

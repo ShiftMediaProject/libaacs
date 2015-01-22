@@ -19,14 +19,14 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "file/mmc_device.h"
-
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "mmc.h"
+
 #include "crypto.h"
+#include "file/mmc_device.h"
 #include "util/macro.h"
 #include "util/logging.h"
 

@@ -20,7 +20,7 @@
 #ifndef MKB_H_
 #define MKB_H_
 
-#include <util/attributes.h>
+#include "util/attributes.h"
 
 #include <stdlib.h>
 #include <stdint.h>

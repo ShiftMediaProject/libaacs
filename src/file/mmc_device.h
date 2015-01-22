@@ -21,7 +21,7 @@
 #ifndef MMC_DEVICE_H_
 #define MMC_DEVICE_H_
 
-#include <util/attributes.h>
+#include "util/attributes.h"
 
 #include <stdint.h>
 #include <stddef.h>
