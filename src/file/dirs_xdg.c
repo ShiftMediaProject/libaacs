@@ -53,7 +53,7 @@ char *file_get_config_home(void)
         return str_printf("%s/%s", user_home, USER_CFG_DIR);
     }
 
-    DEBUG(DBG_FILE, "Can't find user home directory ($HOME) !\n");
+    BD_DEBUG(DBG_FILE, "Can't find user home directory ($HOME) !\n");
     return  NULL;
 }
 
@@ -69,7 +69,7 @@ char *file_get_data_home(void)
         return str_printf("%s/%s", user_home, USER_DATA_DIR);
     }
 
-    DEBUG(DBG_FILE, "Can't find user home directory ($HOME) !\n");
+    BD_DEBUG(DBG_FILE, "Can't find user home directory ($HOME) !\n");
     return NULL;
 }
 
@@ -85,7 +85,7 @@ char *file_get_cache_home(void)
         return str_printf("%s/%s", user_home, USER_CACHE_DIR);
     }
 
-    DEBUG(DBG_FILE, "Can't find user home directory ($HOME) !\n");
+    BD_DEBUG(DBG_FILE, "Can't find user home directory ($HOME) !\n");
     return NULL;
 }
 

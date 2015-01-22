@@ -105,7 +105,7 @@ static int _hexstring_to_unsigned_char(uint8_t *value, char c)
         break;
 
       default:
-        DEBUG(DBG_AACS, "Invalid hex value '%c'", c);
+        BD_DEBUG(DBG_AACS, "Invalid hex value '%c'", c);
         return 0;
     }
 
@@ -210,7 +210,7 @@ static int _str_is_hex_string(const char *str, int len)
 
     /* check end */
     if (isxdigit(str[ii])) {
-        //DEBUG(DBG_AACS, "Invalid hex string (too long): %s", str);
+        //BD_DEBUG(DBG_AACS, "Invalid hex string (too long): %s", str);
         return 0;
     }
 

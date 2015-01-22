@@ -60,7 +60,7 @@ char *file_get_data_home(void)
         return appdir;
     }
 
-    DEBUG(DBG_FILE, "Can't find user configuration directory !\n");
+    BD_DEBUG(DBG_FILE, "Can't find user configuration directory !\n");
     return NULL;
 }
 
@@ -88,7 +88,7 @@ const char *file_get_config_system(const char *dir)
             WideCharToMultiByte (CP_UTF8, 0, wdir, -1, appdir, len, NULL, NULL);
             return appdir;
         } else {
-            DEBUG(DBG_FILE, "Can't find common configuration directory !\n");
+            BD_DEBUG(DBG_FILE, "Can't find common configuration directory !\n");
             return NULL;
         }
     } else {

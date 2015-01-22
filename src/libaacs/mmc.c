@@ -61,7 +61,7 @@ static int _mmc_report_key(MMC *mmc, uint8_t agid, uint32_t addr,
     memset(cmd, 0, sizeof(cmd));
     memset(buf, 0, len);
 
-    DEBUG(DBG_MMC, "MMC report key...\n");
+    BD_DEBUG(DBG_MMC, "MMC report key...\n");
 
     cmd[0] = 0xa4;
     cmd[2] = (addr >> 24) & 0xff;
@@ -84,7 +84,7 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
     char str[512];
     memset(cmd, 0, sizeof(cmd));
 
-    DEBUG(DBG_MMC, "MMC send key [%d] %s...\n", len, print_hex(str, buf, len));
+    BD_DEBUG(DBG_MMC, "MMC send key [%d] %s...\n", len, print_hex(str, buf, len));
 
     cmd[0] = 0xa3;
     cmd[7] = 0x02;
@@ -92,7 +92,7 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
     cmd[9] = len & 0xff;
     cmd[10] = (agid << 6) | (format & 0x3f);
 
-    DEBUG(DBG_MMC, "cmd: %s\n", print_hex(str, cmd, 16));
+    BD_DEBUG(DBG_MMC, "cmd: %s\n", print_hex(str, cmd, 16));
     return device_send_cmd(mmc->dev, cmd, buf, len, 0);
 }
 
@@ -104,7 +104,7 @@ static int _mmc_report_disc_structure(MMC *mmc, uint8_t agid, uint8_t format,
     memset(cmd, 0, sizeof(cmd));
     memset(buf, 0, len);
 
-    DEBUG(DBG_MMC, "MMC report disc structure [format 0x%x layer %d address %d] ...\n", format, layer, address);
+    BD_DEBUG(DBG_MMC, "MMC report disc structure [format 0x%x layer %d address %d] ...\n", format, layer, address);
 
     cmd[0] = 0xad; // operation code
     cmd[1] = 0x01; // BluRay
@@ -127,7 +127,7 @@ static int _mmc_get_configuration(MMC *mmc, uint16_t feature, uint8_t *buf, uint
     memset(cmd, 0, sizeof(cmd));
     memset(buf, 0, len);
 
-    DEBUG(DBG_MMC, "MMC get configuration [feature 0x%x] ...\n", feature);
+    BD_DEBUG(DBG_MMC, "MMC get configuration [feature 0x%x] ...\n", feature);
 
     cmd[0] = 0x46; // operation code
     cmd[1] = 0x01; // BluRay
@@ -224,23 +224,23 @@ static int _mmc_check_aacs(MMC *mmc)
     if (_mmc_get_configuration(mmc, 0x010d, buf, 16)) {
         uint16_t feature = MKINT_BE16(buf+8);
         if (feature == 0x010d) {
-            DEBUG(DBG_MMC, "AACS feature descriptor:\n");
-            DEBUG(DBG_MMC, "  AACS version: %d\n", buf[7+8]);
-            DEBUG(DBG_MMC, "  AACS active: %d\n", buf[2+8] & 1);
-            DEBUG(DBG_MMC, "  Binding Nonce generation support: %d\n", buf[4+8] & 1);
-            DEBUG(DBG_MMC, "  Binding Nonce block count: %d\n", buf[5+8]);
-            DEBUG(DBG_MMC, "  Bus encryption support: %d\n", !!(buf[4+8] & 2));
-            DEBUG(DBG_MMC, "  Read drive certificate: %d\n", !!(buf[4+8] & 0x10));
-            DEBUG(DBG_MMC, "  AGID count: %d\n", buf[6+8] & 0xf);
+            BD_DEBUG(DBG_MMC, "AACS feature descriptor:\n");
+            BD_DEBUG(DBG_MMC, "  AACS version: %d\n", buf[7+8]);
+            BD_DEBUG(DBG_MMC, "  AACS active: %d\n", buf[2+8] & 1);
+            BD_DEBUG(DBG_MMC, "  Binding Nonce generation support: %d\n", buf[4+8] & 1);
+            BD_DEBUG(DBG_MMC, "  Binding Nonce block count: %d\n", buf[5+8]);
+            BD_DEBUG(DBG_MMC, "  Bus encryption support: %d\n", !!(buf[4+8] & 2));
+            BD_DEBUG(DBG_MMC, "  Read drive certificate: %d\n", !!(buf[4+8] & 0x10));
+            BD_DEBUG(DBG_MMC, "  AGID count: %d\n", buf[6+8] & 0xf);
 
             mmc->read_drive_cert = !!(buf[4+8] & 0x10);
 
             return buf[2+8] & 1;
         }
-        DEBUG(DBG_MMC, "incorrect feature ID %04x\n", feature);
+        BD_DEBUG(DBG_MMC, "incorrect feature ID %04x\n", feature);
     }
 
-    DEBUG(DBG_MMC, "_mmc_get_configuration() failed\n");
+    BD_DEBUG(DBG_MMC, "_mmc_get_configuration() failed\n");
     return 0;
 }
 
@@ -256,14 +256,14 @@ static uint8_t *_mmc_read_mkb(MMC *mmc, uint8_t agid, int address, int *size)
         int32_t  len = MKINT_BE16(buf) - 2;
         mkb = malloc(32768 * num_packs);
 
-        DEBUG(DBG_MMC, "got mkb: pack 0/%d %d bytes\n", num_packs, len);
+        BD_DEBUG(DBG_MMC, "got mkb: pack 0/%d %d bytes\n", num_packs, len);
         memcpy(mkb, buf + 4, len);
        *size += len;
 
         for (pack = 1; pack < num_packs; pack++) {
             if (_mmc_report_disc_structure(mmc, agid, 0x83, layer, pack, buf, sizeof(buf))) {
                 len = MKINT_BE16(buf) - 2;
-                DEBUG(DBG_MMC, "got mkb: pack %d/%d %d bytes\n", pack, num_packs, len);
+                BD_DEBUG(DBG_MMC, "got mkb: pack %d/%d %d bytes\n", pack, num_packs, len);
 
                 memcpy(mkb + *size, buf + 4, len);
                 *size += len;
@@ -345,7 +345,7 @@ MMC *mmc_open(const char *path)
 
     if (DEBUG_KEYS) {
         char str[sizeof(mmc->host_nonce)*2 + 1];
-        DEBUG(DBG_MMC, "Created host nonce (Hn): %s\n",
+        BD_DEBUG(DBG_MMC, "Created host nonce (Hn): %s\n",
               print_hex(str, mmc->host_nonce, sizeof(mmc->host_nonce)));
     }
 
@@ -353,9 +353,9 @@ MMC *mmc_open(const char *path)
 
     if (DEBUG_KEYS) {
         char    str[sizeof(mmc->host_key_point)*2 + 1];
-        DEBUG(DBG_MMC, "Created host key (Hk): %s\n",
+        BD_DEBUG(DBG_MMC, "Created host key (Hk): %s\n",
               print_hex(str, mmc->host_key, sizeof(mmc->host_key)));
-        DEBUG(DBG_MMC, "Created host key point (Hv): %s\n",
+        BD_DEBUG(DBG_MMC, "Created host key point (Hv): %s\n",
               print_hex(str, mmc->host_key_point, sizeof(mmc->host_key_point)));
     }
 
@@ -366,7 +366,7 @@ MMC *mmc_open(const char *path)
     }
 
     if (!_mmc_check_aacs(mmc)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "AACS not active or supported by the drive\n");
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "AACS not active or supported by the drive\n");
 #ifndef _WIN32
         mmc_close (mmc);
         return NULL;
@@ -385,7 +385,7 @@ void mmc_close(MMC *mmc)
     if (mmc) {
 
         device_close(&mmc->dev);
-        DEBUG(DBG_MMC, "Closed MMC drive\n");
+        BD_DEBUG(DBG_MMC, "Closed MMC drive\n");
 
         /* erase sensitive data */
         memset(mmc, 0, sizeof(*mmc));
@@ -417,54 +417,54 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     memset(hks, 0, sizeof(hks));
 
     if (DEBUG_KEYS) {
-        DEBUG(DBG_MMC, "Host certificate   : %s\n", print_hex(str, host_cert,       92));
-        DEBUG(DBG_MMC, "Host nonce         : %s\n", print_hex(str, mmc->host_nonce, 20));
+        BD_DEBUG(DBG_MMC, "Host certificate   : %s\n", print_hex(str, host_cert,       92));
+        BD_DEBUG(DBG_MMC, "Host nonce         : %s\n", print_hex(str, mmc->host_nonce, 20));
     }
 
     // send host cert + nonce
     if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, host_cert)) {
 
         if ((mmc->drive_cert[1] & 0x01) && !(host_cert[1] & 0x01)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Certificate (id 0x%s) can not be used with bus encryption capable drive\n",
+            BD_DEBUG(DBG_MMC | DBG_CRIT, "Certificate (id 0x%s) can not be used with bus encryption capable drive\n",
                   print_hex(str, host_cert + 4, 6));
         } else {
-            DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate has been revoked by your drive ?\n");
+            BD_DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate has been revoked by your drive ?\n");
         }
         return MMC_ERROR_CERT_REVOKED;
     }
 
     // receive mmc cert + nonce
     if (!_mmc_read_drive_cert_challenge(mmc, agid, dn, mmc->drive_cert)) {
-        DEBUG(DBG_MMC | DBG_CRIT,
+        BD_DEBUG(DBG_MMC | DBG_CRIT,
               "Drive doesn't give its certificate\n");
         return MMC_ERROR;
     }
 
     if (DEBUG_KEYS) {
-        DEBUG(DBG_MMC, "Drive certificate   : %s\n", print_hex(str, mmc->drive_cert, 92));
-        DEBUG(DBG_MMC, "Drive nonce         : %s\n", print_hex(str, dn, 20));
+        BD_DEBUG(DBG_MMC, "Drive certificate   : %s\n", print_hex(str, mmc->drive_cert, 92));
+        BD_DEBUG(DBG_MMC, "Drive nonce         : %s\n", print_hex(str, dn, 20));
     }
 
     // verify drive certificate
     if (!crypto_aacs_verify_drive_cert(mmc->drive_cert)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
         return MMC_ERROR;
     }
 
     // receive mmc key
     if (!_mmc_read_drive_key(mmc, agid, dkp, dks)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its drive key\n");
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive doesn't give its drive key\n");
         return MMC_ERROR;
     }
 
     if (DEBUG_KEYS) {
-        DEBUG(DBG_MMC, "Drive key point     : %s\n", print_hex(str, dkp, 40));
-        DEBUG(DBG_MMC, "Drive key signature : %s\n", print_hex(str, dks, 40));
+        BD_DEBUG(DBG_MMC, "Drive key point     : %s\n", print_hex(str, dkp, 40));
+        BD_DEBUG(DBG_MMC, "Drive key signature : %s\n", print_hex(str, dks, 40));
     }
 
     // verify drive signature
     if (!_verify_signature(mmc->drive_cert, dks, mmc->host_nonce, dkp)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Drive signature is invalid\n");
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive signature is invalid\n");
         return MMC_ERROR;
     }
 
@@ -474,14 +474,14 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
 
     // verify own signature
     if (!_verify_signature(host_cert, hks, dn, mmc->host_key_point)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Created signature is invalid ?\n");
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Created signature is invalid ?\n");
         return MMC_ERROR;
     }
 
     // send signed host key and point
     if (!_mmc_send_host_key(mmc, agid, mmc->host_key_point, hks)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Error sending host signature\n");
-        DEBUG(DBG_MMC,  "Host key signature : %s\n", print_hex(str, hks, 40));
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Error sending host signature\n");
+        BD_DEBUG(DBG_MMC,  "Host key signature : %s\n", print_hex(str, hks, 40));
         return MMC_ERROR;
     }
 
@@ -489,7 +489,7 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     if (bus_key) {
         crypto_create_bus_key(mmc->host_key, dkp, bus_key);
         if (DEBUG_KEYS) {
-            DEBUG(DBG_MMC, "Bus Key             : %s\n", print_hex(str, bus_key, 16));
+            BD_DEBUG(DBG_MMC, "Bus Key             : %s\n", print_hex(str, bus_key, 16));
         }
     }
 
@@ -505,24 +505,24 @@ static int _read_vid(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *vi
     uint8_t mac[16], calc_mac[16];
     char str[512];
 
-    DEBUG(DBG_MMC, "Reading VID from drive...\n");
+    BD_DEBUG(DBG_MMC, "Reading VID from drive...\n");
 
     if (_mmc_read_vid(mmc, agid, vid, mac)) {
         if (DEBUG_KEYS) {
-            DEBUG(DBG_MMC, "VID                 : %s\n", print_hex(str, vid, 16));
-            DEBUG(DBG_MMC, "VID MAC             : %s\n", print_hex(str, mac, 16));
+            BD_DEBUG(DBG_MMC, "VID                 : %s\n", print_hex(str, vid, 16));
+            BD_DEBUG(DBG_MMC, "VID MAC             : %s\n", print_hex(str, mac, 16));
         }
 
         /* verify MAC */
         crypto_aes_cmac_16(vid, bus_key, calc_mac);
         if (memcmp(calc_mac, mac, 16)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "VID MAC is incorrect. This means this Volume ID is not correct.\n");
+            BD_DEBUG(DBG_MMC | DBG_CRIT, "VID MAC is incorrect. This means this Volume ID is not correct.\n");
         }
 
         return MMC_SUCCESS;
     }
 
-    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive!\n");
+    BD_DEBUG(DBG_MMC | DBG_CRIT, "Unable to read VID from drive!\n");
 
     return MMC_ERROR;
 }
@@ -532,24 +532,24 @@ static int _read_pmsn(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *p
     uint8_t mac[16], calc_mac[16];
     char str[512];
 
-    DEBUG(DBG_MMC, "Reading PMSN from drive...\n");
+    BD_DEBUG(DBG_MMC, "Reading PMSN from drive...\n");
 
     if (_mmc_read_pmsn(mmc, agid, pmsn, mac)) {
         if (DEBUG_KEYS) {
-            DEBUG(DBG_MMC, "PMSN                : %s\n", print_hex(str, pmsn, 16));
-            DEBUG(DBG_MMC, "PMSN MAC            : %s\n", print_hex(str, mac, 16));
+            BD_DEBUG(DBG_MMC, "PMSN                : %s\n", print_hex(str, pmsn, 16));
+            BD_DEBUG(DBG_MMC, "PMSN MAC            : %s\n", print_hex(str, mac, 16));
         }
 
         /* verify MAC */
         crypto_aes_cmac_16(pmsn, bus_key, calc_mac);
         if (memcmp(calc_mac, mac, 16)) {
-            DEBUG(DBG_MMC | DBG_CRIT, "PMSN MAC is incorrect. This means this Pre-recorded Medial Serial Number is not correct.\n");
+            BD_DEBUG(DBG_MMC | DBG_CRIT, "PMSN MAC is incorrect. This means this Pre-recorded Medial Serial Number is not correct.\n");
         }
 
         return MMC_SUCCESS;
     }
 
-    DEBUG(DBG_MMC, "Unable to read PMSN from drive!\n");
+    BD_DEBUG(DBG_MMC, "Unable to read PMSN from drive!\n");
 
     return MMC_ERROR;
 }
@@ -560,26 +560,26 @@ static int _read_data_keys(MMC *mmc, uint8_t agid, const uint8_t *bus_key,
     uint8_t encrypted_read_data_key[16], encrypted_write_data_key[16];
     char str[512];
 
-    DEBUG(DBG_MMC, "Reading data keys from drive...\n");
+    BD_DEBUG(DBG_MMC, "Reading data keys from drive...\n");
 
     if (_mmc_read_data_keys(mmc, agid, encrypted_read_data_key, encrypted_write_data_key)) {
         if (read_data_key) {
             crypto_aes128d(bus_key, encrypted_read_data_key, read_data_key);
             if (DEBUG_KEYS) {
-                DEBUG(DBG_MMC, "READ DATA KEY       : %s\n", print_hex(str, read_data_key, 16));
+                BD_DEBUG(DBG_MMC, "READ DATA KEY       : %s\n", print_hex(str, read_data_key, 16));
             }
         }
         if (write_data_key) {
             crypto_aes128d(bus_key, encrypted_write_data_key, write_data_key);
             if (DEBUG_KEYS) {
-                DEBUG(DBG_MMC, "WRITE DATA KEY      : %s\n", print_hex(str, write_data_key, 16));
+                BD_DEBUG(DBG_MMC, "WRITE DATA KEY      : %s\n", print_hex(str, write_data_key, 16));
             }
         }
 
         return MMC_SUCCESS;
     }
 
-    DEBUG(DBG_MMC | DBG_CRIT, "Unable to read data keys from drive!\n");
+    BD_DEBUG(DBG_MMC | DBG_CRIT, "Unable to read data keys from drive!\n");
 
     return MMC_ERROR;
 }
@@ -593,10 +593,10 @@ int mmc_read_auth(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_ce
     _mmc_invalidate_agids(mmc);
 
     if (!_mmc_report_agid(mmc, &agid)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive\n");
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Didn't get AGID from drive\n");
         return MMC_ERROR;
     }
-    DEBUG(DBG_MMC, "Got AGID from drive: %d\n", agid);
+    BD_DEBUG(DBG_MMC, "Got AGID from drive: %d\n", agid);
 
     /*
      * NOTE: It seems that at least some drives require a new AACS-Auth every time
@@ -620,7 +620,7 @@ int mmc_read_auth(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_ce
             error_code = _read_data_keys(mmc, agid, bus_key, p1, p2);
             break;
         default:
-            DEBUG(DBG_MMC | DBG_CRIT, "unknown mmc_read_auth() request %d\n", request);
+            BD_DEBUG(DBG_MMC | DBG_CRIT, "unknown mmc_read_auth() request %d\n", request);
             error_code = MMC_ERROR;
             break;
     }
@@ -644,18 +644,18 @@ int mmc_read_drive_cert(MMC *mmc, uint8_t *drive_cert)
     }
 
     if (!mmc->read_drive_cert) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Drive does not support reading drive certificate\n");
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive does not support reading drive certificate\n");
     }
 
     if (!_mmc_report_key(mmc, 0, 0, 0, 0x38, buf, 116)) {
         if (mmc->read_drive_cert) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Failed reading drive certificate\n");
+            BD_DEBUG(DBG_MMC | DBG_CRIT, "Failed reading drive certificate\n");
         }
         return MMC_ERROR;
     }
 
     if (!crypto_aacs_verify_drive_cert(buf + 4)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
         return MMC_ERROR;
     }
 

@@ -100,11 +100,11 @@ static int _validate_pk(const uint8_t *pk,
     uint8_t dec_vd[16];
     char str[40];
 
-    DEBUG(DBG_AACS, "Validate processing key %s...\n", print_hex(str, pk, 16));
-    DEBUG(DBG_AACS, " Using:\n");
-    DEBUG(DBG_AACS, "   UV: %s\n", print_hex(str, uv, 4));
-    DEBUG(DBG_AACS, "   cvalue: %s\n", print_hex(str, cvalue, 16));
-    DEBUG(DBG_AACS, "   Verification data: %s\n", print_hex(str, vd, 16));
+    BD_DEBUG(DBG_AACS, "Validate processing key %s...\n", print_hex(str, pk, 16));
+    BD_DEBUG(DBG_AACS, " Using:\n");
+    BD_DEBUG(DBG_AACS, "   UV: %s\n", print_hex(str, uv, 4));
+    BD_DEBUG(DBG_AACS, "   cvalue: %s\n", print_hex(str, cvalue, 16));
+    BD_DEBUG(DBG_AACS, "   Verification data: %s\n", print_hex(str, vd, 16));
 
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
     gcry_cipher_setkey(gcry_h, pk, 16);
@@ -119,7 +119,7 @@ static int _validate_pk(const uint8_t *pk,
     gcry_cipher_close(gcry_h);
 
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
-        DEBUG(DBG_AACS, "Processing key %s is valid!\n", print_hex(str, pk, 16));
+        BD_DEBUG(DBG_AACS, "Processing key %s is valid!\n", print_hex(str, pk, 16));
         return AACS_SUCCESS;
     }
 
@@ -132,7 +132,7 @@ static int _rl_verify_signature(const uint8_t *rl, size_t size)
     size_t len     = 12 + 12 + 8 * entries; /* type_and_version_rec=12, rl_header=12, rl=entries*8 */
 
     if (len + 40 > size) {
-        DEBUG(DBG_AACS, "revocation list size mismatch\n");
+        BD_DEBUG(DBG_AACS, "revocation list size mismatch\n");
         return 0;
     }
 
@@ -145,7 +145,7 @@ static void _save_rl(const char *name, uint32_t version, const uint8_t *version_
     int len     = MKINT_BE24(rl_rec - 3);
     int entries = MKINT_BE32(rl_rec + 4); /* entries in first signature block */
     if (len < 4 || !entries) {
-        DEBUG(DBG_AACS | DBG_CRIT, "ignoring empty %s\n", name);
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "ignoring empty %s\n", name);
         return;
     }
 
@@ -157,7 +157,7 @@ static void _save_rl(const char *name, uint32_t version, const uint8_t *version_
         memcpy(data,      version_rec, 12);
         memcpy(data + 12, rl_rec,      rl_len);
         if (!_rl_verify_signature(data, rl_len + 12)) {
-          DEBUG(DBG_AACS | DBG_CRIT, "invalid %s signature, not using it\n", name);
+          BD_DEBUG(DBG_AACS | DBG_CRIT, "invalid %s signature, not using it\n", name);
         } else {
           cache_save(name, version, data, rl_len + 12);
         }
@@ -226,7 +226,7 @@ static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mas
     }
 
     char str[40];
-    DEBUG(DBG_AACS, "Processing key: %s\n",  print_hex(str, pk, 16));
+    BD_DEBUG(DBG_AACS, "Processing key: %s\n",  print_hex(str, pk, 16));
 }
 
 static dk_list *_find_dk(dk_list *dkl, uint32_t *p_dev_key_v_mask, uint32_t uv, uint32_t u_mask)
@@ -255,11 +255,11 @@ static dk_list *_find_dk(dk_list *dkl, uint32_t *p_dev_key_v_mask, uint32_t uv, 
     }
 
     if (!dkl) {
-        DEBUG(DBG_AACS | DBG_CRIT, "could not find applying device key (device 0x%x)\n", device_number);
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "could not find applying device key (device 0x%x)\n", device_number);
     } else {
         char str[128];
-        DEBUG(DBG_AACS, "Applying device key is #%d %s\n", key_idx, print_hex(str, dkl->key, 16));
-        DEBUG(DBG_AACS, "  UV: 0x%08x  U mask: 0x%08x  V mask: 0x%08x\n", dev_key_uv, dev_key_u_mask, dev_key_v_mask);
+        BD_DEBUG(DBG_AACS, "Applying device key is #%d %s\n", key_idx, print_hex(str, dkl->key, 16));
+        BD_DEBUG(DBG_AACS, "  UV: 0x%08x  U mask: 0x%08x  V mask: 0x%08x\n", dev_key_uv, dev_key_u_mask, dev_key_v_mask);
         *p_dev_key_v_mask = dev_key_v_mask;
     }
 
@@ -314,7 +314,7 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
             }
 
             if (u_mask_shift & 0xc0) {
-                DEBUG(DBG_AACS | DBG_CRIT, "device 0x%x is revoked\n", device_number);
+                BD_DEBUG(DBG_AACS | DBG_CRIT, "device 0x%x is revoked\n", device_number);
                 uvs_idx = num_uvs;
 
             } else {
@@ -329,13 +329,13 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
         }
 
         if (uvs_idx >= num_uvs) {
-            DEBUG(DBG_AACS | DBG_CRIT, "could not find applying subset-difference for device 0x%x\n", device_number);
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "could not find applying subset-difference for device 0x%x\n", device_number);
             /* try next device */
             continue;
         }
 
-        DEBUG(DBG_AACS, "Applying subset-difference for device 0x%x is #%d:\n", device_number, uvs_idx);
-        DEBUG(DBG_AACS,"  UV: 0x%08x  U mask: 0x%08x  V mask: 0x%08x\n", uv, u_mask, v_mask);
+        BD_DEBUG(DBG_AACS, "Applying subset-difference for device 0x%x is #%d:\n", device_number, uvs_idx);
+        BD_DEBUG(DBG_AACS,"  UV: 0x%08x  U mask: 0x%08x  V mask: 0x%08x\n", uv, u_mask, v_mask);
 
         /* find applying device key */
 
@@ -362,11 +362,11 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
                           mk)
              == AACS_SUCCESS) {
 
-            DEBUG(DBG_AACS, "Media key: %s\n", print_hex(str, mk, 16));
+            BD_DEBUG(DBG_AACS, "Media key: %s\n", print_hex(str, mk, 16));
             return AACS_SUCCESS;
         }
 
-        DEBUG(DBG_AACS | DBG_CRIT, "Processing key %s is invalid!\n", print_hex(str, pk, 16));
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Processing key %s is invalid!\n", print_hex(str, pk, 16));
 
         /* try next device */
     }
@@ -397,7 +397,7 @@ static MKB *_mkb_open(AACS *aacs)
 
     fp = _file_open(aacs, "AACS" DIR_SEP "MKB_RO.inf");
     if (!fp) {
-        DEBUG(DBG_AACS | DBG_CRIT, "Error opening MKB file (AACS/MKB_RO.inf)\n");
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Error opening MKB file (AACS/MKB_RO.inf)\n");
         return NULL;
     }
 
@@ -419,7 +419,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
         return AACS_SUCCESS;
     }
 
-    DEBUG(DBG_AACS, "Calculate media key...\n");
+    BD_DEBUG(DBG_AACS, "Calculate media key...\n");
 
     if ((mkb = _mkb_open(aacs))) {
 
@@ -433,7 +433,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
             return AACS_SUCCESS;
         }
 
-        DEBUG(DBG_AACS, "Get UVS...\n");
+        BD_DEBUG(DBG_AACS, "Get UVS...\n");
         uvs = mkb_subdiff_records(mkb, &len);
         rec = uvs;
         while (rec < uvs + len) {
@@ -443,11 +443,11 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
             num_uvs++;
         }
 
-        DEBUG(DBG_AACS, "Get cvalues...\n");
+        BD_DEBUG(DBG_AACS, "Get cvalues...\n");
         rec = mkb_cvalues(mkb, &len);
 
         for (; pkl; pkl = pkl->next) {
-                DEBUG(DBG_AACS, "Trying processing key...\n");
+                BD_DEBUG(DBG_AACS, "Trying processing key...\n");
 
                 for (a = 0; a < num_uvs; a++) {
                     if (AACS_SUCCESS == _validate_pk(pkl->key, rec + a * 16, uvs + 1 + a * 5,
@@ -455,7 +455,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
                         mkb_close(mkb);
 
                         char str[40];
-                        DEBUG(DBG_AACS, "Media key: %s\n", print_hex(str, mk, 16));
+                        BD_DEBUG(DBG_AACS, "Media key: %s\n", print_hex(str, mk, 16));
                         memcpy(aacs->mk, mk, sizeof(aacs->mk));
                         return AACS_SUCCESS;
                     }
@@ -464,7 +464,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 
         mkb_close(mkb);
 
-        DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key. Missing right processing key ?\n");
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key. Missing right processing key ?\n");
         return AACS_ERROR_NO_PK;
     }
 
@@ -487,18 +487,18 @@ static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uin
         char tmp_str[2*92+1];
 
         if (!crypto_aacs_verify_host_cert(hcl->host_cert)) {
-            DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
+            BD_DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
                   print_hex(tmp_str, hcl->host_cert, 92));
             continue;
         }
 
         if (drive_cert && (drive_cert[1] & 0x01) && !(hcl->host_cert[1] & 0x01)) {
-            DEBUG(DBG_AACS, "Certificate (id 0x%s) does not support bus encryption\n",
+            BD_DEBUG(DBG_AACS, "Certificate (id 0x%s) does not support bus encryption\n",
                   print_hex(tmp_str, hcl->host_cert + 4, 6));
             //continue;
         }
 
-        DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
+        BD_DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
               print_hex(tmp_str, hcl->host_cert + 4, 6));
 
         int mmc_result = mmc_read_auth(mmc, hcl->host_priv_key, hcl->host_cert, type, p1, p2);
@@ -530,7 +530,7 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
 
     int error_code = _mmc_read_auth(aacs, hcl, MMC_READ_VID, aacs->vid, NULL);
     if (error_code != AACS_SUCCESS) {
-        DEBUG(DBG_AACS, "Error reading VID!\n");
+        BD_DEBUG(DBG_AACS, "Error reading VID!\n");
     } else {
         /* cache vid */
         keycache_save("vid", aacs->disc_id, aacs->vid, 16);
@@ -542,7 +542,7 @@ static int _read_read_data_key(AACS *aacs, cert_list *hcl)
 {
     int error_code = _mmc_read_auth(aacs, hcl, MMC_READ_DATA_KEYS, aacs->read_data_key, NULL);
     if (error_code != AACS_SUCCESS) {
-        DEBUG(DBG_AACS, "Error reading data keys!\n");
+        BD_DEBUG(DBG_AACS, "Error reading data keys!\n");
     }
     return error_code;
 }
@@ -551,7 +551,7 @@ static int _read_pmsn(AACS *aacs, cert_list *hcl)
 {
     int error_code = _mmc_read_auth(aacs, hcl, MMC_READ_PMSN, aacs->pmsn, NULL);
     if (error_code != AACS_SUCCESS) {
-        DEBUG(DBG_AACS, "Error reading PMSN!\n");
+        BD_DEBUG(DBG_AACS, "Error reading PMSN!\n");
     }
     return error_code;
 }
@@ -562,13 +562,13 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
 
     /* Skip if retrieved from config file */
     if (memcmp(vuk, empty_key, 16)) {
-        DEBUG(DBG_AACS, "Using VUK from config file\n");
+        BD_DEBUG(DBG_AACS, "Using VUK from config file\n");
         return AACS_SUCCESS;
     }
 
     /* get cached vuk */
     if (keycache_find("vuk", aacs->disc_id, vuk, 16)) {
-        DEBUG(DBG_AACS, "Using cached VUK\n");
+        BD_DEBUG(DBG_AACS, "Using cached VUK\n");
         return AACS_SUCCESS;
     }
 
@@ -598,7 +598,7 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
     }
 
     char str[40];
-    DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(str, vuk, 16));
+    BD_DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(str, vuk, 16));
 
     /* cache vuk */
     keycache_save("vuk", aacs->disc_id, vuk, 16);
@@ -620,7 +620,7 @@ static void _read_uks_map(AACS *aacs, AACS_FILE_H *fp)
     uint16_t first_play, top_menu;
     unsigned i;
 
-    DEBUG(DBG_AACS, "Assigning CPS units to titles ...\n");
+    BD_DEBUG(DBG_AACS, "Assigning CPS units to titles ...\n");
 
     X_FREE(aacs->cps_units);
     aacs->current_cps_unit = 0;
@@ -630,8 +630,8 @@ static void _read_uks_map(AACS *aacs, AACS_FILE_H *fp)
     first_play = _read_u16(fp);
     top_menu   = _read_u16(fp);
 
-    DEBUG(DBG_AACS, "Title FP : CPS unit %d\n", first_play);
-    DEBUG(DBG_AACS, "Title TM : CPS unit %d\n", top_menu);
+    BD_DEBUG(DBG_AACS, "Title FP : CPS unit %d\n", first_play);
+    BD_DEBUG(DBG_AACS, "Title TM : CPS unit %d\n", top_menu);
 
     aacs->num_titles   = _read_u16(fp);
     aacs->cps_units    = calloc(sizeof(uint16_t), aacs->num_titles + 2);
@@ -641,7 +641,7 @@ static void _read_uks_map(AACS *aacs, AACS_FILE_H *fp)
     for (i = 2; i < aacs->num_titles + 2; i++) {
         _read_u16(fp); /* reserved */
         aacs->cps_units[i] = _read_u16(fp);
-        DEBUG(DBG_AACS, "Title %02d : CPS unit %d\n", i - 1, aacs->cps_units[i]);
+        BD_DEBUG(DBG_AACS, "Title %02d : CPS unit %d\n", i - 1, aacs->cps_units[i]);
     }
 
     /* validate */
@@ -649,7 +649,7 @@ static void _read_uks_map(AACS *aacs, AACS_FILE_H *fp)
         if (aacs->cps_units[i])
             aacs->cps_units[i]--; /* number [1...N] --> index [0...N-1] */
         if (aacs->cps_units[i] >= aacs->num_uks) {
-            DEBUG(DBG_AACS, " *** Invalid CPS unit for title %d: %d !\n", (int) i - 1, aacs->cps_units[i]);
+            BD_DEBUG(DBG_AACS, " *** Invalid CPS unit for title %d: %d !\n", (int) i - 1, aacs->cps_units[i]);
             aacs->cps_units[i] = 0;
         }
     }
@@ -666,7 +666,7 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
 
         while (ce && ce->entry.discid) {
             if (!memcmp(aacs->disc_id, ce->entry.discid, 20)) {
-                DEBUG(DBG_AACS, "Found config entry for discid %s\n",
+                BD_DEBUG(DBG_AACS, "Found config entry for discid %s\n",
                       print_hex(str, ce->entry.discid, 20));
                 break;
             }
@@ -680,7 +680,7 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
         if (ce->entry.mek) {
             hexstring_to_hex_array(mk, 16, ce->entry.mek);
 
-            DEBUG(DBG_AACS, "Found media key for %s: %s\n",
+            BD_DEBUG(DBG_AACS, "Found media key for %s: %s\n",
                   ce->entry.discid, print_hex(str, mk, 16));
         }
 
@@ -688,19 +688,19 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
             hexstring_to_hex_array(aacs->vid, sizeof(aacs->vid),
                                     ce->entry.vid);
 
-            DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
+            BD_DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
                   ce->entry.discid, print_hex(str, aacs->vid, 16));
         }
 
         if (ce->entry.vuk) {
             hexstring_to_hex_array(vuk, 16, ce->entry.vuk);
 
-            DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
+            BD_DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
                   ce->entry.discid, print_hex(str, vuk, 16));
         }
 
         if (ce->entry.uk) {
-            DEBUG(DBG_AACS, "Acquire CPS unit keys from keydb config file...\n");
+            BD_DEBUG(DBG_AACS, "Acquire CPS unit keys from keydb config file...\n");
 
             digit_key_pair_list *ukcursor = ce->entry.uk;
             while (ukcursor && ukcursor->key_pair.key) {
@@ -710,7 +710,7 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
                 hexstring_to_hex_array(aacs->uks + (16 * (aacs->num_uks - 1)), 16,
                                       ukcursor->key_pair.key);
 
-                DEBUG(DBG_AACS, "Unit key %d from keydb entry: %s\n",
+                BD_DEBUG(DBG_AACS, "Unit key %d from keydb entry: %s\n",
                       aacs->num_uks,
                       print_hex(str, aacs->uks + (16 * (aacs->num_uks - 1)), 16));
 
@@ -730,7 +730,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
     uint8_t mk[16] = {0}, vuk[16] = {0};
 
     if (cf) {
-        DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
+        BD_DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
         _find_config_entry(aacs, cf->list, mk, vuk);
 
         /* Skip if retrieved from config file */
@@ -745,11 +745,11 @@ static int _calc_uks(AACS *aacs, config_file *cf)
         return error_code;
     }
 
-    DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
+    BD_DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
     fp = _file_open(aacs, "AACS" DIR_SEP "Unit_Key_RO.inf");
     if (!fp) {
-        DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file (AACS/Unit_Key_RO.inf)\n");
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file (AACS/Unit_Key_RO.inf)\n");
         return AACS_ERROR_CORRUPTED_DISC;
     }
 
@@ -764,11 +764,11 @@ static int _calc_uks(AACS *aacs, config_file *cf)
             X_FREE(aacs->uks);
             aacs->uks = calloc(aacs->num_uks, 16);
 
-            DEBUG(DBG_AACS, "%d CPS unit keys\n", aacs->num_uks);
+            BD_DEBUG(DBG_AACS, "%d CPS unit keys\n", aacs->num_uks);
 
         } else {
             aacs->num_uks = 0;
-            DEBUG(DBG_AACS | DBG_CRIT, "Error reading number of unit keys\n");
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Error reading number of unit keys\n");
             error_code = AACS_ERROR_CORRUPTED_DISC;
         }
 
@@ -778,7 +778,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
             file_seek(fp, f_pos, SEEK_SET);
             if ((file_read(fp, buf, 16)) != 16) {
-                DEBUG(DBG_AACS, "Unit key %d: read error\n", i);
+                BD_DEBUG(DBG_AACS, "Unit key %d: read error\n", i);
                 aacs->num_uks = i;
                 error_code = AACS_ERROR_CORRUPTED_DISC;
                 break;
@@ -787,7 +787,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
             crypto_aes128d(vuk, buf, aacs->uks + 16*i);
 
             char str[40];
-            DEBUG(DBG_AACS, "Unit key %d: %s\n", i,
+            BD_DEBUG(DBG_AACS, "Unit key %d: %s\n", i,
                   print_hex(str, aacs->uks + 16*i, 16));
         }
 
@@ -801,7 +801,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
     file_close(fp);
 
-    DEBUG(DBG_AACS | DBG_CRIT, "Error reading unit keys\n");
+    BD_DEBUG(DBG_AACS | DBG_CRIT, "Error reading unit keys\n");
     return AACS_ERROR_CORRUPTED_DISC;
 }
 
@@ -815,7 +815,7 @@ static int _calc_title_hash(AACS *aacs)
 
     fp = _file_open(aacs, "AACS" DIR_SEP "Unit_Key_RO.inf");
     if (!fp) {
-        DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file (AACS/Unit_Key_RO.inf)\n");
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file (AACS/Unit_Key_RO.inf)\n");
         return AACS_ERROR_CORRUPTED_DISC;
     }
 
@@ -827,11 +827,11 @@ static int _calc_title_hash(AACS *aacs)
 
     if ((file_read(fp, ukf_buf, f_size)) == f_size) {
         crypto_aacs_title_hash(ukf_buf, f_size, aacs->disc_id);
-        DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(str, aacs->disc_id, 20));
+        BD_DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(str, aacs->disc_id, 20));
 
     } else {
         result = AACS_ERROR_CORRUPTED_DISC;
-        DEBUG(DBG_AACS | DBG_CRIT, "Failed to read %lu bytes from unit key file (AACS/Unit_Key_RO.inf)", (unsigned long)f_size);
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed to read %lu bytes from unit key file (AACS/Unit_Key_RO.inf)", (unsigned long)f_size);
     }
 
     file_close(fp);
@@ -848,15 +848,15 @@ static int _get_bus_encryption_enabled(AACS *aacs)
 
     fp = _file_open(aacs, "AACS" DIR_SEP "Content000.cer");
     if (!fp) {
-        DEBUG(DBG_AACS | DBG_CRIT, "Unable to open content certificate (AACS/Content000.cer)\n");
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to open content certificate (AACS/Content000.cer)\n");
         return 0;
     }
 
     if (file_read(fp, buf, 2) == 2) {
         bee = (buf[1] & 0x80) >> 7;
-        DEBUG(DBG_AACS, "Bus Encryption Enabled flag in content certificate: %d\n", bee);
+        BD_DEBUG(DBG_AACS, "Bus Encryption Enabled flag in content certificate: %d\n", bee);
     } else {
-        DEBUG(DBG_AACS | DBG_CRIT, "Failed to read Bus Encryption Enabled flag from content certificate file\n");
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed to read Bus Encryption Enabled flag from content certificate file\n");
     }
 
     file_close(fp);
@@ -875,9 +875,9 @@ static int _get_bus_encryption_capable(const char *path)
 
     if (mmc_read_drive_cert(mmc, drive_cert) == MMC_SUCCESS) {
         bec = drive_cert[1] & 1;
-        DEBUG(DBG_AACS, "Bus Encryption Capable flag in drive certificate: %d\n", bec);
+        BD_DEBUG(DBG_AACS, "Bus Encryption Capable flag in drive certificate: %d\n", bec);
     } else {
-        DEBUG(DBG_AACS | DBG_CRIT, "Unable to read drive certificate\n");
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to read drive certificate\n");
     }
 
     mmc_close(mmc);
@@ -981,11 +981,11 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
 
 AACS *aacs_init()
 {
-    DEBUG(DBG_AACS, "libaacs "AACS_VERSION_STRING" [%u]\n", (unsigned)sizeof(AACS));
+    BD_DEBUG(DBG_AACS, "libaacs "AACS_VERSION_STRING" [%u]\n", (unsigned)sizeof(AACS));
 
-    DEBUG(DBG_AACS, "Initializing libgcrypt...\n");
+    BD_DEBUG(DBG_AACS, "Initializing libgcrypt...\n");
     if (!crypto_init()) {
-        DEBUG(DBG_AACS | DBG_CRIT, "Failed to initialize libgcrypt\n");
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed to initialize libgcrypt\n");
         return NULL;
     }
 
@@ -1014,10 +1014,10 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
 
     cf = keydbcfg_config_load(configfile_path);
 
-    DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
+    BD_DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
     error_code = _calc_uks(aacs, cf);
     if (error_code != AACS_SUCCESS) {
-        DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
+        BD_DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
     }
 
     aacs->bee = _get_bus_encryption_enabled(aacs);
@@ -1031,13 +1031,13 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
 
         error_code = _read_read_data_key(aacs, cf->host_cert_list);
         if (error_code != AACS_SUCCESS) {
-            DEBUG(DBG_AACS | DBG_CRIT, "Unable to initialize bus encryption required by drive and disc\n");
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to initialize bus encryption required by drive and disc\n");
         }
     }
 
     keydbcfg_config_file_close(cf);
 
-    DEBUG(DBG_AACS, "AACS initialized!\n");
+    BD_DEBUG(DBG_AACS, "AACS initialized!\n");
 
     return error_code;
 }
@@ -1056,7 +1056,7 @@ void aacs_close(AACS *aacs)
     X_FREE(aacs->cps_units);
     X_FREE(aacs->path);
 
-    DEBUG(DBG_AACS, "AACS destroyed!\n");
+    BD_DEBUG(DBG_AACS, "AACS destroyed!\n");
 
     /* erase sensitive data */
     memset(aacs, 0, sizeof(*aacs));
@@ -1092,7 +1092,7 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
         uint8_t out_buf[ALIGNED_UNIT_LEN];
         for (i = 0; i < aacs->num_uks; i++) {
             if (_decrypt_unit(aacs, out_buf, buf, i)) {
-                DEBUG(DBG_AACS, "autodetected current CPS unit (%d)\n", i);
+                BD_DEBUG(DBG_AACS, "autodetected current CPS unit (%d)\n", i);
                 aacs->current_cps_unit  = i;
                 aacs->cps_unit_selected = 1;
                 memcpy(buf, out_buf, ALIGNED_UNIT_LEN);
@@ -1101,7 +1101,7 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
         }
     }
 
-    DEBUG(DBG_AACS, "Failed decrypting unit [6144 bytes]\n");
+    BD_DEBUG(DBG_AACS, "Failed decrypting unit [6144 bytes]\n");
     return 0;
 }
 
@@ -1133,7 +1133,7 @@ const uint8_t *aacs_get_mk(AACS *aacs)
         }
 
         if (!memcmp(aacs->mk, empty_key, 16)) {
-            DEBUG(DBG_AACS | DBG_CRIT, "aacs_get_mk() failed\n");
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "aacs_get_mk() failed\n");
             return NULL;
         }
     }
@@ -1146,7 +1146,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
     if (!memcmp(aacs->vid, empty_key, 16)) {
         /* get cached vid */
         if (keycache_find("vid", aacs->disc_id, aacs->vid, 16)) {
-            DEBUG(DBG_AACS, "Using cached VID\n");
+            BD_DEBUG(DBG_AACS, "Using cached VID\n");
             return aacs->vid;
         }
 
@@ -1158,7 +1158,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
         }
 
         if (!memcmp(aacs->vid, empty_key, 16)) {
-            DEBUG(DBG_AACS | DBG_CRIT, "aacs_get_vid() failed\n");
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "aacs_get_vid() failed\n");
             return NULL;
         }
     }
@@ -1177,7 +1177,7 @@ const uint8_t *aacs_get_pmsn(AACS *aacs)
         }
 
         if (!memcmp(aacs->pmsn, empty_key, 16)) {
-            DEBUG(DBG_AACS, "aacs_get_pmsn() failed\n");
+            BD_DEBUG(DBG_AACS, "aacs_get_pmsn() failed\n");
             return NULL;
         }
     }
@@ -1193,9 +1193,9 @@ const uint8_t *aacs_get_device_binding_id(AACS *aacs)
     static const char config_file_name[] = "device_binding_id";
     uint32_t len = sizeof(aacs->device_binding_id);
 
-    DEBUG(DBG_AACS, "reading device binding id\n");
+    BD_DEBUG(DBG_AACS, "reading device binding id\n");
     if (!config_get(config_file_name, &len, aacs->device_binding_id) || len != sizeof(aacs->device_binding_id)) {
-        DEBUG(DBG_AACS, "creating device binding id\n");
+        BD_DEBUG(DBG_AACS, "creating device binding id\n");
         crypto_create_nonce(aacs->device_binding_id, sizeof(aacs->device_binding_id));
         config_save(config_file_name, aacs->device_binding_id, sizeof(aacs->device_binding_id));
     }
@@ -1205,7 +1205,7 @@ const uint8_t *aacs_get_device_binding_id(AACS *aacs)
 
 const uint8_t *aacs_get_device_nonce(AACS *aacs)
 {
-    DEBUG(DBG_AACS, "creating device nonce\n");
+    BD_DEBUG(DBG_AACS, "creating device nonce\n");
     crypto_create_nonce(aacs->device_nonce, sizeof(aacs->device_nonce));
     return aacs->device_nonce;
 }
@@ -1237,7 +1237,7 @@ static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkbv)
                 return rl;
             }
 
-            DEBUG(DBG_AACS | DBG_CRIT, "invalid signature in cached %s\n", type);
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "invalid signature in cached %s\n", type);
         }
 
         X_FREE(data);
@@ -1275,7 +1275,7 @@ void aacs_select_title(AACS *aacs, uint32_t title)
     }
 
     if (!aacs->cps_units) {
-        DEBUG(DBG_AACS|DBG_CRIT, "aacs_select_title(): CPS units not read !\n");
+        BD_DEBUG(DBG_AACS|DBG_CRIT, "aacs_select_title(): CPS units not read !\n");
         return;
     }
 
@@ -1283,16 +1283,16 @@ void aacs_select_title(AACS *aacs, uint32_t title)
         /* first play */
         aacs->current_cps_unit = aacs->cps_units[0];
         aacs->cps_unit_selected = 0;
-        DEBUG(DBG_AACS, "aacs_set_title(first_play): CPS unit %d\n", aacs->current_cps_unit);
+        BD_DEBUG(DBG_AACS, "aacs_set_title(first_play): CPS unit %d\n", aacs->current_cps_unit);
         return;
     }
 
     if (title <= aacs->num_titles) {
         aacs->current_cps_unit = aacs->cps_units[title + 1];
         aacs->cps_unit_selected = 1;
-        DEBUG(DBG_AACS, "aacs_set_title(%d): CPS unit %d\n", title, aacs->current_cps_unit);
+        BD_DEBUG(DBG_AACS, "aacs_set_title(%d): CPS unit %d\n", title, aacs->current_cps_unit);
         return;
     }
 
-    DEBUG(DBG_AACS|DBG_CRIT, "aacs_set_title(%d): invalid title !\n", title);
+    BD_DEBUG(DBG_AACS|DBG_CRIT, "aacs_set_title(%d): invalid title !\n", title);
 }

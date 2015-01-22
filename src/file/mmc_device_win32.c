@@ -119,12 +119,12 @@ int device_send_cmd(MMCDEV *dev, const uint8_t *cmd, uint8_t *buf, size_t tx, si
                         &dwBytesReturned, NULL)) {
 
         if (sptd_sb.sptd.ScsiStatus == 0 /* STATUS_GOOD */) {
-            DEBUG(DBG_MMC, "  Send succeeded!\n");
+            BD_DEBUG(DBG_MMC, "  Send succeeded!\n");
             return 1;
         }
     }
 
-    DEBUG(DBG_MMC, "  Send failed!\n");
+    BD_DEBUG(DBG_MMC, "  Send failed!\n");
 
     return 0;
 }
@@ -137,11 +137,11 @@ MMCDEV *device_open(const char *path)
     HANDLE  fd;
     MMCDEV *dev;
 
-    DEBUG(DBG_MMC, "Opening Windows MMC drive %s...\n", drive);
+    BD_DEBUG(DBG_MMC, "Opening Windows MMC drive %s...\n", drive);
 
     type = GetDriveType(drive);
     if (type != DRIVE_CDROM) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Drive %s is not CD/DVD drive\n", drive);
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive %s is not CD/DVD drive\n", drive);
         return NULL;
     }
 
@@ -153,12 +153,12 @@ MMCDEV *device_open(const char *path)
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (fd == INVALID_HANDLE_VALUE) {
-            DEBUG(DBG_MMC, "Failed opening Windows MMC drive %s\n", volume);
+            BD_DEBUG(DBG_MMC, "Failed opening Windows MMC drive %s\n", volume);
             return NULL;
         }
     }
 
-    DEBUG(DBG_MMC, "Windows MMC drive %s opened\n", volume);
+    BD_DEBUG(DBG_MMC, "Windows MMC drive %s opened\n", volume);
 
     dev = calloc(1, sizeof(MMCDEV));
     dev->fd = fd;

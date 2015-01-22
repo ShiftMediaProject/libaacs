@@ -86,22 +86,22 @@ int device_send_cmd(MMCDEV *dev, const uint8_t *cmd, uint8_t *buf, size_t tx, si
 
     result = ioctl(dev->fd, CDROM_SEND_PACKET, &cgc);
 
-    DEBUG(DBG_MMC, "Send LINUX MMC cmd %s:\n", print_hex(str, cmd, 16));
+    BD_DEBUG(DBG_MMC, "Send LINUX MMC cmd %s:\n", print_hex(str, cmd, 16));
     if (tx) {
-        DEBUG(DBG_MMC, "  Buffer: %s ->\n", print_hex(str, buf, tx>255?255:tx));
+        BD_DEBUG(DBG_MMC, "  Buffer: %s ->\n", print_hex(str, buf, tx>255?255:tx));
     } else {
-        DEBUG(DBG_MMC, "  Buffer: %s <-\n", print_hex(str, buf, rx>255?255:rx));
+        BD_DEBUG(DBG_MMC, "  Buffer: %s <-\n", print_hex(str, buf, rx>255?255:rx));
     }
 
     if (result >= 0) {
-        DEBUG(DBG_MMC, "  Send succeeded! [%d]\n", result);
+        BD_DEBUG(DBG_MMC, "  Send succeeded! [%d]\n", result);
         return 1;
     }
 
-    DEBUG(DBG_MMC, "  Send failed! [%d] %s\n", result, strerror(errno));
+    BD_DEBUG(DBG_MMC, "  Send failed! [%d] %s\n", result, strerror(errno));
 #else
 #warning no MMC drive support
-    DEBUG(DBG_MMC | DBG_CRIT, "No MMC drive support\n");
+    BD_DEBUG(DBG_MMC | DBG_CRIT, "No MMC drive support\n");
 #endif
 
     return 0;
@@ -118,7 +118,7 @@ MMCDEV *device_open(const char *path)
 
     /* resolve path */
     if (!aacs_resolve_path(path, resolved_path)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "Failed resolving path %s\n", path);
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Failed resolving path %s\n", path);
         return NULL;
     }
 
@@ -129,7 +129,7 @@ MMCDEV *device_open(const char *path)
     }
 
     if (stat(resolved_path, &st)) {
-        DEBUG(DBG_MMC | DBG_CRIT, "stat(%s) failed\n", resolved_path);
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "stat(%s) failed\n", resolved_path);
         return NULL;
     }
 
@@ -137,14 +137,14 @@ MMCDEV *device_open(const char *path)
 
     if (S_ISBLK(st.st_mode)) {
         /* opening device */
-        DEBUG(DBG_MMC, "Opening block device %s\n", resolved_path);
+        BD_DEBUG(DBG_MMC, "Opening block device %s\n", resolved_path);
         fd = open(resolved_path, O_RDONLY | O_NONBLOCK);
         if (fd < 0) {
-            DEBUG(DBG_MMC | DBG_CRIT, "Error opening block device %s\n", resolved_path);
+            BD_DEBUG(DBG_MMC | DBG_CRIT, "Error opening block device %s\n", resolved_path);
         }
     } else {
 #if !defined(HAVE_MNTENT_H)
-        DEBUG(DBG_MMC | DBG_CRIT, "Only block devices supported\n");
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Only block devices supported\n");
         return NULL;
 #endif
     }
@@ -155,17 +155,17 @@ MMCDEV *device_open(const char *path)
         if ((proc_mounts = setmntent("/proc/mounts", "r"))) {
             struct mntent* mount_entry;
 
-            DEBUG(DBG_MMC, "Opening LINUX MMC drive mounted to %s...\n", resolved_path);
+            BD_DEBUG(DBG_MMC, "Opening LINUX MMC drive mounted to %s...\n", resolved_path);
             while ((mount_entry = getmntent(proc_mounts)) != NULL) {
                 if (strcmp(mount_entry->mnt_dir, resolved_path) == 0) {
                     fd = open(mount_entry->mnt_fsname, O_RDONLY | O_NONBLOCK);
                     if (fd >= 0) {
-                        DEBUG(DBG_MMC, "LINUX MMC drive %s opened - fd: %d\n",
+                        BD_DEBUG(DBG_MMC, "LINUX MMC drive %s opened - fd: %d\n",
                               mount_entry->mnt_fsname, fd);
                         break;
                     }
 
-                    DEBUG(DBG_MMC | DBG_CRIT, "Failed opening MMC drive %s mounted to %s\n",
+                    BD_DEBUG(DBG_MMC | DBG_CRIT, "Failed opening MMC drive %s mounted to %s\n",
                           mount_entry->mnt_fsname, resolved_path);
                 }
             }
@@ -173,11 +173,11 @@ MMCDEV *device_open(const char *path)
             endmntent(proc_mounts);
 
             if (fd < 0) {
-                DEBUG(DBG_MMC | DBG_CRIT, "No MMC drive mounted to %s\n", resolved_path);
+                BD_DEBUG(DBG_MMC | DBG_CRIT, "No MMC drive mounted to %s\n", resolved_path);
             }
 
         } else {
-            DEBUG(DBG_MMC | DBG_CRIT, "Error opening /proc/mounts\n");
+            BD_DEBUG(DBG_MMC | DBG_CRIT, "Error opening /proc/mounts\n");
         }
 #endif
     }

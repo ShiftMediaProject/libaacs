@@ -26,7 +26,7 @@
 
 AACS_PRIVATE extern uint32_t debug_mask;
 
-#define DEBUG(MASK,...)                                 \
+#define BD_DEBUG(MASK,...)                              \
   do {                                                  \
     if (AACS_UNLIKELY((MASK) & debug_mask)) {           \
       aacs_debug(__FILE__,__LINE__,MASK,__VA_ARGS__);   \
@@ -44,7 +44,7 @@ enum debug_mask_enum {
     DBG_DIR        = 0x0080,
   //DBG_NAV        = 0x0100,
   //DBG_BDPLUS     = 0x0200,
-    DBG_DLX        = 0x0400,
+  //DBG_DLX        = 0x0400,
     DBG_CRIT       = 0x0800, /* this is the default debug mask so use this if you want to display critical info */
   //DBG_HDMV       = 0x1000,
 };

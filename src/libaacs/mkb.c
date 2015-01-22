@@ -42,7 +42,7 @@ static const uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
         }
 
         if (mkb->buf[pos] == type) {
-            DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (%p)\n", type,
+            BD_DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (%p)\n", type,
                   (void*)(mkb->buf + pos));
 
             return mkb->buf + pos;
@@ -66,8 +66,8 @@ MKB *mkb_read(AACS_FILE_H *fp)
 
     file_read(fp, mkb->buf, mkb->size);
 
-    DEBUG(DBG_MKB, "MKB size: %u\n", (unsigned)mkb->size);
-    DEBUG(DBG_MKB, "MKB version: %d\n", mkb_version(mkb));
+    BD_DEBUG(DBG_MKB, "MKB size: %u\n", (unsigned)mkb->size);
+    BD_DEBUG(DBG_MKB, "MKB version: %d\n", mkb_version(mkb));
 
     return mkb;
 }
@@ -196,7 +196,7 @@ static int _cert_is_revoked(const uint8_t *rl, size_t rl_size, const uint8_t *ce
 
         size_t rec_len = 4 + 4 + 8 * entries + 40;
         if (rec_len > rl_size) {
-            DEBUG(DBG_MKB, "revocation list size mismatch\n");
+            BD_DEBUG(DBG_MKB, "revocation list size mismatch\n");
             return -1;
         }
 
@@ -207,7 +207,7 @@ static int _cert_is_revoked(const uint8_t *rl, size_t rl_size, const uint8_t *ce
             if (cert_id >= id && cert_id <= id + len) {
                 char str[16];
                 print_hex(str, rl + 2, 6);
-                DEBUG(DBG_MKB, "Certificate %s has been revoked\n", str);
+                BD_DEBUG(DBG_MKB, "Certificate %s has been revoked\n", str);
                 return 1;
             }
             rl += 8;
