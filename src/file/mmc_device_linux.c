@@ -27,8 +27,9 @@
 
 #include "path.h"
 
-#include "util/macro.h"
 #include "util/logging.h"
+#include "util/macro.h"
+#include "util/strutl.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -86,11 +87,11 @@ int device_send_cmd(MMCDEV *dev, const uint8_t *cmd, uint8_t *buf, size_t tx, si
 
     result = ioctl(dev->fd, CDROM_SEND_PACKET, &cgc);
 
-    BD_DEBUG(DBG_MMC, "Send LINUX MMC cmd %s:\n", print_hex(str, cmd, 16));
+    BD_DEBUG(DBG_MMC, "Send LINUX MMC cmd %s:\n", str_print_hex(str, cmd, 16));
     if (tx) {
-        BD_DEBUG(DBG_MMC, "  Buffer: %s ->\n", print_hex(str, buf, tx>255?255:tx));
+        BD_DEBUG(DBG_MMC, "  Buffer: %s ->\n", str_print_hex(str, buf, tx>255?255:tx));
     } else {
-        BD_DEBUG(DBG_MMC, "  Buffer: %s <-\n", print_hex(str, buf, rx>255?255:rx));
+        BD_DEBUG(DBG_MMC, "  Buffer: %s <-\n", str_print_hex(str, buf, rx>255?255:rx));
     }
 
     if (result >= 0) {

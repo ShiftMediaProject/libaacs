@@ -114,26 +114,26 @@ struct config_file_t
 };
 
 /* Functions used throughout the parser */
-AACS_PRIVATE int keydbcfg_parse_config(config_file *cfgfile, const char *path);
-AACS_PRIVATE config_file *keydbcfg_new_config_file(void);
-AACS_PRIVATE int keydbcfg_config_file_close(config_file *cfgfile);
+BD_PRIVATE int keydbcfg_parse_config(config_file *cfgfile, const char *path);
+BD_PRIVATE config_file *keydbcfg_new_config_file(void);
+BD_PRIVATE int keydbcfg_config_file_close(config_file *cfgfile);
 
 /* */
 
-AACS_PRIVATE config_file *keydbcfg_config_load(const char *configfile_path);
+BD_PRIVATE config_file *keydbcfg_config_load(const char *configfile_path);
 
-AACS_PRIVATE int   keycache_save(const char *type, const uint8_t *disc_id,
+BD_PRIVATE int   keycache_save(const char *type, const uint8_t *disc_id,
                                  const uint8_t *key, unsigned int len);
-AACS_PRIVATE int   keycache_find(const char *type, const uint8_t *disc_id,
+BD_PRIVATE int   keycache_find(const char *type, const uint8_t *disc_id,
                                  uint8_t *key, unsigned int len);
 
-AACS_PRIVATE int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf); /* use buf=NULL to get version and size */
-AACS_PRIVATE int cache_save(const char *name, uint32_t version, const void *data, uint32_t len);
-AACS_PRIVATE int cache_remove(const char *name);
+BD_PRIVATE int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf); /* use buf=NULL to get version and size */
+BD_PRIVATE int cache_save(const char *name, uint32_t version, const void *data, uint32_t len);
+BD_PRIVATE int cache_remove(const char *name);
 
-AACS_PRIVATE void *cache_get_or_update(const char *type, const void *data, uint32_t *len, uint32_t version);
+BD_PRIVATE void *cache_get_or_update(const char *type, const void *data, uint32_t *len, uint32_t version);
 
-AACS_PRIVATE int config_get(const char *name, uint32_t *len, void *buf); /* use buf=NULL to get size */
-AACS_PRIVATE int config_save(const char *name, const void *data, uint32_t len);
+BD_PRIVATE int config_get(const char *name, uint32_t *len, void *buf); /* use buf=NULL to get size */
+BD_PRIVATE int config_save(const char *name, const void *data, uint32_t len);
 
 #endif

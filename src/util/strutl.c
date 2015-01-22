@@ -19,13 +19,15 @@
  */
 
 #include "strutl.h"
+
+#include "macro.h"
 #include "logging.h"
 
-#include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 
 
 /* Function to assigns proper hex value of character to uint8_t pointer */
@@ -151,6 +153,11 @@ int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size)
   return 1;
 }
 
+char * str_dup(const char *str)
+{
+  return str ? strcpy (malloc(strlen(str) + 1), str) : NULL;
+}
+
 char *str_printf(const char *fmt, ...)
 {
     /* Guess we need no more than 100 bytes. */
@@ -239,4 +246,14 @@ char *str_get_hex_string(const char *p, int n)
     s[n] = 0;
 
     return s;
+}
+
+char *str_print_hex(char *out, const uint8_t *buf, int count)
+{
+    int zz;
+    for (zz = 0; zz < count; zz++) {
+        sprintf(out + (zz * 2), "%02x", buf[zz]);
+    }
+
+    return out;
 }

@@ -24,15 +24,6 @@
 
 #include <stdint.h>
 
-AACS_PRIVATE extern uint32_t debug_mask;
-
-#define BD_DEBUG(MASK,...)                              \
-  do {                                                  \
-    if (AACS_UNLIKELY((MASK) & debug_mask)) {           \
-      aacs_debug(__FILE__,__LINE__,MASK,__VA_ARGS__);   \
-    }                                                   \
-  } while (0)
-
 enum debug_mask_enum {
     DBG_RESERVED   = 0x0001,
     DBG_CONFIGFILE = 0x0002,
@@ -51,8 +42,16 @@ enum debug_mask_enum {
 
 typedef enum debug_mask_enum debug_mask_t;
 
-AACS_PRIVATE char *print_hex(char *out, const uint8_t *str, int count);
-AACS_PRIVATE void aacs_debug(const char *file, int line, uint32_t mask, const char *format, ...)
-                  AACS_ATTR_FORMAT_PRINTF(4,5);
+BD_PRIVATE extern uint32_t debug_mask;
+
+#define BD_DEBUG(MASK,...) \
+  do {                                                  \
+    if (BD_UNLIKELY((MASK) & debug_mask)) {             \
+      bd_debug(__FILE__,__LINE__,MASK,__VA_ARGS__);     \
+    }                                                   \
+  } while (0)
+
+BD_PRIVATE void bd_debug(const char *file, int line, uint32_t mask, const char *format, ...) BD_ATTR_FORMAT_PRINTF(4,5);
+
 
 #endif /* LOGGING_H_ */

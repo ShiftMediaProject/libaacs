@@ -28,9 +28,9 @@
 
 typedef struct mmcdev MMCDEV;
 
-AACS_PRIVATE MMCDEV *device_open(const char *path);
-AACS_PRIVATE void    device_close(MMCDEV **mmc);
+BD_PRIVATE MMCDEV *device_open(const char *path);
+BD_PRIVATE void    device_close(MMCDEV **mmc);
 
-AACS_PRIVATE int     device_send_cmd(MMCDEV *dev, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t rx);
+BD_PRIVATE int     device_send_cmd(MMCDEV *dev, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t rx);
 
 #endif /* MMC_DEVICE_H_ */

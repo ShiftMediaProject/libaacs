@@ -1,6 +1,7 @@
 /*
  * This file is part of libaacs
  * Copyright (C) 2009-2010  Obliter0n
+ * Copyright (C) 2013       VideoLAN
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,35 +20,30 @@
 
 #include "logging.h"
 
+#include "file/file.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 
-uint32_t debug_mask = (uint32_t)-1; /* set all bits to make sure aacs_debug() is called for initialization */
+uint32_t debug_mask = (uint32_t)-1; /* set all bits to make sure bd_debug() is called for initialization */
 
-char *print_hex(char *out, const uint8_t *buf, int count)
+void bd_debug(const char *file, int line, uint32_t mask, const char *format, ...)
 {
-    int zz;
-    for(zz = 0; zz < count; zz++) {
-        sprintf(out + (zz * 2), "%02X", buf[zz]);
-    }
-
-    return out;
-}
-
-void aacs_debug(const char *file, int line, uint32_t mask, const char *format, ...)
-{
-    static int debug_init = 0;
-    static FILE *logfile = NULL;
+    static int   debug_init = 0;
+    static FILE *logfile    = NULL;
 
     // Only call getenv() once.
     if (!debug_init) {
         debug_init = 1;
         logfile = stderr;
-        debug_mask = DBG_CRIT;
 
         char *env = NULL;
+        if (debug_mask == (uint32_t)-1) {
+            /* might be set by application with bd_set_debug_mask() */
+            debug_mask = DBG_CRIT;
+        }
         if ((env = getenv("AACS_DEBUG_MASK")))
             debug_mask = strtol(env, NULL, 0);
         else if ((env = getenv("BD_DEBUG_MASK")))
@@ -58,7 +54,7 @@ void aacs_debug(const char *file, int line, uint32_t mask, const char *format, .
             FILE *fp = fopen(env, "wb");
             if (fp) {
                 logfile = fp;
-                setvbuf(logfile, NULL, _IOLBF, 0);
+                setvbuf(logfile, NULL, _IONBF, 0);
             } else {
                 fprintf(logfile, "%s:%d: Error opening log file %s\n", __FILE__, __LINE__, env);
             }
@@ -66,19 +62,16 @@ void aacs_debug(const char *file, int line, uint32_t mask, const char *format, .
     }
 
     if (mask & debug_mask) {
-        const char *filename;
-        char buffer[512];
+        const char *f = strrchr(file, DIR_SEP_CHAR);
+        char buffer[4096], *pt = buffer;
         va_list args;
 
-        filename = strrchr(file, '/');
-        if (filename) {
-            file = filename + 1;
-        }
+        pt += sprintf(buffer, "%s:%d: ", f ? f + 1 : file, line);
 
         va_start(args, format);
-        sprintf(buffer, "libaacs: %s:%d: %s", file, line, format);
-        vfprintf(logfile, buffer, args);
+        vsnprintf(pt, sizeof(buffer) - (size_t)(intptr_t)(pt - buffer) - 1, format, args);
         va_end(args);
 
+        fprintf(logfile, "%s", buffer);
     }
 }

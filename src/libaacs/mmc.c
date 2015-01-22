@@ -27,8 +27,9 @@
 
 #include "crypto.h"
 #include "file/mmc_device.h"
-#include "util/macro.h"
 #include "util/logging.h"
+#include "util/macro.h"
+#include "util/strutl.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -84,7 +85,7 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
     char str[512];
     memset(cmd, 0, sizeof(cmd));
 
-    BD_DEBUG(DBG_MMC, "MMC send key [%d] %s...\n", len, print_hex(str, buf, len));
+    BD_DEBUG(DBG_MMC, "MMC send key [%d] %s...\n", len, str_print_hex(str, buf, len));
 
     cmd[0] = 0xa3;
     cmd[7] = 0x02;
@@ -92,7 +93,7 @@ static int _mmc_send_key(MMC *mmc, uint8_t agid, uint8_t format, uint8_t *buf,
     cmd[9] = len & 0xff;
     cmd[10] = (agid << 6) | (format & 0x3f);
 
-    BD_DEBUG(DBG_MMC, "cmd: %s\n", print_hex(str, cmd, 16));
+    BD_DEBUG(DBG_MMC, "cmd: %s\n", str_print_hex(str, cmd, 16));
     return device_send_cmd(mmc->dev, cmd, buf, len, 0);
 }
 
@@ -346,7 +347,7 @@ MMC *mmc_open(const char *path)
     if (DEBUG_KEYS) {
         char str[sizeof(mmc->host_nonce)*2 + 1];
         BD_DEBUG(DBG_MMC, "Created host nonce (Hn): %s\n",
-              print_hex(str, mmc->host_nonce, sizeof(mmc->host_nonce)));
+              str_print_hex(str, mmc->host_nonce, sizeof(mmc->host_nonce)));
     }
 
     crypto_create_host_key_pair(mmc->host_key, mmc->host_key_point);
@@ -354,9 +355,9 @@ MMC *mmc_open(const char *path)
     if (DEBUG_KEYS) {
         char    str[sizeof(mmc->host_key_point)*2 + 1];
         BD_DEBUG(DBG_MMC, "Created host key (Hk): %s\n",
-              print_hex(str, mmc->host_key, sizeof(mmc->host_key)));
+              str_print_hex(str, mmc->host_key, sizeof(mmc->host_key)));
         BD_DEBUG(DBG_MMC, "Created host key point (Hv): %s\n",
-              print_hex(str, mmc->host_key_point, sizeof(mmc->host_key_point)));
+              str_print_hex(str, mmc->host_key_point, sizeof(mmc->host_key_point)));
     }
 
     mmc->dev = device_open(path);
@@ -417,8 +418,8 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     memset(hks, 0, sizeof(hks));
 
     if (DEBUG_KEYS) {
-        BD_DEBUG(DBG_MMC, "Host certificate   : %s\n", print_hex(str, host_cert,       92));
-        BD_DEBUG(DBG_MMC, "Host nonce         : %s\n", print_hex(str, mmc->host_nonce, 20));
+        BD_DEBUG(DBG_MMC, "Host certificate   : %s\n", str_print_hex(str, host_cert,       92));
+        BD_DEBUG(DBG_MMC, "Host nonce         : %s\n", str_print_hex(str, mmc->host_nonce, 20));
     }
 
     // send host cert + nonce
@@ -426,7 +427,7 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
 
         if ((mmc->drive_cert[1] & 0x01) && !(host_cert[1] & 0x01)) {
             BD_DEBUG(DBG_MMC | DBG_CRIT, "Certificate (id 0x%s) can not be used with bus encryption capable drive\n",
-                  print_hex(str, host_cert + 4, 6));
+                  str_print_hex(str, host_cert + 4, 6));
         } else {
             BD_DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate has been revoked by your drive ?\n");
         }
@@ -441,8 +442,8 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     }
 
     if (DEBUG_KEYS) {
-        BD_DEBUG(DBG_MMC, "Drive certificate   : %s\n", print_hex(str, mmc->drive_cert, 92));
-        BD_DEBUG(DBG_MMC, "Drive nonce         : %s\n", print_hex(str, dn, 20));
+        BD_DEBUG(DBG_MMC, "Drive certificate   : %s\n", str_print_hex(str, mmc->drive_cert, 92));
+        BD_DEBUG(DBG_MMC, "Drive nonce         : %s\n", str_print_hex(str, dn, 20));
     }
 
     // verify drive certificate
@@ -458,8 +459,8 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     }
 
     if (DEBUG_KEYS) {
-        BD_DEBUG(DBG_MMC, "Drive key point     : %s\n", print_hex(str, dkp, 40));
-        BD_DEBUG(DBG_MMC, "Drive key signature : %s\n", print_hex(str, dks, 40));
+        BD_DEBUG(DBG_MMC, "Drive key point     : %s\n", str_print_hex(str, dkp, 40));
+        BD_DEBUG(DBG_MMC, "Drive key signature : %s\n", str_print_hex(str, dks, 40));
     }
 
     // verify drive signature
@@ -481,7 +482,7 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     // send signed host key and point
     if (!_mmc_send_host_key(mmc, agid, mmc->host_key_point, hks)) {
         BD_DEBUG(DBG_MMC | DBG_CRIT, "Error sending host signature\n");
-        BD_DEBUG(DBG_MMC,  "Host key signature : %s\n", print_hex(str, hks, 40));
+        BD_DEBUG(DBG_MMC,  "Host key signature : %s\n", str_print_hex(str, hks, 40));
         return MMC_ERROR;
     }
 
@@ -489,7 +490,7 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     if (bus_key) {
         crypto_create_bus_key(mmc->host_key, dkp, bus_key);
         if (DEBUG_KEYS) {
-            BD_DEBUG(DBG_MMC, "Bus Key             : %s\n", print_hex(str, bus_key, 16));
+            BD_DEBUG(DBG_MMC, "Bus Key             : %s\n", str_print_hex(str, bus_key, 16));
         }
     }
 
@@ -509,8 +510,8 @@ static int _read_vid(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *vi
 
     if (_mmc_read_vid(mmc, agid, vid, mac)) {
         if (DEBUG_KEYS) {
-            BD_DEBUG(DBG_MMC, "VID                 : %s\n", print_hex(str, vid, 16));
-            BD_DEBUG(DBG_MMC, "VID MAC             : %s\n", print_hex(str, mac, 16));
+            BD_DEBUG(DBG_MMC, "VID                 : %s\n", str_print_hex(str, vid, 16));
+            BD_DEBUG(DBG_MMC, "VID MAC             : %s\n", str_print_hex(str, mac, 16));
         }
 
         /* verify MAC */
@@ -536,8 +537,8 @@ static int _read_pmsn(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *p
 
     if (_mmc_read_pmsn(mmc, agid, pmsn, mac)) {
         if (DEBUG_KEYS) {
-            BD_DEBUG(DBG_MMC, "PMSN                : %s\n", print_hex(str, pmsn, 16));
-            BD_DEBUG(DBG_MMC, "PMSN MAC            : %s\n", print_hex(str, mac, 16));
+            BD_DEBUG(DBG_MMC, "PMSN                : %s\n", str_print_hex(str, pmsn, 16));
+            BD_DEBUG(DBG_MMC, "PMSN MAC            : %s\n", str_print_hex(str, mac, 16));
         }
 
         /* verify MAC */
@@ -566,13 +567,13 @@ static int _read_data_keys(MMC *mmc, uint8_t agid, const uint8_t *bus_key,
         if (read_data_key) {
             crypto_aes128d(bus_key, encrypted_read_data_key, read_data_key);
             if (DEBUG_KEYS) {
-                BD_DEBUG(DBG_MMC, "READ DATA KEY       : %s\n", print_hex(str, read_data_key, 16));
+                BD_DEBUG(DBG_MMC, "READ DATA KEY       : %s\n", str_print_hex(str, read_data_key, 16));
             }
         }
         if (write_data_key) {
             crypto_aes128d(bus_key, encrypted_write_data_key, write_data_key);
             if (DEBUG_KEYS) {
-                BD_DEBUG(DBG_MMC, "WRITE DATA KEY      : %s\n", print_hex(str, write_data_key, 16));
+                BD_DEBUG(DBG_MMC, "WRITE DATA KEY      : %s\n", str_print_hex(str, write_data_key, 16));
             }
         }
 

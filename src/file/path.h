@@ -26,6 +26,6 @@
 #define AACS_PATH_MAX 1024
 #endif
 
-AACS_PRIVATE char *aacs_resolve_path(const char *path, char *resolved_path);
+BD_PRIVATE char *aacs_resolve_path(const char *path, char *resolved_path);
 
 #endif /* AACS_PATH_H */

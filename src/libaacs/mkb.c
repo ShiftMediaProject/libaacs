@@ -206,7 +206,7 @@ static int _cert_is_revoked(const uint8_t *rl, size_t rl_size, const uint8_t *ce
             uint64_t id  = MKINT_BE48(rl + 2);
             if (cert_id >= id && cert_id <= id + len) {
                 char str[16];
-                print_hex(str, rl + 2, 6);
+                str_print_hex(str, rl + 2, 6);
                 BD_DEBUG(DBG_MKB, "Certificate %s has been revoked\n", str);
                 return 1;
             }

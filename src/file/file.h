@@ -28,8 +28,10 @@
 
 #ifdef _WIN32
 # define DIR_SEP "\\"
+# define DIR_SEP_CHAR '\\'
 #else
 # define DIR_SEP "/"
+# define DIR_SEP_CHAR '/'
 #endif
 
 /*
@@ -42,7 +44,7 @@
 #define file_read(X,Y,Z) X->read(X,Y,Z)
 
 
-AACS_PRIVATE extern AACS_FILE_H *(*file_open)(const char* filename, const char *mode);
+BD_PRIVATE extern AACS_FILE_H *(*file_open)(const char* filename, const char *mode);
 
 
 #endif /* FILE_H_ */

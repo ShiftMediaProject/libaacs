@@ -100,11 +100,11 @@ static int _validate_pk(const uint8_t *pk,
     uint8_t dec_vd[16];
     char str[40];
 
-    BD_DEBUG(DBG_AACS, "Validate processing key %s...\n", print_hex(str, pk, 16));
+    BD_DEBUG(DBG_AACS, "Validate processing key %s...\n", str_print_hex(str, pk, 16));
     BD_DEBUG(DBG_AACS, " Using:\n");
-    BD_DEBUG(DBG_AACS, "   UV: %s\n", print_hex(str, uv, 4));
-    BD_DEBUG(DBG_AACS, "   cvalue: %s\n", print_hex(str, cvalue, 16));
-    BD_DEBUG(DBG_AACS, "   Verification data: %s\n", print_hex(str, vd, 16));
+    BD_DEBUG(DBG_AACS, "   UV: %s\n", str_print_hex(str, uv, 4));
+    BD_DEBUG(DBG_AACS, "   cvalue: %s\n", str_print_hex(str, cvalue, 16));
+    BD_DEBUG(DBG_AACS, "   Verification data: %s\n", str_print_hex(str, vd, 16));
 
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
     gcry_cipher_setkey(gcry_h, pk, 16);
@@ -119,7 +119,7 @@ static int _validate_pk(const uint8_t *pk,
     gcry_cipher_close(gcry_h);
 
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
-        BD_DEBUG(DBG_AACS, "Processing key %s is valid!\n", print_hex(str, pk, 16));
+        BD_DEBUG(DBG_AACS, "Processing key %s is valid!\n", str_print_hex(str, pk, 16));
         return AACS_SUCCESS;
     }
 
@@ -226,7 +226,7 @@ static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mas
     }
 
     char str[40];
-    BD_DEBUG(DBG_AACS, "Processing key: %s\n",  print_hex(str, pk, 16));
+    BD_DEBUG(DBG_AACS, "Processing key: %s\n",  str_print_hex(str, pk, 16));
 }
 
 static dk_list *_find_dk(dk_list *dkl, uint32_t *p_dev_key_v_mask, uint32_t uv, uint32_t u_mask)
@@ -258,7 +258,7 @@ static dk_list *_find_dk(dk_list *dkl, uint32_t *p_dev_key_v_mask, uint32_t uv, 
         BD_DEBUG(DBG_AACS | DBG_CRIT, "could not find applying device key (device 0x%x)\n", device_number);
     } else {
         char str[128];
-        BD_DEBUG(DBG_AACS, "Applying device key is #%d %s\n", key_idx, print_hex(str, dkl->key, 16));
+        BD_DEBUG(DBG_AACS, "Applying device key is #%d %s\n", key_idx, str_print_hex(str, dkl->key, 16));
         BD_DEBUG(DBG_AACS, "  UV: 0x%08x  U mask: 0x%08x  V mask: 0x%08x\n", dev_key_uv, dev_key_u_mask, dev_key_v_mask);
         *p_dev_key_v_mask = dev_key_v_mask;
     }
@@ -362,11 +362,11 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
                           mk)
              == AACS_SUCCESS) {
 
-            BD_DEBUG(DBG_AACS, "Media key: %s\n", print_hex(str, mk, 16));
+            BD_DEBUG(DBG_AACS, "Media key: %s\n", str_print_hex(str, mk, 16));
             return AACS_SUCCESS;
         }
 
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Processing key %s is invalid!\n", print_hex(str, pk, 16));
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Processing key %s is invalid!\n", str_print_hex(str, pk, 16));
 
         /* try next device */
     }
@@ -455,7 +455,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
                         mkb_close(mkb);
 
                         char str[40];
-                        BD_DEBUG(DBG_AACS, "Media key: %s\n", print_hex(str, mk, 16));
+                        BD_DEBUG(DBG_AACS, "Media key: %s\n", str_print_hex(str, mk, 16));
                         memcpy(aacs->mk, mk, sizeof(aacs->mk));
                         return AACS_SUCCESS;
                     }
@@ -488,18 +488,18 @@ static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uin
 
         if (!crypto_aacs_verify_host_cert(hcl->host_cert)) {
             BD_DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
-                  print_hex(tmp_str, hcl->host_cert, 92));
+                  str_print_hex(tmp_str, hcl->host_cert, 92));
             continue;
         }
 
         if (drive_cert && (drive_cert[1] & 0x01) && !(hcl->host_cert[1] & 0x01)) {
             BD_DEBUG(DBG_AACS, "Certificate (id 0x%s) does not support bus encryption\n",
-                  print_hex(tmp_str, hcl->host_cert + 4, 6));
+                  str_print_hex(tmp_str, hcl->host_cert + 4, 6));
             //continue;
         }
 
         BD_DEBUG(DBG_AACS, "Trying host certificate (id 0x%s)...\n",
-              print_hex(tmp_str, hcl->host_cert + 4, 6));
+              str_print_hex(tmp_str, hcl->host_cert + 4, 6));
 
         int mmc_result = mmc_read_auth(mmc, hcl->host_priv_key, hcl->host_cert, type, p1, p2);
         switch (mmc_result) {
@@ -598,7 +598,7 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
     }
 
     char str[40];
-    BD_DEBUG(DBG_AACS, "Volume unique key: %s\n", print_hex(str, vuk, 16));
+    BD_DEBUG(DBG_AACS, "Volume unique key: %s\n", str_print_hex(str, vuk, 16));
 
     /* cache vuk */
     keycache_save("vuk", aacs->disc_id, vuk, 16);
@@ -667,7 +667,7 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
         while (ce && ce->entry.discid) {
             if (!memcmp(aacs->disc_id, ce->entry.discid, 20)) {
                 BD_DEBUG(DBG_AACS, "Found config entry for discid %s\n",
-                      print_hex(str, ce->entry.discid, 20));
+                      str_print_hex(str, ce->entry.discid, 20));
                 break;
             }
 
@@ -681,7 +681,7 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
             hexstring_to_hex_array(mk, 16, ce->entry.mek);
 
             BD_DEBUG(DBG_AACS, "Found media key for %s: %s\n",
-                  ce->entry.discid, print_hex(str, mk, 16));
+                  ce->entry.discid, str_print_hex(str, mk, 16));
         }
 
         if (ce->entry.vid) {
@@ -689,14 +689,14 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
                                     ce->entry.vid);
 
             BD_DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
-                  ce->entry.discid, print_hex(str, aacs->vid, 16));
+                  ce->entry.discid, str_print_hex(str, aacs->vid, 16));
         }
 
         if (ce->entry.vuk) {
             hexstring_to_hex_array(vuk, 16, ce->entry.vuk);
 
             BD_DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
-                  ce->entry.discid, print_hex(str, vuk, 16));
+                  ce->entry.discid, str_print_hex(str, vuk, 16));
         }
 
         if (ce->entry.uk) {
@@ -712,7 +712,7 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
 
                 BD_DEBUG(DBG_AACS, "Unit key %d from keydb entry: %s\n",
                       aacs->num_uks,
-                      print_hex(str, aacs->uks + (16 * (aacs->num_uks - 1)), 16));
+                      str_print_hex(str, aacs->uks + (16 * (aacs->num_uks - 1)), 16));
 
                 ukcursor = ukcursor->next;
             }
@@ -788,7 +788,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
             char str[40];
             BD_DEBUG(DBG_AACS, "Unit key %d: %s\n", i,
-                  print_hex(str, aacs->uks + 16*i, 16));
+                  str_print_hex(str, aacs->uks + 16*i, 16));
         }
 
         /* failing next is not fatal, it just slows down things */
@@ -827,7 +827,7 @@ static int _calc_title_hash(AACS *aacs)
 
     if ((file_read(fp, ukf_buf, f_size)) == f_size) {
         crypto_aacs_title_hash(ukf_buf, f_size, aacs->disc_id);
-        BD_DEBUG(DBG_AACS, "Disc ID: %s\n", print_hex(str, aacs->disc_id, 20));
+        BD_DEBUG(DBG_AACS, "Disc ID: %s\n", str_print_hex(str, aacs->disc_id, 20));
 
     } else {
         result = AACS_ERROR_CORRUPTED_DISC;
@@ -888,7 +888,7 @@ static int _verify_ts(uint8_t *buf)
 {
     int i;
     for (i = 0; i < ALIGNED_UNIT_LEN; i += 192) {
-        if (AACS_UNLIKELY(buf[i + 4] != 0x47)) {
+        if (BD_UNLIKELY(buf[i + 4] != 0x47)) {
             return 0;
         }
 
@@ -906,7 +906,7 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
     int a;
     uint8_t key[16];
 
-    if (AACS_UNLIKELY(in_buf != NULL)) {
+    if (BD_UNLIKELY(in_buf != NULL)) {
         memcpy(out_buf, in_buf, 16); /* first 16 bytes are plain */
     }
 
@@ -922,7 +922,7 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
     gcry_cipher_setkey(gcry_h, key, 16);
     gcry_cipher_setiv(gcry_h, aacs_iv, 16);
-    if (AACS_UNLIKELY(in_buf != NULL)) {
+    if (BD_UNLIKELY(in_buf != NULL)) {
         gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
     } else {
         gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, NULL, 0);
@@ -1081,8 +1081,8 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
     }
 
     /* decrypt in-place if current unit key is known */
-    if (AACS_LIKELY(aacs->cps_unit_selected) || AACS_LIKELY(aacs->num_uks == 1)) {
-        if (AACS_LIKELY(_decrypt_unit(aacs, buf, NULL, aacs->current_cps_unit))) {
+    if (BD_LIKELY(aacs->cps_unit_selected) || BD_LIKELY(aacs->num_uks == 1)) {
+        if (BD_LIKELY(_decrypt_unit(aacs, buf, NULL, aacs->current_cps_unit))) {
             return 1;
         }
 

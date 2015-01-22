@@ -24,13 +24,16 @@
 
 #include <stdint.h>
 
-AACS_PRIVATE int hexstring_to_hex_array(uint8_t *hex_array, uint32_t size,
+BD_PRIVATE int hexstring_to_hex_array(uint8_t *hex_array, uint32_t size,
                                         const char *hexstring);
-AACS_PRIVATE int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size);
+BD_PRIVATE int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size);
 
-AACS_PRIVATE char *str_printf(const char *fmt, ...) AACS_ATTR_FORMAT_PRINTF(1,2) AACS_ATTR_MALLOC;
+BD_PRIVATE char * str_dup(const char *str) BD_ATTR_MALLOC;
+BD_PRIVATE char * str_printf(const char *fmt, ...) BD_ATTR_FORMAT_PRINTF(1,2) BD_ATTR_MALLOC;
 
-AACS_PRIVATE const char * str_next_line     (const char *str);
-AACS_PRIVATE char *       str_get_hex_string(const char *str, int len) AACS_ATTR_MALLOC;
+BD_PRIVATE const char * str_next_line     (const char *str);
+BD_PRIVATE char *       str_get_hex_string(const char *str, int len) BD_ATTR_MALLOC;
+
+BD_PRIVATE char * str_print_hex(char *out, const uint8_t *str, int count);
 
 #endif // STRUTL_H_
