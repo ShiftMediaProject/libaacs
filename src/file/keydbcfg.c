@@ -57,6 +57,9 @@ static int _mkpath(const char *path)
     char *dir = str_printf("%s", path);
     char *end = dir;
 
+#ifdef _WIN32
+    end += 2; /* skip drive */
+#endif
     while (*end == DIR_SEP_CHAR)
         end++;
 
