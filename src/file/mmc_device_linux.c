@@ -116,7 +116,6 @@ MMCDEV *device_open(const char *path)
     struct stat st;
     int         fd = -1;
     MMCDEV     *dev = NULL;
-    FILE       *proc_mounts;
 
     /* resolve path */
     if (!aacs_resolve_path(path, resolved_path)) {
@@ -154,6 +153,7 @@ MMCDEV *device_open(const char *path)
 #if defined(HAVE_MNTENT_H)
     if (fd < 0) {
         /* resolve mount point to block device */
+        FILE *proc_mounts;
         if ((proc_mounts = setmntent("/proc/mounts", "r"))) {
             struct mntent* mount_entry;
 
