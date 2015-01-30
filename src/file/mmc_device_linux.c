@@ -180,8 +180,8 @@ MMCDEV *device_open(const char *path)
         } else {
             BD_DEBUG(DBG_MMC | DBG_CRIT, "Error opening /proc/mounts\n");
         }
-#endif
     }
+#endif
 
     if (fd >= 0) {
         dev = calloc(1, sizeof(MMCDEV));
