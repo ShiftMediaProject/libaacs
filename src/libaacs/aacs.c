@@ -382,6 +382,9 @@ static AACS_FILE_H *_file_open(AACS *aacs, const char *file)
     if (aacs->fopen) {
         return aacs->fopen(aacs->fopen_handle, file);
     }
+    if (!aacs->path) {
+        return NULL;
+    }
 
     f_name = str_printf("%s" DIR_SEP "%s", aacs->path, file);
     fp = file_open(f_name, "rb");
