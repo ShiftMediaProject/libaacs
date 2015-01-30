@@ -340,7 +340,13 @@ static int _mmc_read_data_keys(MMC *mmc, uint8_t agid, uint8_t *read_data_key, u
 
 MMC *mmc_open(const char *path)
 {
-    MMC *mmc = calloc(1, sizeof(MMC));
+    MMC *mmc;
+
+    if (!path) {
+        return NULL;
+    }
+
+    mmc = calloc(1, sizeof(MMC));
 
     crypto_create_nonce(mmc->host_nonce, sizeof(mmc->host_nonce));
 
