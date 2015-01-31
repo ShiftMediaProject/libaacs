@@ -42,7 +42,7 @@ static const uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
         }
 
         if (mkb->buf[pos] == type) {
-            DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (%p)\n", type,
+            BD_DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (%p)\n", type,
                   (void*)(mkb->buf + pos));
 
             return mkb->buf + pos;
@@ -54,40 +54,22 @@ static const uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
     return NULL;
 }
 
-MKB *mkb_open(const char *path)
+MKB *mkb_read(AACS_FILE_H *fp)
 {
-    AACS_FILE_H *fp = NULL;
-    char   *f_name;
     MKB *mkb = malloc(sizeof(MKB));
 
-    f_name = str_printf("%s/AACS/MKB_RO.inf", path);
+    file_seek(fp, 0, SEEK_END);
+    mkb->size = file_tell(fp);
+    file_seek(fp, 0, SEEK_SET);
 
-    DEBUG(DBG_MKB, "Opening MKB %s...\n", f_name);
-    fp = file_open(f_name, "rb");
+    mkb->buf = malloc(mkb->size);
 
-    X_FREE(f_name);
+    file_read(fp, mkb->buf, mkb->size);
 
-    if (fp) {
-        file_seek(fp, 0, SEEK_END);
-        mkb->size = file_tell(fp);
-        file_seek(fp, 0, SEEK_SET);
+    BD_DEBUG(DBG_MKB, "MKB size: %u\n", (unsigned)mkb->size);
+    BD_DEBUG(DBG_MKB, "MKB version: %d\n", mkb_version(mkb));
 
-        mkb->buf = malloc(mkb->size);
-
-        file_read(fp, mkb->buf, mkb->size);
-
-        DEBUG(DBG_MKB, "MKB size: %u\n", (unsigned)mkb->size);
-        DEBUG(DBG_MKB, "MKB version: %d\n", mkb_version(mkb));
-
-        file_close(fp);
-        return mkb;
-    }
-
-    DEBUG(DBG_MKB, "Error opening MKB!\n");
-
-    X_FREE(mkb);
-
-    return NULL;
+    return mkb;
 }
 
 MKB *mkb_init(uint8_t *data, int len)
@@ -214,7 +196,7 @@ static int _cert_is_revoked(const uint8_t *rl, size_t rl_size, const uint8_t *ce
 
         size_t rec_len = 4 + 4 + 8 * entries + 40;
         if (rec_len > rl_size) {
-            DEBUG(DBG_MKB, "revocation list size mismatch\n");
+            BD_DEBUG(DBG_MKB, "revocation list size mismatch\n");
             return -1;
         }
 
@@ -224,8 +206,8 @@ static int _cert_is_revoked(const uint8_t *rl, size_t rl_size, const uint8_t *ce
             uint64_t id  = MKINT_BE48(rl + 2);
             if (cert_id >= id && cert_id <= id + len) {
                 char str[16];
-                print_hex(str, rl + 2, 6);
-                DEBUG(DBG_MKB, "Certificate %s has been revoked\n", str);
+                str_print_hex(str, rl + 2, 6);
+                BD_DEBUG(DBG_MKB, "Certificate %s has been revoked\n", str);
                 return 1;
             }
             rl += 8;

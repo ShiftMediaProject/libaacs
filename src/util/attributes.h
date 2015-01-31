@@ -21,38 +21,41 @@
 #define LIBAACS_ATTRIBUTES_H_
 
 #if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3 ))
-#    define AACS_ATTR_FORMAT_PRINTF(format,var) \
-            __attribute__((__format__(__printf__,format,var)))
-#    define AACS_ATTR_MALLOC __attribute__((__malloc__))
-#    define AACS_ATTR_PACKED __attribute__((packed))
+#    if defined(_WIN32)
+#        define BD_ATTR_FORMAT_PRINTF(format,var) __attribute__((__format__(__gnu_printf__,format,var)))
+#    else
+#        define BD_ATTR_FORMAT_PRINTF(format,var) __attribute__((__format__(__printf__,format,var)))
+#    endif
+#    define BD_ATTR_MALLOC                    __attribute__((__malloc__))
+#    define BD_ATTR_PACKED                    __attribute__((packed))
 #else
-#    define AACS_ATTR_FORMAT_PRINTF(format,var)
-#    define AACS_ATTR_MALLOC
-#    define AACS_ATTR_PACKED
+#    define BD_ATTR_FORMAT_PRINTF(format,var)
+#    define BD_ATTR_MALLOC
+#    define BD_ATTR_PACKED
 #endif
 
 #if defined(_WIN32)
 #    if defined(__GNUC__)
 #        define AACS_PUBLIC  __attribute__((dllexport))
-#        define AACS_PRIVATE
+#        define BD_PRIVATE
 #    else
 #        define AACS_PUBLIC  __declspec(dllexport)
-#        define AACS_PRIVATE
+#        define BD_PRIVATE
 #    endif
 #elif defined(__GNUC__) && __GNUC__ >= 4
 #    define AACS_PUBLIC  __attribute__((visibility("default")))
-#    define AACS_PRIVATE __attribute__((visibility("hidden")))
+#    define BD_PRIVATE __attribute__((visibility("hidden")))
 #else
 #    define AACS_PUBLIC
-#    define AACS_PRIVATE
+#    define BD_PRIVATE
 #endif
 
-#if ( !defined(__GNUC__) || __GNUC__ < 3 ) && !defined(__INTEL_COMPILER)
-#  define AACS_LIKELY(x)   (x)
-#  define AACS_UNLIKELY(x) (x)
+#if !defined(__GNUC__) || __GNUC__ < 3
+#  define BD_LIKELY(x)   (x)
+#  define BD_UNLIKELY(x) (x)
 #else
-#  define AACS_LIKELY(x)   __builtin_expect((x),1)
-#  define AACS_UNLIKELY(x) __builtin_expect((x),0)
+#  define BD_LIKELY(x)   __builtin_expect((x),1)
+#  define BD_UNLIKELY(x) __builtin_expect((x),0)
 #endif
 
 #endif /* LIBAACS_ATTRIBUTES_H_ */

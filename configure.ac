@@ -1,22 +1,22 @@
 dnl library version number
 m4_define([aacs_major], 0)
-m4_define([aacs_minor], 7)
-m4_define([aacs_micro], 1)
+m4_define([aacs_minor], 8)
+m4_define([aacs_micro], 0)
 m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 
-dnl library (.so) version
-#
+dnl shared library version (.so version)
+dnl
 dnl update when making new release
-#
+dnl
 dnl - If there are no ABI changes, increase revision.
 dnl - If ABI is changed backwards-compatible way, increase current and age. Set revision to 0.
 dnl - If ABI is broken, increase current and set age and revision to 0.
-#
+dnl
 dnl Library file name will be libaacs.(current-age).age.revision
-#
-m4_define([lt_current],  4)
-m4_define([lt_age],      4)
-m4_define([lt_revision], 1)
+
+m4_define([lt_current],  5)
+m4_define([lt_age],      5)
+m4_define([lt_revision], 0)
 
 dnl initilization
 AC_INIT([libaacs], aacs_version, [http://www.videolan.org/developers/libaacs.html])
@@ -26,6 +26,9 @@ AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([foreign tar-ustar dist-bzip2 no-dist-gzip subdir-objects])
 AC_CONFIG_HEADERS(config.h)
 AM_MAINTAINER_MODE
+
+dnl Enable silent rules only when available (automake 1.11 or later).
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 SET_FEATURES="-D_ISOC99_SOURCE -D_POSIX_C_SOURCE=200112L"
 
@@ -137,7 +140,7 @@ else
 fi
 AC_FUNC_STRERROR_R
 
-# use re-entrant version of gcrypt_error() from gpg-error
+dnl use re-entrant version of gcrypt_error() from gpg-error
 
 AC_ARG_WITH(gpg-error-prefix,
             AC_HELP_STRING([--with-gpg-error-prefix=PFX],
@@ -196,5 +199,5 @@ AC_SUBST(LT_VERSION_INFO)
 
 dnl generate output files
 AC_SUBST(SET_FEATURES)
-AC_CONFIG_FILES([Makefile src/Makefile src/libaacs.pc src/libaacs/aacs-version.h])
+AC_CONFIG_FILES([Makefile src/libaacs.pc src/libaacs/aacs-version.h])
 AC_OUTPUT

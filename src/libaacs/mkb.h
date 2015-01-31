@@ -20,43 +20,45 @@
 #ifndef MKB_H_
 #define MKB_H_
 
-#include <util/attributes.h>
+#include "util/attributes.h"
 
 #include <stdlib.h>
 #include <stdint.h>
 
 typedef struct mkb MKB;
 
-AACS_PRIVATE MKB *mkb_open(const char *path);    // init MKB
-AACS_PRIVATE MKB *mkb_init(uint8_t *data, int len); // init MKB from data
-AACS_PRIVATE void mkb_close(MKB *mkb);           // free MKB
+struct aacs_file_s;
 
-AACS_PRIVATE const uint8_t *mkb_data(MKB *mkb);
-AACS_PRIVATE size_t mkb_data_size(MKB *mkb);
+BD_PRIVATE MKB *mkb_read(struct aacs_file_s *fp);    // init MKB
+BD_PRIVATE MKB *mkb_init(uint8_t *data, int len); // init MKB from data
+BD_PRIVATE void mkb_close(MKB *mkb);           // free MKB
+
+BD_PRIVATE const uint8_t *mkb_data(MKB *mkb);
+BD_PRIVATE size_t mkb_data_size(MKB *mkb);
 
 // returns type
-AACS_PRIVATE uint8_t mkb_type(MKB *mkb);
+BD_PRIVATE uint8_t mkb_type(MKB *mkb);
 // returns version
-AACS_PRIVATE uint32_t mkb_version(MKB *mkb);
+BD_PRIVATE uint32_t mkb_version(MKB *mkb);
 // returns type and version record (required to verify signatures)
-AACS_PRIVATE const uint8_t *mkb_type_and_version_record(MKB *mkb);
+BD_PRIVATE const uint8_t *mkb_type_and_version_record(MKB *mkb);
 // returns list of revoked host entries
-AACS_PRIVATE const uint8_t *mkb_host_revokation_entries(MKB *mkb, size_t *len);
+BD_PRIVATE const uint8_t *mkb_host_revokation_entries(MKB *mkb, size_t *len);
 // returns list of revoked drive entries
-AACS_PRIVATE const uint8_t *mkb_drive_revokation_entries(MKB *mkb, size_t *len);
+BD_PRIVATE const uint8_t *mkb_drive_revokation_entries(MKB *mkb, size_t *len);
 // returns subset-diff records
-AACS_PRIVATE const uint8_t *mkb_subdiff_records(MKB *mkb, size_t *len);
+BD_PRIVATE const uint8_t *mkb_subdiff_records(MKB *mkb, size_t *len);
 // returns list of subset-diff offsets
-AACS_PRIVATE const uint8_t *mkb_subdiff_offsets(MKB *mkb, size_t *len);
+BD_PRIVATE const uint8_t *mkb_subdiff_offsets(MKB *mkb, size_t *len);
 // returns list of cvalues
-AACS_PRIVATE const uint8_t *mkb_cvalues(MKB *mkb, size_t *len);
+BD_PRIVATE const uint8_t *mkb_cvalues(MKB *mkb, size_t *len);
 // media key verification data return in param (always 16 bytes)
-AACS_PRIVATE const uint8_t *mkb_mk_dv(MKB *mkb);
+BD_PRIVATE const uint8_t *mkb_mk_dv(MKB *mkb);
 // returns MKB signature
-AACS_PRIVATE const uint8_t *mkb_signature(MKB *mkb, size_t *len);
+BD_PRIVATE const uint8_t *mkb_signature(MKB *mkb, size_t *len);
 
-AACS_PRIVATE int mkb_host_cert_is_revoked(MKB *mkb, const uint8_t *cert_id);
-AACS_PRIVATE int mkb_drive_cert_is_revoked(MKB *mkb, const uint8_t *cert_id);
+BD_PRIVATE int mkb_host_cert_is_revoked(MKB *mkb, const uint8_t *cert_id);
+BD_PRIVATE int mkb_drive_cert_is_revoked(MKB *mkb, const uint8_t *cert_id);
 
 /* The Media Key block is of variable size but must be a multiple of 4
  * MKB Structure:

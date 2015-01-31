@@ -18,7 +18,7 @@
  */
 
 #include "file/keydbcfg.h"
-#include "util/logging.h"
+#include "util/strutl.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,7 +66,7 @@ static int print_title_entries(title_entry_list *list)
     if (!cursor->entry.discid)
       break;
 
-    printf("DISCID: %s\n", print_hex(tmp, cursor->entry.discid, 20));
+    printf("DISCID: %s\n", str_print_hex(tmp, cursor->entry.discid, 20));
     printf("  Title: %s\n", cursor->entry.title);
     printf("  Date: %u-%u-%u\n", cursor->entry.date.year,
       cursor->entry.date.month, cursor->entry.date.day);
@@ -112,8 +112,8 @@ static int print_cert_list(cert_list *list)
   cert_list *cursor = list;
   while (cursor)
   {
-    printf("  Host private key: %s\n", print_hex(tmp, cursor->host_priv_key, 20));
-    printf("  Host certificate: %s\n", print_hex(tmp, cursor->host_cert, 92));
+    printf("  Host private key: %s\n", str_print_hex(tmp, cursor->host_priv_key, 20));
+    printf("  Host certificate: %s\n", str_print_hex(tmp, cursor->host_cert, 92));
     printf("\n");
 
     cursor = cursor->next;
@@ -133,7 +133,7 @@ static int print_config_file(config_file *cfgfile)
   dk_list *dkcursor = cfgfile->dkl;
   while (dkcursor)
   {
-    printf("  Device key: %s\n", print_hex(tmp, dkcursor->key, 16));
+    printf("  Device key: %s\n", str_print_hex(tmp, dkcursor->key, 16));
     printf("  Device node: %lu\n", dkcursor->node);
 
     dkcursor = dkcursor->next;
@@ -146,7 +146,7 @@ static int print_config_file(config_file *cfgfile)
   pk_list *cursor = cfgfile->pkl;
   while (cursor)
   {
-    printf("  %s\n", print_hex(tmp, cursor->key, 16));
+    printf("  %s\n", str_print_hex(tmp, cursor->key, 16));
 
     cursor = cursor->next;
   }

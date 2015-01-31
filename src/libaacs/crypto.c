@@ -225,10 +225,10 @@ void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key,
 #define LOG_GCRY_ERROR(msg, func, err)                                  \
   char errstr[100] = {0};                                               \
   gpg_strerror_r(err, errstr, sizeof(errstr));                          \
-  DEBUG(DBG_AACS|DBG_CRIT, "%s: %s failed. error was: %s\n", func, msg, errstr);
+  BD_DEBUG(DBG_AACS|DBG_CRIT, "%s: %s failed. error was: %s\n", func, msg, errstr);
 #else
 #define LOG_GCRY_ERROR(msg, func, err)                                  \
-  DEBUG(DBG_AACS|DBG_CRIT, "%s: %s failed. error was: %s\n", func, msg, gcry_strerror(err));
+  BD_DEBUG(DBG_AACS|DBG_CRIT, "%s: %s failed. error was: %s\n", func, msg, gcry_strerror(err));
 #endif
 
 #define GCRY_VERIFY(msg, op)                                \
@@ -538,7 +538,7 @@ int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, ui
 int crypto_aacs_verify_cert(const uint8_t *cert)
 {
     if (MKINT_BE16(cert+2) != 0x5c) {
-        DEBUG(DBG_AACS, "Certificate length is invalid (0x%04x), expected 0x005c\n",
+        BD_DEBUG(DBG_AACS, "Certificate length is invalid (0x%04x), expected 0x005c\n",
               MKINT_BE16(cert+2));
         return 0;
     }
@@ -549,12 +549,12 @@ int crypto_aacs_verify_cert(const uint8_t *cert)
 int crypto_aacs_verify_host_cert(const uint8_t *cert)
 {
     if (cert[0] != 0x02) {
-        DEBUG(DBG_AACS, "Host certificate type is invalid (0x%02x), expected 0x01\n", cert[0]);
+        BD_DEBUG(DBG_AACS, "Host certificate type is invalid (0x%02x), expected 0x01\n", cert[0]);
         return 0;
     }
 
     if (!crypto_aacs_verify_cert(cert)) {
-        DEBUG(DBG_AACS, "Host certificate signature is invalid\n");
+        BD_DEBUG(DBG_AACS, "Host certificate signature is invalid\n");
         return 0;
     }
 
@@ -564,12 +564,12 @@ int crypto_aacs_verify_host_cert(const uint8_t *cert)
 int crypto_aacs_verify_drive_cert(const uint8_t *cert)
 {
     if (cert[0] != 0x01) {
-        DEBUG(DBG_AACS, "Drive certificate type is invalid (0x%02x), expected 0x01\n", cert[0]);
+        BD_DEBUG(DBG_AACS, "Drive certificate type is invalid (0x%02x), expected 0x01\n", cert[0]);
         return 0;
     }
 
     if (!crypto_aacs_verify_cert(cert)) {
-        DEBUG(DBG_AACS, "Drive certificate signature is invalid\n");
+        BD_DEBUG(DBG_AACS, "Drive certificate signature is invalid\n");
         return 0;
     }
 

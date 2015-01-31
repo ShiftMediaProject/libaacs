@@ -20,25 +20,31 @@
 #ifndef FILE_H_
 #define FILE_H_
 
-#include "filesystem.h"
+#include "util/attributes.h"
 
-#include <util/attributes.h>
+#include "filesystem.h"
 
 #include <stdint.h>
 
-//#ifdef __LINUX__
-#define DIR_SEP "/"
-//#endif
+#ifdef _WIN32
+# define DIR_SEP "\\"
+# define DIR_SEP_CHAR '\\'
+#else
+# define DIR_SEP "/"
+# define DIR_SEP_CHAR '/'
+#endif
+
+/*
+ * file access
+ */
 
 #define file_close(X) X->close(X)
 #define file_seek(X,Y,Z) X->seek(X,Y,Z)
 #define file_tell(X) X->tell(X)
-#define file_eof(X) X->eof(X)
 #define file_read(X,Y,Z) X->read(X,Y,Z)
-#define file_write(X,Y,Z) X->write(X,Y,Z)
 
 
-AACS_PRIVATE extern AACS_FILE_H *(*file_open)(const char* filename, const char *mode);
+BD_PRIVATE extern AACS_FILE_H *(*file_open)(const char* filename, const char *mode);
 
 
 #endif /* FILE_H_ */

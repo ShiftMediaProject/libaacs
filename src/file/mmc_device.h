@@ -1,6 +1,7 @@
 /*
- * This file is part of libbluray
- * Copyright (C) 2011-2013  VideoLAN
+ * This file is part of libaacs
+ * Copyright (C) 2009-2010  Obliter0n
+ * Copyright (C) 2010-2015  npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,23 +18,19 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef BLURAY_DIRS_H
-#define BLURAY_DIRS_H
+#ifndef MMC_DEVICE_H_
+#define MMC_DEVICE_H_
 
 #include "util/attributes.h"
 
-#ifdef _WIN32
-BD_PRIVATE int         win32_mkdir(const char *dir);
-#endif
+#include <stdint.h>
+#include <stddef.h>
 
-/*
- * Config, cache and data dirs
- */
+typedef struct mmcdev MMCDEV;
 
-BD_PRIVATE const char *file_get_config_system(const char *dir);
+BD_PRIVATE MMCDEV *device_open(const char *path);
+BD_PRIVATE void    device_close(MMCDEV **mmc);
 
-BD_PRIVATE char *file_get_config_home(void) BD_ATTR_MALLOC;
-BD_PRIVATE char *file_get_cache_home(void) BD_ATTR_MALLOC;
-BD_PRIVATE char *file_get_data_home(void) BD_ATTR_MALLOC;
+BD_PRIVATE int     device_send_cmd(MMCDEV *dev, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t rx);
 
-#endif
+#endif /* MMC_DEVICE_H_ */
