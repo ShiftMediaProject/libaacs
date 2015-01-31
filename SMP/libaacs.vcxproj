@@ -62,6 +62,7 @@
     <ClCompile Include="..\src\file\dirs_win32.c" />
     <ClCompile Include="..\src\file\file_posix.c" />
     <ClCompile Include="..\src\file\keydbcfg.c" />
+    <ClCompile Include="..\src\file\mmc_device_win32.c" />
     <ClCompile Include="..\src\libaacs\aacs.c" />
     <ClCompile Include="..\src\libaacs\crypto.c" />
     <ClCompile Include="..\src\libaacs\mkb.c" />
@@ -77,6 +78,7 @@
     <ClInclude Include="..\src\file\filesystem.h" />
     <ClInclude Include="..\src\file\keydb.h" />
     <ClInclude Include="..\src\file\keydbcfg.h" />
+    <ClInclude Include="..\src\file\mmc_device.h" />
     <ClInclude Include="..\src\file\path.h" />
     <ClInclude Include="..\src\libaacs\aacs.h" />
     <ClInclude Include="..\src\libaacs\crypto.h" />

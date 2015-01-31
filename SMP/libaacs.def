@@ -13,6 +13,10 @@ EXPORTS
     aacs_get_pmsn
     aacs_get_version
     aacs_get_vid
+    aacs_init
     aacs_open
     aacs_open2
+    aacs_open_device
+    aacs_register_file
     aacs_select_title
+    aacs_set_fopen

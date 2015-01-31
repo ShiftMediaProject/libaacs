@@ -63,6 +63,9 @@
     <ClCompile Include="src\file\keydbcfg-parser.c">
       <Filter>Source Files\file</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\file\mmc_device_win32.c">
+      <Filter>Source Files\file</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\libaacs\aacs.h">
@@ -112,6 +115,9 @@
     </ClInclude>
     <ClInclude Include="src\libaacs\aacs-version.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\file\mmc_device.h">
+      <Filter>Header Files\file</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
