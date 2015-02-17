@@ -32,9 +32,13 @@
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
+
 #include <gcrypt.h>
+
 #ifdef HAVE_PTHREAD_H
+#if GCRYPT_VERSION_NUMBER < 0x010600
 #include <pthread.h>
+#endif
 #endif
 
 /* elliptic curve from AACS specs */
@@ -52,7 +56,9 @@
 
 /* Use pthread in libgcrypt */
 #ifdef HAVE_PTHREAD_H
+# if GCRYPT_VERSION_NUMBER < 0x010600
 GCRY_THREAD_OPTION_PTHREAD_IMPL;
+# endif
 #endif
 
 /* include some elliptic curve utils from libgcrypt */
@@ -121,7 +127,9 @@ int crypto_init()
     if (!crypto_init_check) {
         crypto_init_check = 1;
 #ifdef HAVE_PTHREAD_H
+# if GCRYPT_VERSION_NUMBER < 0x010600
         gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+# endif
 #endif
         if (!gcry_check_version(GCRYPT_VERSION)) {
             crypto_init_check = 0;
