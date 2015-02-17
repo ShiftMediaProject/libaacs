@@ -109,16 +109,20 @@ AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
 dnl required libraries
 
-dnl pthread check (not on win32)
-AS_IF([test "${SYS}" != "mingw32"], [
-  AC_CHECK_HEADERS([pthread.h], ,
-    [AC_MSG_ERROR([pthread required])])
-  AC_SEARCH_LIBS([pthread_create], [pthread], ,
-    [AC_MSG_ERROR([pthread required])])
-])
-
 dnl gcrypt check
-AM_PATH_LIBGCRYPT([1.1.94],, AC_MSG_ERROR([libgcrypt not found on system]))
+AM_PATH_LIBGCRYPT([1.6.0], [have_gcrypt=yes])
+AS_IF([test "x$have_gcrypt" != xyes],[
+    dnl older gcrypt requires pthread
+    AM_PATH_LIBGCRYPT([1.1.94],,
+                      AC_MSG_ERROR([libgcrypt not found on system]))
+    dnl pthread check (not on win32)
+    AS_IF([test "${SYS}" != "mingw32"], [
+        AC_CHECK_HEADERS([pthread.h], ,
+            [AC_MSG_ERROR([pthread required])])
+        AC_SEARCH_LIBS([pthread_create], [pthread], ,
+            [AC_MSG_ERROR([pthread required])])
+        ])
+    ])
 
 dnl use re-entrant version of gcrypt_error() from gpg-error
 AC_FUNC_STRERROR_R
