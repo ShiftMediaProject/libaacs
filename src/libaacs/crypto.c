@@ -36,7 +36,6 @@
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
-#include <errno.h>
 
 /* elliptic curve from AACS specs */
 #define AACS_EC_p   "9DC9D81355ECCEB560BDB09EF9EAE7C479A7D7DF"
