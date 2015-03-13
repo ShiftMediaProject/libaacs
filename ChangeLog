@@ -1,3 +1,4 @@
+2015-03-13: Version 0.8.1
  - Accept NULL mount / device path when application handles file system access.
  - Fix FreeBSD build.
  - Do not require pthread with gcrypt >= 1.6.0.
