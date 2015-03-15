@@ -38,6 +38,7 @@
 #ifdef HAVE_PTHREAD_H
 #if GCRYPT_VERSION_NUMBER < 0x010600
 #include <pthread.h>
+#include <errno.h>
 #endif
 #endif
 
