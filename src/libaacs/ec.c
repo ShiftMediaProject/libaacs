@@ -22,7 +22,9 @@
 #define mpi_alloc_like(m)   gcry_mpi_new(0)
 #define mpi_alloc_set_ui(u) gcry_mpi_set_ui(gcry_mpi_new(0), u)
 #define mpi_free(m)         gcry_mpi_release(m)
+#ifndef mpi_is_neg
 #define mpi_is_neg(m)      (mpi_cmp_ui(m, 0) < 0)
+#endif
 #define DIM(t)             (sizeof(t)/sizeof(t[0]))
 
 /************************************ mpi.h ***********************************/

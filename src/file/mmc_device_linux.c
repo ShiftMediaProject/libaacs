@@ -32,6 +32,7 @@
 #include "util/strutl.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -115,7 +116,6 @@ MMCDEV *device_open(const char *path)
     struct stat st;
     int         fd = -1;
     MMCDEV     *dev = NULL;
-    FILE       *proc_mounts;
 
     /* resolve path */
     if (!aacs_resolve_path(path, resolved_path)) {
@@ -153,6 +153,7 @@ MMCDEV *device_open(const char *path)
 #if defined(HAVE_MNTENT_H)
     if (fd < 0) {
         /* resolve mount point to block device */
+        FILE *proc_mounts;
         if ((proc_mounts = setmntent("/proc/mounts", "r"))) {
             struct mntent* mount_entry;
 
@@ -180,8 +181,8 @@ MMCDEV *device_open(const char *path)
         } else {
             BD_DEBUG(DBG_MMC | DBG_CRIT, "Error opening /proc/mounts\n");
         }
-#endif
     }
+#endif
 
     if (fd >= 0) {
         dev = calloc(1, sizeof(MMCDEV));

@@ -382,6 +382,9 @@ static AACS_FILE_H *_file_open(AACS *aacs, const char *file)
     if (aacs->fopen) {
         return aacs->fopen(aacs->fopen_handle, file);
     }
+    if (!aacs->path) {
+        return NULL;
+    }
 
     f_name = str_printf("%s" DIR_SEP "%s", aacs->path, file);
     fp = file_open(f_name, "rb");
@@ -1005,7 +1008,7 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
     config_file *cf;
     int error_code;
 
-    aacs->path = str_printf("%s", path);
+    aacs->path = path ? str_printf("%s", path) : NULL;
 
     error_code = _calc_title_hash(aacs);
     if (error_code != AACS_SUCCESS) {

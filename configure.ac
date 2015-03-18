@@ -1,7 +1,7 @@
 dnl library version number
 m4_define([aacs_major], 0)
 m4_define([aacs_minor], 8)
-m4_define([aacs_micro], 0)
+m4_define([aacs_micro], 1)
 m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 
 dnl shared library version (.so version)
@@ -16,7 +16,7 @@ dnl Library file name will be libaacs.(current-age).age.revision
 
 m4_define([lt_current],  5)
 m4_define([lt_age],      5)
-m4_define([lt_revision], 0)
+m4_define([lt_revision], 1)
 
 dnl initilization
 AC_INIT([libaacs], aacs_version, [http://www.videolan.org/developers/libaacs.html])
@@ -109,59 +109,25 @@ AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
 dnl required libraries
 
-dnl pthread check (not on win32)
-AS_IF([test "${SYS}" != "mingw32"], [
-  AC_CHECK_HEADERS([pthread.h], ,
-    [AC_MSG_ERROR([pthread required])])
-  AC_SEARCH_LIBS([pthread_create], [pthread], ,
-    [AC_MSG_ERROR([pthread required])])
-])
-
 dnl gcrypt check
-
-AC_ARG_WITH(libgcrypt-prefix,
-            AC_HELP_STRING([--with-libgcrypt-prefix=PFX],
-                           [prefix where libgcrypt is installed (optional)]),
-     libgcrypt_config_prefix="$withval", libgcrypt_config_prefix="")
-if test x$libgcrypt_config_prefix != x ; then
-   if test x${LIBGCRYPT_CONFIG+set} != xset ; then
-      LIBGCRYPT_CONFIG=$libgcrypt_config_prefix/bin/libgcrypt-config
-   fi
-fi
-
-AC_PATH_PROG(LIBGCRYPT_CONFIG, libgcrypt-config, no)
-if test x"$LIBGCRYPT_CONFIG" = xno; then
-  AC_MSG_ERROR([libgcrypt not found on system])
-else
-  LIBGCRYPT_CFLAGS=`$LIBGCRYPT_CONFIG --cflags`
-  LIBGCRYPT_LIBS=`$LIBGCRYPT_CONFIG --libs`
-  AC_SUBST(LIBGCRYPT_CFLAGS)
-  AC_SUBST(LIBGCRYPT_LIBS)
-fi
-AC_FUNC_STRERROR_R
+AM_PATH_LIBGCRYPT([1.6.0], [have_gcrypt=yes])
+AS_IF([test "x$have_gcrypt" != xyes],[
+    dnl older gcrypt requires pthread
+    AM_PATH_LIBGCRYPT([1.1.94],,
+                      AC_MSG_ERROR([libgcrypt not found on system]))
+    dnl pthread check (not on win32)
+    AS_IF([test "${SYS}" != "mingw32"], [
+        AC_CHECK_HEADERS([pthread.h], ,
+            [AC_MSG_ERROR([pthread required])])
+        AC_SEARCH_LIBS([pthread_create], [pthread], ,
+            [AC_MSG_ERROR([pthread required])])
+        ])
+    ])
 
 dnl use re-entrant version of gcrypt_error() from gpg-error
-
-AC_ARG_WITH(gpg-error-prefix,
-            AC_HELP_STRING([--with-gpg-error-prefix=PFX],
-                           [prefix where gpg-error is installed (optional)]),
-     gpg_error_config_prefix="$withval", gpg_error_config_prefix="")
-if test x$gpg_error_config_prefix != x ; then
-   if test x${GPG_ERROR_CONFIG+set} != xset ; then
-      GPG_ERROR_CONFIG=$gpg_error_config_prefix/bin/gpg-error-config
-   fi
-fi
-
-AC_PATH_PROG(GPG_ERROR_CONFIG, gpg-error-config, no)
-if test x"$GPG_ERROR_CONFIG" = xno; then
-  AC_MSG_ERROR([gpg-error not found on system])
-else
-  GPG_ERROR_CFLAGS=`$GPG_ERROR_CONFIG --cflags`
-  GPG_ERROR_LIBS=`$GPG_ERROR_CONFIG --libs`
-  AC_SUBST(GPG_ERROR_CFLAGS)
-  AC_SUBST(GPG_ERROR_LIBS)
-  AC_DEFINE(HAVE_LIBGPG_ERROR, 1, [Define to 1 if you have the gpg-error library])
-fi
+AC_FUNC_STRERROR_R
+AM_PATH_GPG_ERROR([0.5],
+                  AC_DEFINE(HAVE_LIBGPG_ERROR, 1, [Define to 1 if you have the gpg-error library]))
 
 CC_CHECK_CFLAGS_APPEND([-Wall -Wdisabled-optimization -Wpointer-arith ]dnl
 [-Wredundant-decls -Wcast-qual -Wwrite-strings -Wtype-limits -Wundef ]dnl
