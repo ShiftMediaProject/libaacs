@@ -11,13 +11,13 @@ AM_YFLAGS = -d -p libaacs_yy
 lib_LTLIBRARIES = libaacs.la
 libaacs_la_SOURCES=\
 	src/libaacs/aacs.h \
-	src/libaacs/mmc.h \
-	src/libaacs/mkb.h \
 	src/libaacs/aacs.c \
-	src/libaacs/mmc.c \
-	src/libaacs/crypto.c \
 	src/libaacs/crypto.h \
+	src/libaacs/crypto.c \
+	src/libaacs/mkb.h \
 	src/libaacs/mkb.c \
+	src/libaacs/mmc.h \
+	src/libaacs/mmc.c \
 	src/file/dirs.h \
 	src/file/file.h \
 	src/file/filesystem.h \
