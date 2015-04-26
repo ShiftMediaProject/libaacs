@@ -114,6 +114,9 @@ int main (int argc, char **argv)
     const uint8_t *pmsn = aacs_get_pmsn(aacs);
     const int      bec  = aacs_get_bus_encryption(aacs);
     const uint8_t *binding_id = aacs_get_device_binding_id(aacs);
+    const uint8_t *bdj_hash   = aacs_get_bdj_root_cert_hash(aacs);
+    const uint8_t *cc_id      = aacs_get_content_cert_id(aacs);
+
     printf("Disc ID: %s\n", id  ? _hex2str(id,  20) : "???");
     printf("VID    : %s\n", vid ? _hex2str(vid, 16) : "???");
     printf("MKBv   : %d\n", aacs_get_mkb_version(aacs));
@@ -121,7 +124,10 @@ int main (int argc, char **argv)
     printf("Bus encryption:\n");
     printf("  Device support:   %s\n", (bec & AACS_BUS_ENCRYPTION_CAPABLE) ? "yes" : "no");
     printf("  Enabled in media: %s\n", (bec & AACS_BUS_ENCRYPTION_ENABLED) ? "yes" : "no");
-    printf("Device binding ID:  %s\n", binding_id ? _hex2str(binding_id, 16) : "???");
+    printf("Content Certificate ID: %s\n", cc_id      ? _hex2str(cc_id,      6)  : "???");
+    printf("BD-J Root Cert hash:    %s\n", bdj_hash   ? _hex2str(bdj_hash,   20) : "???");
+    printf("Device binding ID:      %s\n", binding_id ? _hex2str(binding_id, 16) : "???");
+
 
     aacs_close(aacs);
 

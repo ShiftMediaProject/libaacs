@@ -29,6 +29,9 @@ typedef struct content_cert CONTENT_CERT;
 
 struct content_cert {
     uint8_t bus_encryption_enabled_flag;
+
+    uint8_t cc_id[6];
+    uint8_t bdj_root_cert_hash[20];
 };
 
 

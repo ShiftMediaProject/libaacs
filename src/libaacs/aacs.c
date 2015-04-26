@@ -1179,6 +1179,22 @@ const uint8_t *aacs_get_disc_id(AACS *aacs)
     return aacs->disc_id;
 }
 
+const uint8_t *aacs_get_content_cert_id(AACS *aacs)
+{
+    if (aacs && aacs->cc) {
+        return aacs->cc->cc_id;
+    }
+    return NULL;
+}
+
+const uint8_t *aacs_get_bdj_root_cert_hash(AACS *aacs)
+{
+    if (aacs && aacs->cc) {
+        return aacs->cc->bdj_root_cert_hash;
+    }
+    return NULL;
+}
+
 const uint8_t *aacs_get_mk(AACS *aacs)
 {
     if (!memcmp(aacs->mk, empty_key, 16)) {
