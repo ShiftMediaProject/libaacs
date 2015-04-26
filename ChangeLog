@@ -1,3 +1,4 @@
+- Verify content certificate signature.
 - Fix build with gcrypt < 1.6.0.
 
 2015-03-13: Version 0.8.1

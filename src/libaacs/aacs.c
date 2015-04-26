@@ -26,6 +26,7 @@
 
 #include "aacs-version.h"
 #include "aacs.h"
+#include "content_cert.h"
 #include "crypto.h"
 #include "mmc.h"
 #include "mkb.h"
@@ -80,6 +81,9 @@ struct aacs {
     int       bee;        /* bus encryption enabled flag in content certificate */
     int       bec;        /* bus encryption capable flag in drive certificate */
     uint8_t   read_data_key[16];
+
+    /* content certificate */
+    CONTENT_CERT *cc;
 
     /* AACS Online (BD-J) */
     uint8_t   device_nonce[16];
@@ -843,27 +847,73 @@ static int _calc_title_hash(AACS *aacs)
     return result;
 }
 
-static int _get_bus_encryption_enabled(AACS *aacs)
+static size_t _read_file(AACS *aacs, const char *file, void **data)
 {
     AACS_FILE_H *fp = NULL;
-    uint8_t buf[2];
-    int bee = 0;
+    int64_t f_size;
 
-    fp = _file_open(aacs, "AACS" DIR_SEP "Content000.cer");
+    *data = NULL;
+
+    fp = _file_open(aacs, file);
     if (!fp) {
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to open content certificate (AACS/Content000.cer)\n");
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to open %s\n", file);
         return 0;
     }
 
-    if (file_read(fp, buf, 2) == 2) {
-        bee = (buf[1] & 0x80) >> 7;
-        BD_DEBUG(DBG_AACS, "Bus Encryption Enabled flag in content certificate: %d\n", bee);
+    file_seek(fp, 0, SEEK_END);
+    f_size = file_tell(fp);
+    file_seek(fp, 0, SEEK_SET);
+
+    *data = malloc(f_size);
+    if (*data) {
+        if (file_read(fp, *data, f_size) != f_size) {
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed reading %s\n", file);
+            X_FREE(*data);
+        }
     } else {
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed to read Bus Encryption Enabled flag from content certificate file\n");
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Out of memory\n");
     }
 
     file_close(fp);
-    return bee;
+
+    return *data ? f_size : 0;
+}
+
+static CONTENT_CERT *_read_cc_any(AACS *aacs)
+{
+    CONTENT_CERT *cc = NULL;
+    void   *data;
+    size_t  size;
+
+    size = _read_file(aacs, "AACS" DIR_SEP "Content000.cer", &data);
+    if (!size) {
+        size = _read_file(aacs, "AACS" DIR_SEP "Content001.cer", &data);
+    }
+
+    if (size) {
+        cc = cc_parse(data, size);
+        X_FREE(data);
+    } else {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed to read content certificate file\n");
+    }
+
+    return cc;
+}
+
+static int _get_bus_encryption_enabled(AACS *aacs)
+{
+    if (!aacs->cc) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed to read Bus Encryption Enabled flag from content certificate file\n");
+        return 0;
+    }
+
+    if (aacs->cc->bus_encryption_enabled_flag) {
+        BD_DEBUG(DBG_AACS, "Bus Encryption Enabled flag in content certificate: %d\n",
+                 aacs->cc->bus_encryption_enabled_flag);
+        return 1;
+    }
+
+    return 0;
 }
 
 static int _get_bus_encryption_capable(const char *path)
@@ -1023,6 +1073,8 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
         BD_DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
     }
 
+    aacs->cc = _read_cc_any(aacs);
+
     aacs->bee = _get_bus_encryption_enabled(aacs);
     aacs->bec = _get_bus_encryption_capable(path);
 
@@ -1058,6 +1110,8 @@ void aacs_close(AACS *aacs)
     X_FREE(aacs->uks);
     X_FREE(aacs->cps_units);
     X_FREE(aacs->path);
+
+    cc_free(&aacs->cc);
 
     BD_DEBUG(DBG_AACS, "AACS destroyed!\n");
 
