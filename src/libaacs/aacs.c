@@ -397,6 +397,38 @@ static AACS_FILE_H *_file_open(AACS *aacs, const char *file)
     return fp;
 }
 
+static size_t _read_file(AACS *aacs, const char *file, void **data)
+{
+    AACS_FILE_H *fp = NULL;
+    int64_t f_size;
+
+    *data = NULL;
+
+    fp = _file_open(aacs, file);
+    if (!fp) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to open %s\n", file);
+        return 0;
+    }
+
+    file_seek(fp, 0, SEEK_END);
+    f_size = file_tell(fp);
+    file_seek(fp, 0, SEEK_SET);
+
+    *data = malloc(f_size);
+    if (*data) {
+        if (file_read(fp, *data, f_size) != f_size) {
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed reading %s\n", file);
+            X_FREE(*data);
+        }
+    } else {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Out of memory\n");
+    }
+
+    file_close(fp);
+
+    return *data ? f_size : 0;
+}
+
 static MKB *_mkb_open(AACS *aacs)
 {
     AACS_FILE_H *fp;
@@ -845,38 +877,6 @@ static int _calc_title_hash(AACS *aacs)
     X_FREE(ukf_buf);
 
     return result;
-}
-
-static size_t _read_file(AACS *aacs, const char *file, void **data)
-{
-    AACS_FILE_H *fp = NULL;
-    int64_t f_size;
-
-    *data = NULL;
-
-    fp = _file_open(aacs, file);
-    if (!fp) {
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to open %s\n", file);
-        return 0;
-    }
-
-    file_seek(fp, 0, SEEK_END);
-    f_size = file_tell(fp);
-    file_seek(fp, 0, SEEK_SET);
-
-    *data = malloc(f_size);
-    if (*data) {
-        if (file_read(fp, *data, f_size) != f_size) {
-            BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed reading %s\n", file);
-            X_FREE(*data);
-        }
-    } else {
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Out of memory\n");
-    }
-
-    file_close(fp);
-
-    return *data ? f_size : 0;
 }
 
 static CONTENT_CERT *_read_cc_any(AACS *aacs)
