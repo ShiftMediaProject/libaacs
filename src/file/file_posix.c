@@ -31,6 +31,7 @@
 #include "util/logging.h"
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 
 static void file_close_linux(AACS_FILE_H *file)
@@ -64,6 +65,11 @@ static int64_t file_tell_linux(AACS_FILE_H *file)
 
 static int64_t file_read_linux(AACS_FILE_H *file, uint8_t *buf, int64_t size)
 {
+    if (size <= 0 || size >= BD_MAX_SSIZE) {
+        BD_DEBUG(DBG_FILE | DBG_CRIT, "Ignoring invalid read of size %"PRId64" (%p)\n", size, (void*)file);
+        return 0;
+    }
+
     return fread(buf, 1, size, (FILE *)file->internal);
 }
 

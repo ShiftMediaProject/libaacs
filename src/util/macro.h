@@ -30,4 +30,6 @@
 
 #define X_FREE(X)     ( free(X), X = NULL )
 
+#define BD_MAX_SSIZE ((int64_t)(((size_t)-1)>>1))
+
 #endif /* MACRO_H_ */
