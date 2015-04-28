@@ -153,9 +153,9 @@ int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size)
   return 1;
 }
 
-char * str_dup(const char *str)
+char *str_dup(const char *str)
 {
-  return str ? strcpy (malloc(strlen(str) + 1), str) : NULL;
+    return str ? strcpy (malloc(strlen(str) + 1), str) : NULL;
 }
 
 char *str_printf(const char *fmt, ...)
@@ -167,8 +167,7 @@ char *str_printf(const char *fmt, ...)
     char   *tmp, *str;
 
     str = malloc(size);
-    while (1)
-    {
+    while (1) {
         /* Try to print in the allocated space. */
         va_start(ap, fmt);
         len = vsnprintf(str, size, fmt, ap);
