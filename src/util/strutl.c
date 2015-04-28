@@ -164,10 +164,17 @@ char *str_printf(const char *fmt, ...)
     va_list ap;
     int     len;
     int     size = 100;
-    char   *tmp, *str;
+    char   *tmp, *str = NULL;
 
-    str = malloc(size);
     while (1) {
+
+        tmp = realloc(str, size);
+        if (tmp == NULL) {
+            X_FREE(str);
+            return NULL;
+        }
+        str = tmp;
+
         /* Try to print in the allocated space. */
         va_start(ap, fmt);
         len = vsnprintf(str, size, fmt, ap);
@@ -183,12 +190,6 @@ char *str_printf(const char *fmt, ...)
             size = len+1; /* precisely what is needed */
         else           /* glibc 2.0 */
             size *= 2;  /* twice the old size */
-
-        tmp = realloc(str, size);
-        if (tmp == NULL) {
-            return str;
-        }
-        str = tmp;
     }
 }
 
