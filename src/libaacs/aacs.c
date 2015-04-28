@@ -846,35 +846,21 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
 static int _calc_title_hash(AACS *aacs)
 {
-    AACS_FILE_H *fp = NULL;
-    uint8_t *ukf_buf;
+    void    *data;
+    size_t   size;
     char     str[48];
-    int64_t  f_size;
     int      result = AACS_SUCCESS;
 
-    fp = _file_open(aacs, "AACS" DIR_SEP "Unit_Key_RO.inf");
-    if (!fp) {
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Error opening unit key file (AACS/Unit_Key_RO.inf)\n");
-        return AACS_ERROR_CORRUPTED_DISC;
-    }
-
-    file_seek(fp, 0, SEEK_END);
-    f_size = file_tell(fp);
-    file_seek(fp, 0, SEEK_SET);
-
-    ukf_buf = malloc(f_size);
-
-    if ((file_read(fp, ukf_buf, f_size)) == f_size) {
-        crypto_aacs_title_hash(ukf_buf, f_size, aacs->disc_id);
+    size = _read_file(aacs, "AACS" DIR_SEP "Unit_Key_RO.inf", &data);
+    if (size) {
+        crypto_aacs_title_hash(data, size, aacs->disc_id);
         BD_DEBUG(DBG_AACS, "Disc ID: %s\n", str_print_hex(str, aacs->disc_id, 20));
+        X_FREE(data);
 
     } else {
         result = AACS_ERROR_CORRUPTED_DISC;
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed to read %lu bytes from unit key file (AACS/Unit_Key_RO.inf)", (unsigned long)f_size);
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed to read %lu bytes from unit key file (AACS/Unit_Key_RO.inf)", (unsigned long)size);
     }
-
-    file_close(fp);
-    X_FREE(ukf_buf);
 
     return result;
 }
