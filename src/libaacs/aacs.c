@@ -863,6 +863,10 @@ static int _calc_title_hash(AACS *aacs)
     int      result = AACS_SUCCESS;
 
     size = _read_file(aacs, "AACS" DIR_SEP "Unit_Key_RO.inf", &data);
+    if (!size) {
+        size = _read_file(aacs, "AACS" DIR_SEP "DUPLICATE" DIR_SEP "Unit_Key_RO.inf", &data);
+    }
+
     if (size) {
         crypto_aacs_title_hash(data, size, aacs->disc_id);
         BD_DEBUG(DBG_AACS, "Disc ID: %s\n", str_print_hex(str, aacs->disc_id, 20));
