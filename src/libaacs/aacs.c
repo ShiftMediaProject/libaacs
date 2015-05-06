@@ -404,6 +404,7 @@ static size_t _read_file(AACS *aacs, const char *file, void **data)
 {
     AACS_FILE_H *fp = NULL;
     int64_t f_size;
+    size_t size;
 
     *data = NULL;
 
@@ -414,13 +415,14 @@ static size_t _read_file(AACS *aacs, const char *file, void **data)
     }
 
     f_size = file_size(fp);
-    if (f_size <= 0) {
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid size %"PRId64" for %s\n", file);
+    size = f_size;
+    if (f_size <= 0 || f_size != (int64_t)size) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid size %"PRId64" for %s\n", f_size, file);
         file_close(fp);
         return 0;
     }
 
-    *data = malloc(f_size);
+    *data = malloc(size);
     if (*data) {
         if (file_read(fp, *data, f_size) != f_size) {
             BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed reading %s\n", file);
@@ -432,7 +434,7 @@ static size_t _read_file(AACS *aacs, const char *file, void **data)
 
     file_close(fp);
 
-    return *data ? f_size : 0;
+    return *data ? size : 0;
 }
 
 static MKB *_mkb_open(AACS *aacs)
