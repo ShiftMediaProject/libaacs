@@ -23,7 +23,7 @@ libaacs_la_SOURCES=\
 	src/file/dirs.h \
 	src/file/file.h \
 	src/file/filesystem.h \
-	src/file/file_posix.c \
+	src/file/filesystem.c \
 	src/file/keydbcfg.c \
 	src/file/keydbcfg.h \
 	src/file/keydb.h \
@@ -44,15 +44,18 @@ EXTRA_libaacs_la_SOURCES=\
 if HAVE_DARWIN
 libaacs_la_SOURCES+= \
 	src/file/dirs_darwin.c \
+	src/file/file_posix.c \
 	src/file/mmc_device_darwin.c
 else
 if HAVE_WIN32
 libaacs_la_SOURCES+= \
 	src/file/dirs_win32.c \
+	src/file/file_win32.c \
 	src/file/mmc_device_win32.c
 else
 libaacs_la_SOURCES+= \
 	src/file/dirs_xdg.c \
+	src/file/file_posix.c \
 	src/file/mmc_device_linux.c \
 	src/file/path.c
 endif
