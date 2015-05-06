@@ -46,5 +46,10 @@
 
 BD_PRIVATE extern AACS_FILE_H *(*file_open)(const char* filename, const char *mode);
 
+/*
+ * local filesystem
+ */
+
+BD_PRIVATE int file_mkdir(const char *dir);
 
 #endif /* FILE_H_ */

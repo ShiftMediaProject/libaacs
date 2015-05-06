@@ -34,14 +34,6 @@
 #include <direct.h>
 
 
-int win32_mkdir(const char *dir)
-{
-    wchar_t wdir[MAX_PATH];
-
-    MultiByteToWideChar(CP_UTF8, 0, dir, -1, wdir, MAX_PATH);
-    return _wmkdir(wdir);
-}
-
 char *file_get_config_home(void)
 {
     return file_get_data_home();

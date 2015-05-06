@@ -112,3 +112,13 @@ static AACS_FILE_H *_file_open(const char* filename, const char *mode)
 }
 
 AACS_FILE_H* (*file_open)(const char* filename, const char *mode) = _file_open;
+
+int file_mkdir(const char *dir)
+{
+    wchar_t wdir[MAX_PATH];
+
+    MultiByteToWideChar(CP_UTF8, 0, dir, -1, wdir, MAX_PATH);
+    if (!CreateDirectoryW(wdir, NULL))
+        return -1;
+    return 0;
+}

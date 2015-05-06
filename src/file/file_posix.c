@@ -29,6 +29,9 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 static void file_close_linux(AACS_FILE_H *file)
 {
     if (file) {
@@ -85,3 +88,8 @@ static AACS_FILE_H *file_open_linux(const char* filename, const char *mode)
 }
 
 AACS_FILE_H* (*file_open)(const char* filename, const char *mode) = file_open_linux;
+
+int file_mkdir(const char *dir)
+{
+    return mkdir(dir, S_IRWXU);
+}

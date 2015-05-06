@@ -20,6 +20,7 @@
 #include "keydbcfg.h"
 
 #include "dirs.h"
+#include "file.h"
 
 #include "util/strutl.h"
 #include "util/logging.h"
@@ -30,15 +31,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
-#ifdef _WIN32
-# define mkdir(p,m) win32_mkdir(p)
-# define DIR_SEP_CHAR '\\'
-# define DIR_SEP      "\\"
-#else
-# define DIR_SEP_CHAR '/'
-# define DIR_SEP      "/"
-#endif
 
 
 #define CFG_DIR        "aacs"
@@ -73,7 +65,7 @@ static int _mkpath(const char *path)
         if (stat(dir, &s) != 0 || !S_ISDIR(s.st_mode)) {
             BD_DEBUG(DBG_FILE, "Creating directory %s\n", dir);
 
-            if (mkdir(dir, S_IRWXU|S_IRWXG|S_IRWXO) == -1) {
+            if (file_mkdir(dir) == -1) {
                 BD_DEBUG(DBG_FILE | DBG_CRIT, "Error creating directory %s\n", dir);
                 result = 0;
                 break;
