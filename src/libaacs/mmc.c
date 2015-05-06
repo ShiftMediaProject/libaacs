@@ -255,9 +255,15 @@ static uint8_t *_mmc_read_mkb(MMC *mmc, uint8_t agid, int address, int *size)
     if (_mmc_report_disc_structure(mmc, agid, 0x83, layer, address, buf, sizeof(buf))) {
         unsigned pack, num_packs = buf[3];
         int32_t  len = MKINT_BE16(buf) - 2;
-        mkb = malloc(32768 * num_packs);
 
         BD_DEBUG(DBG_MMC, "got mkb: pack 0/%d %d bytes\n", num_packs, len);
+
+        mkb = malloc(32768 * num_packs);
+        if (!mkb) {
+              BD_DEBUG(DBG_MMC | DBG_CRIT, "out of memory\n");
+              return NULL;
+        }
+
         memcpy(mkb, buf + 4, len);
        *size += len;
 
@@ -347,6 +353,9 @@ MMC *mmc_open(const char *path)
     }
 
     mmc = calloc(1, sizeof(MMC));
+    if (!mmc) {
+        return NULL;
+    }
 
     crypto_create_nonce(mmc->host_nonce, sizeof(mmc->host_nonce));
 

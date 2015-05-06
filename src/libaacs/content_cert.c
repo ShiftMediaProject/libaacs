@@ -64,11 +64,11 @@ CONTENT_CERT *cc_parse(const void *data, size_t len)
     /* return useful data */
 
     CONTENT_CERT *c = calloc(1, sizeof(CONTENT_CERT));
-
-    c->bus_encryption_enabled_flag = p[1] >> 7;
-    memcpy(c->cc_id,              p + 14, 6);
-    memcpy(c->bdj_root_cert_hash, p + 46, 20);
-
+    if (c) {
+        c->bus_encryption_enabled_flag = p[1] >> 7;
+        memcpy(c->cc_id,              p + 14, 6);
+        memcpy(c->bdj_root_cert_hash, p + 46, 20);
+    }
     return c;
 }
 
