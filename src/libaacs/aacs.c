@@ -431,18 +431,21 @@ static size_t _read_file(AACS *aacs, const char *file, void **data)
 
 static MKB *_mkb_open(AACS *aacs)
 {
-    AACS_FILE_H *fp;
-    MKB         *mkb;
+    size_t  size;
+    void   *data;
+    MKB    *mkb;
 
-    fp = _file_open(aacs, "AACS" DIR_SEP "MKB_RO.inf");
-    if (!fp) {
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Error opening MKB file (AACS/MKB_RO.inf)\n");
+    size = _read_file(aacs, "AACS" DIR_SEP "MKB_RO.inf", &data);
+    if (size < 4) {
+        X_FREE(data);
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Error reading MKB file (AACS/MKB_RO.inf)\n");
         return NULL;
     }
 
-    mkb = mkb_read(fp);
-    file_close(fp);
-
+    mkb = mkb_init(data, size);
+    if (!mkb) {
+        X_FREE(data);
+    }
     return mkb;
 }
 

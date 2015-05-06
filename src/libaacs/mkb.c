@@ -18,7 +18,6 @@
  */
 
 #include "mkb.h"
-#include "file/file.h"
 #include "util/macro.h"
 #include "util/logging.h"
 #include "util/strutl.h"
@@ -54,30 +53,20 @@ static const uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
     return NULL;
 }
 
-MKB *mkb_read(AACS_FILE_H *fp)
+MKB *mkb_init(uint8_t *data, size_t len)
 {
     MKB *mkb = malloc(sizeof(MKB));
 
-    file_seek(fp, 0, SEEK_END);
-    mkb->size = file_tell(fp);
-    file_seek(fp, 0, SEEK_SET);
-
-    mkb->buf = malloc(mkb->size);
-
-    file_read(fp, mkb->buf, mkb->size);
-
-    BD_DEBUG(DBG_MKB, "MKB size: %u\n", (unsigned)mkb->size);
-    BD_DEBUG(DBG_MKB, "MKB version: %d\n", mkb_version(mkb));
-
-    return mkb;
-}
-
-MKB *mkb_init(uint8_t *data, int len)
-{
-    MKB *mkb = malloc(sizeof(MKB));
+    if (!mkb) {
+        BD_DEBUG(DBG_MKB | DBG_CRIT, "out of memory\n");
+        return NULL;
+    }
 
     mkb->size = len;
     mkb->buf  = data;
+
+    BD_DEBUG(DBG_MKB, "MKB size: %u\n", (unsigned)mkb->size);
+    BD_DEBUG(DBG_MKB, "MKB version: %d\n", mkb_version(mkb));
 
     return mkb;
 }
