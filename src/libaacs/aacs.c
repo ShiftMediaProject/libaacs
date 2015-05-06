@@ -1055,7 +1055,7 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
     config_file *cf;
     int error_code;
 
-    aacs->path = path ? str_printf("%s", path) : NULL;
+    aacs->path = path ? str_dup(path) : NULL;
 
     error_code = _calc_title_hash(aacs);
     if (error_code != AACS_SUCCESS) {
