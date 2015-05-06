@@ -20,9 +20,9 @@
 #ifndef FILE_H_
 #define FILE_H_
 
-#include "util/attributes.h"
-
 #include "filesystem.h"
+
+#include "util/attributes.h"
 
 #include <stdint.h>
 
@@ -38,9 +38,9 @@
  * file access
  */
 
-#define file_close(X) X->close(X)
+#define file_close(X)    X->close(X)
 #define file_seek(X,Y,Z) X->seek(X,Y,Z)
-#define file_tell(X) X->tell(X)
+#define file_tell(X)     X->tell(X)
 #define file_read(X,Y,Z) X->read(X,Y,Z)
 BD_PRIVATE int64_t file_size(AACS_FILE_H *fp);
 

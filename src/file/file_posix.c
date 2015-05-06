@@ -32,7 +32,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-static void file_close_linux(AACS_FILE_H *file)
+static void _file_close(AACS_FILE_H *file)
 {
     if (file) {
         fclose((FILE *)file->internal);
@@ -43,17 +43,17 @@ static void file_close_linux(AACS_FILE_H *file)
     }
 }
 
-static int64_t file_seek_linux(AACS_FILE_H *file, int64_t offset, int32_t origin)
+static int64_t _file_seek(AACS_FILE_H *file, int64_t offset, int32_t origin)
 {
     return fseeko((FILE *)file->internal, offset, origin);
 }
 
-static int64_t file_tell_linux(AACS_FILE_H *file)
+static int64_t _file_tell(AACS_FILE_H *file)
 {
     return ftello((FILE *)file->internal);
 }
 
-static int64_t file_read_linux(AACS_FILE_H *file, uint8_t *buf, int64_t size)
+static int64_t _file_read(AACS_FILE_H *file, uint8_t *buf, int64_t size)
 {
     if (size <= 0 || size >= BD_MAX_SSIZE) {
         BD_DEBUG(DBG_FILE | DBG_CRIT, "Ignoring invalid read of size %"PRId64" (%p)\n", size, (void*)file);
@@ -63,16 +63,16 @@ static int64_t file_read_linux(AACS_FILE_H *file, uint8_t *buf, int64_t size)
     return fread(buf, 1, size, (FILE *)file->internal);
 }
 
-static AACS_FILE_H *file_open_linux(const char* filename, const char *mode)
+static AACS_FILE_H *_file_open(const char* filename, const char *mode)
 {
     FILE *fp = NULL;
     AACS_FILE_H *file = calloc(1, sizeof(AACS_FILE_H));
 
     BD_DEBUG(DBG_FILE, "Opening LINUX file %s... (%p)\n", filename, (void*)file);
-    file->close = file_close_linux;
-    file->seek = file_seek_linux;
-    file->read = file_read_linux;
-    file->tell = file_tell_linux;
+    file->close = _file_close;
+    file->seek  = _file_seek;
+    file->read  = _file_read;
+    file->tell  = _file_tell;
 
     if ((fp = fopen(filename, mode))) {
         file->internal = fp;
@@ -87,7 +87,7 @@ static AACS_FILE_H *file_open_linux(const char* filename, const char *mode)
     return NULL;
 }
 
-AACS_FILE_H* (*file_open)(const char* filename, const char *mode) = file_open_linux;
+AACS_FILE_H* (*file_open)(const char* filename, const char *mode) = _file_open;
 
 int file_mkdir(const char *dir)
 {
