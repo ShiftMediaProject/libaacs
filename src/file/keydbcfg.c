@@ -534,42 +534,6 @@ int cache_remove(const char *name)
     return result;
 }
 
-void *cache_get_or_update(const char *type, const void *data, uint32_t *len, uint32_t version)
-{
-    uint32_t cache_len, cache_version;
-    uint8_t *cache_data = NULL;
-
-    /* get cache version */
-    cache_get(type, &cache_version, &cache_len, NULL);
-
-    /* if cached data is later, use it */
-    if (cache_len && cache_version > version) {
-        cache_data = malloc(cache_len);
-
-        if (cache_get(type, &cache_version, &cache_len, cache_data)) {
-            BD_DEBUG(DBG_AACS, "Using cached %s. Version: %d\n", type, cache_version);
-            *len = cache_len;
-            return cache_data;
-        }
-
-        /* read failed, fall back to older version */
-        X_FREE(cache_data);
-    }
-
-    if (data) {
-        cache_data = malloc(*len);
-        memcpy(cache_data, data, *len);
-
-        /* cached data is older, update cache */
-        if (cache_version < version) {
-            cache_save(type, version, data, *len);
-            BD_DEBUG(DBG_AACS, "Updated cached %s. Version: %d\n", type, version);
-        }
-    }
-
-    return cache_data;
-}
-
 int config_save(const char *name, const void *data, uint32_t len)
 {
     char *path = NULL;

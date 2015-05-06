@@ -131,8 +131,6 @@ BD_PRIVATE int cache_get(const char *name, uint32_t *version, uint32_t *len, voi
 BD_PRIVATE int cache_save(const char *name, uint32_t version, const void *data, uint32_t len);
 BD_PRIVATE int cache_remove(const char *name);
 
-BD_PRIVATE void *cache_get_or_update(const char *type, const void *data, uint32_t *len, uint32_t version);
-
 BD_PRIVATE int config_get(const char *name, uint32_t *len, void *buf); /* use buf=NULL to get size */
 BD_PRIVATE int config_save(const char *name, const void *data, uint32_t len);
 
