@@ -413,9 +413,12 @@ static size_t _read_file(AACS *aacs, const char *file, void **data)
         return 0;
     }
 
-    file_seek(fp, 0, SEEK_END);
-    f_size = file_tell(fp);
-    file_seek(fp, 0, SEEK_SET);
+    f_size = file_size(fp);
+    if (f_size <= 0) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid size %"PRId64" for %s\n", file);
+        file_close(fp);
+        return 0;
+    }
 
     *data = malloc(f_size);
     if (*data) {

@@ -1,6 +1,6 @@
 /*
- * This file is part of libaacs
- * Copyright (C) 2009-2010  Obliter0n
+ * This file is part of libbluray
+ * Copyright (C) 2014  VideoLAN
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,39 +17,25 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FILE_H_
-#define FILE_H_
-
-#include "util/attributes.h"
-
-#include "filesystem.h"
-
-#include <stdint.h>
-
-#ifdef _WIN32
-# define DIR_SEP "\\"
-# define DIR_SEP_CHAR '\\'
-#else
-# define DIR_SEP "/"
-# define DIR_SEP_CHAR '/'
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
-/*
- * file access
- */
+#include "file.h"
 
-#define file_close(X) X->close(X)
-#define file_seek(X,Y,Z) X->seek(X,Y,Z)
-#define file_tell(X) X->tell(X)
-#define file_read(X,Y,Z) X->read(X,Y,Z)
-BD_PRIVATE int64_t file_size(AACS_FILE_H *fp);
+#include <stdio.h>  // SEEK_*
 
-BD_PRIVATE extern AACS_FILE_H *(*file_open)(const char* filename, const char *mode);
 
-/*
- * local filesystem
- */
+int64_t file_size(AACS_FILE_H *fp)
+{
+    int64_t pos    = file_tell(fp);
+    int64_t res1   = file_seek(fp, 0, SEEK_END);
+    int64_t length = file_tell(fp);
+    int64_t res2   = file_seek(fp, pos, SEEK_SET);
 
-BD_PRIVATE int file_mkdir(const char *dir);
+    if (res1 < 0 || res2 < 0 || pos < 0 || length < 0) {
+        return -1;
+    }
 
-#endif /* FILE_H_ */
+    return length;
+}

@@ -22,6 +22,7 @@ libaacs_la_SOURCES=\
 	src/libaacs/mmc.c \
 	src/file/dirs.h \
 	src/file/file.h \
+	src/file/file.c \
 	src/file/filesystem.h \
 	src/file/filesystem.c \
 	src/file/keydbcfg.c \
