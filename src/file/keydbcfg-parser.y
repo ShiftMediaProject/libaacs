@@ -54,14 +54,14 @@
 enum
 {
   ENTRY_TYPE_DISCID,
-  ENTRY_TYPE_TITLE,
-  ENTRY_TYPE_DATE,
+  /*ENTRY_TYPE_TITLE,*/
+  /*ENTRY_TYPE_DATE,*/
   ENTRY_TYPE_MEK,
   ENTRY_TYPE_VID,
-  ENTRY_TYPE_BN,
+  /*ENTRY_TYPE_BN,*/
   ENTRY_TYPE_VUK,
-  ENTRY_TYPE_PAK,
-  ENTRY_TYPE_TK,
+  /*ENTRY_TYPE_PAK,*/
+  /*ENTRY_TYPE_TK,*/
   ENTRY_TYPE_UK
 };
 
@@ -78,8 +78,10 @@ static int add_entry(title_entry_list *list, int type, char *entry);
 static digit_key_pair_list *new_digit_key_pair_list(void);
 static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
                               int type, unsigned int digit, char *key);
+/*
 static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
+*/
 void yyerror (void *scanner, config_file *cf,
               title_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg);
@@ -284,7 +286,7 @@ disc_info
         celist = celist->next;
       }
       add_entry(celist, ENTRY_TYPE_DISCID, $1);
-      add_entry(celist, ENTRY_TYPE_TITLE, $3);
+      /*add_entry(celist, ENTRY_TYPE_TITLE, $3);*/
     }
   ;
 
@@ -314,9 +316,11 @@ entry
 
 date_entry
   : ENTRY_ID_DATE DIGIT PUNCT_HYPHEN DIGIT PUNCT_HYPHEN DIGIT
+    /*
     {
       add_date_entry(celist, $2, $4, $6);
     }
+    */
   ;
 
 mek_entry
@@ -347,6 +351,7 @@ bn_data_list
 
 bn_data
   : DIGIT PUNCT_HYPHEN hexstring_list
+    /*
     {
       if (!dkplist)
       {
@@ -355,6 +360,7 @@ bn_data
       }
       dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_BN, $1, $3);
     }
+    */
   ;
 
 vuk_entry
@@ -378,6 +384,7 @@ pak_data_list
 
 pak_data
   : DIGIT PUNCT_HYPHEN hexstring_list
+    /*
     {
       if (!dkplist)
       {
@@ -386,6 +393,7 @@ pak_data
       }
       dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_PAK, $1, $3);
     }
+    */
   ;
 
 tk_entry
@@ -402,7 +410,8 @@ tk_data_list
 
 tk_data
   : DIGIT PUNCT_HYPHEN hexstring_list
-    {
+    /*
+  {
       if (!dkplist)
       {
         dkplist = new_digit_key_pair_list();
@@ -410,6 +419,7 @@ tk_data
       }
       dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_TK, $1, $3);
     }
+    */
   ;
 
 uk_entry
@@ -520,13 +530,13 @@ int keydbcfg_config_file_close(config_file *cfgfile)
   while (cfgfile->list)
   {
     title_entry_list *next = cfgfile->list->next;
-    X_FREE(cfgfile->list->entry.title);
+    /*X_FREE(cfgfile->list->entry.title);*/
     X_FREE(cfgfile->list->entry.mek);
     X_FREE(cfgfile->list->entry.vid);
-    DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.bn);
+    /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.bn);*/
     X_FREE(cfgfile->list->entry.vuk);
-    DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.pak);
-    DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.tk);
+    /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.pak);*/
+    /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.tk);*/
     DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.uk);
     X_FREE(cfgfile->list);
     cfgfile->list = next;
@@ -694,12 +704,13 @@ static int add_entry(title_entry_list *list, int type, char *entry)
       X_FREE(entry);
       break;
 
+#if 0
     case ENTRY_TYPE_TITLE:
       X_FREE(list->entry.title);
       list->entry.title = (char*)malloc(strlen(entry) + 1);
       strcpy(list->entry.title, entry);
       break;
-
+#endif
     case ENTRY_TYPE_MEK:
       CHECK_KEY_LENGTH("mek", 32)
       X_FREE(list->entry.mek);
@@ -761,6 +772,7 @@ static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
 }
 
 /* Function to add a date entry */
+#if 0
 static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day)
 {
@@ -776,6 +788,7 @@ static int add_date_entry(title_entry_list *list, unsigned int year,
 
   return 1;
 }
+#endif
 
 /* Our definition of yyerror */
 void yyerror (void *scanner, config_file *cf,

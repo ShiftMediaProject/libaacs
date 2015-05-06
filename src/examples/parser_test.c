@@ -67,20 +67,25 @@ static int print_title_entries(title_entry_list *list)
       break;
 
     printf("DISCID: %s\n", str_print_hex(tmp, cursor->entry.discid, 20));
+#if 0
     printf("  Title: %s\n", cursor->entry.title);
     printf("  Date: %u-%u-%u\n", cursor->entry.date.year,
       cursor->entry.date.month, cursor->entry.date.day);
+#endif
     if (cursor->entry.mek)
       printf("  MEK: %s\n", cursor->entry.mek);
     if (cursor->entry.vid)
       printf("  VID: %s\n", cursor->entry.vid);
+#if 0
     if (cursor->entry.bn)
     {
       printf("  BN:\n");
       print_digit_key_pair_enties(cursor->entry.bn);
     }
+#endif
     if (cursor->entry.vuk)
       printf("  VUK: %s\n", cursor->entry.vuk);
+#if 0
     if (cursor->entry.pak)
     {
       printf("  PAK:\n");
@@ -91,6 +96,7 @@ static int print_title_entries(title_entry_list *list)
       printf("  TK:\n");
       print_digit_key_pair_enties(cursor->entry.tk);
     }
+#endif
     if (cursor->entry.uk)
     {
       printf("  UK:\n");

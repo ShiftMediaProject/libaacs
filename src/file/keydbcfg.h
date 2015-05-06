@@ -41,6 +41,7 @@ struct digit_key_pair_list_t
 };
 
 /* date entry struct */
+#if 0
 typedef struct date_entry_t date_entry;
 struct date_entry_t
 {
@@ -48,6 +49,7 @@ struct date_entry_t
   unsigned int month;
   unsigned int day;
 };
+#endif
 
 /* dk entry */
 typedef struct dk_entry dk_list;
@@ -84,14 +86,14 @@ typedef struct title_entry_t title_entry;
 struct title_entry_t
 {
   uint8_t discid[20];
-  char *title;
-  date_entry date;
+  //char *title;
+  //date_entry date;
   char *mek;
   char *vid;
-  digit_key_pair_list *bn;
+  //digit_key_pair_list *bn;
   char *vuk;
-  digit_key_pair_list *pak;
-  digit_key_pair_list *tk;
+  //digit_key_pair_list *pak;
+  //digit_key_pair_list *tk;
   digit_key_pair_list *uk;
 };
 
