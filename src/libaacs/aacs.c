@@ -391,6 +391,9 @@ static AACS_FILE_H *_file_open(AACS *aacs, const char *file)
     }
 
     f_name = str_printf("%s" DIR_SEP "%s", aacs->path, file);
+    if (!f_name) {
+        return NULL;
+    }
     fp = file_open(f_name, "rb");
     X_FREE(f_name);
 

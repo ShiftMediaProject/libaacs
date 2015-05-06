@@ -323,6 +323,12 @@ static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
       mpi_d ? "(d %m)" : ""
       );
 
+    if (!strfmt) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "out of memory\n");
+        err = GPG_ERR_ENOMEM;
+        goto error;
+    }
+
     /* Now build the S-expression */
     GCRY_VERIFY("gcry_sexp_build",
                 gcry_sexp_build(p_sexp_key, NULL, strfmt, mpi_d));

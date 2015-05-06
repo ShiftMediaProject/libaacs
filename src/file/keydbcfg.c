@@ -54,8 +54,12 @@ static int _mkpath(const char *path)
 {
     struct stat s;
     int result = 1;
-    char *dir = str_printf("%s", path);
+    char *dir = str_dup(path);
     char *end = dir;
+
+    if (!dir) {
+        return -1;
+    }
 
 #ifdef _WIN32
     end += 2; /* skip drive */
@@ -161,6 +165,9 @@ static FILE *_open_cfg_file_system(const char *file_name, char **path)
     while (NULL != (dir = file_get_config_system(dir))) {
 
         char *cfg_file = str_printf("%s"DIR_SEP"%s"DIR_SEP"%s", dir, CFG_DIR, file_name);
+        if (!cfg_file) {
+            continue;
+        }
 
         FILE *fp = fopen(cfg_file, "r");
         if (fp) {
@@ -416,7 +423,7 @@ int keycache_find(const char *type, const uint8_t *disc_id, uint8_t *key, unsign
               BD_DEBUG(DBG_FILE, "Error reading from %s\n", file);
             }
 
-            free(key_str);
+            X_FREE(key_str);
 
             fclose(fp);
 
@@ -516,6 +523,9 @@ int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf)
 int cache_remove(const char *name)
 {
     char *file = _cache_file(name);
+    if (!file) {
+        return 0;
+    }
     int result = !remove(file);
     if (!result) {
         BD_DEBUG(DBG_FILE, "Error removing %s\n", file);
