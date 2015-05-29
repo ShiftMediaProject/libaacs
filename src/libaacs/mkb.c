@@ -17,7 +17,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "mkb.h"
+
 #include "util/macro.h"
 #include "util/logging.h"
 #include "util/strutl.h"
