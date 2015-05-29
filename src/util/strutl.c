@@ -18,6 +18,10 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "strutl.h"
 
 #include "macro.h"
@@ -155,7 +159,16 @@ int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size)
 
 char *str_dup(const char *str)
 {
-    return str ? strcpy (malloc(strlen(str) + 1), str) : NULL;
+    char *dup = NULL;
+
+    if (str) {
+        size_t size = strlen(str) + 1;
+        dup = malloc(size);
+        if (dup) {
+            memcpy(dup, str, size);
+        }
+    }
+    return dup;
 }
 
 char *str_printf(const char *fmt, ...)
@@ -198,7 +211,7 @@ const char *str_next_line(const char *p)
     while (*p && *p != '\r' && *p != '\n') {
         p++;
     }
-    while (*p && (*p == '\r' || *p == '\n')) {
+    while (*p && (*p == '\r' || *p == '\n' || *p == ' ')) {
         p++;
     }
 
