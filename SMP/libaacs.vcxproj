@@ -329,7 +329,6 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ProgramDataBaseFileName>$(OutDir)\lib\x86\$(TargetName).pdb</ProgramDataBaseFileName>
@@ -392,7 +391,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ProgramDataBaseFileName>$(OutDir)\lib\x64\$(TargetName).pdb</ProgramDataBaseFileName>
@@ -456,7 +454,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>true</BufferSecurityCheck>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
@@ -523,7 +520,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>true</BufferSecurityCheck>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
@@ -589,7 +585,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
@@ -654,7 +649,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;fseeko=_fseeki64;ftello=_ftelli64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;$(OutDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>4996;4267;4244;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
@@ -724,7 +718,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
@@ -800,7 +793,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
@@ -876,7 +868,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
@@ -952,7 +943,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
@@ -1028,7 +1018,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
@@ -1105,7 +1094,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
@@ -1182,7 +1170,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
@@ -1258,7 +1245,6 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
