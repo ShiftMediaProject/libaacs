@@ -286,6 +286,7 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
     num_uvs = len / 5;
 
     if (num_uvs < 1) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "No UVS detected - corrupted disc\n");
         return AACS_ERROR_CORRUPTED_DISC;
     }
 
@@ -518,6 +519,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
         return AACS_ERROR_NO_PK;
     }
 
+    BD_DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key - corrupted disc\n");
     return AACS_ERROR_CORRUPTED_DISC;
 }
 
@@ -829,7 +831,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
             file_seek(fp, f_pos, SEEK_SET);
             if ((file_read(fp, buf, 16)) != 16) {
-                BD_DEBUG(DBG_AACS, "Unit key %d: read error\n", i);
+                BD_DEBUG(DBG_AACS | DBG_CRIT, "Unit key %d: read error\n", i);
                 aacs->num_uks = i;
                 error_code = AACS_ERROR_CORRUPTED_DISC;
                 break;
