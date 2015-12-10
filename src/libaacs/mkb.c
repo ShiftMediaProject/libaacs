@@ -52,6 +52,12 @@ static const uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
             return mkb->buf + pos;
         }
 
+        if (len == 0) {
+            BD_DEBUG(DBG_MKB, "Couldn't retrieve MKB record 0x%02x - len=0 (%p)\n", type,
+                  (void*)(mkb->buf + pos));
+            break;
+        }
+
         pos += len;
     }
 
@@ -108,12 +114,20 @@ uint8_t mkb_type(MKB *mkb)
 {
     const uint8_t *rec = _record(mkb, 0x10, NULL);
 
+    if (!rec) {
+        return 0;
+    }
+
     return MKINT_BE32(rec + 4);
 }
 
 uint32_t mkb_version(MKB *mkb)
 {
     const uint8_t *rec = _record(mkb, 0x10, NULL);
+
+    if (!rec) {
+        return 0;
+    }
 
     return MKINT_BE32(rec + 8);
 }
@@ -152,31 +166,49 @@ const uint8_t *mkb_drive_revokation_entries(MKB *mkb, size_t *len)
 
 const uint8_t *mkb_subdiff_records(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x04, len) + 4;
-    *len -= 4;
+    const uint8_t *rec = _record(mkb, 0x04, len);
+
+    if (rec) {
+        rec += 4;
+        *len -= 4;
+    }
 
     return rec;
 }
 
 const uint8_t *mkb_cvalues(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x05, len) + 4;
-    *len -= 4;
+    const uint8_t *rec = _record(mkb, 0x05, len);
+
+    if (rec) {
+        rec += 4;
+        *len -= 4;
+    }
 
     return rec;
 }
 
 const uint8_t *mkb_mk_dv(MKB *mkb)
 {
-    return _record(mkb, 0x81, NULL) + 4;
+    const uint8_t *rec = _record(mkb, 0x81, NULL);
+
+    if (rec) {
+        rec += 4;
+    }
+
+    return rec;
 }
 
 const uint8_t *mkb_signature(MKB *mkb, size_t *len)
 {
     const uint8_t *rec = _record(mkb, 0x02, len);
-    *len -= 4;
 
-    return rec + 4;
+    if (rec) {
+        rec += 4;
+        *len -= 4;
+    }
+
+    return rec;
 
 }
 
