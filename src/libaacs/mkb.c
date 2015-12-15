@@ -112,7 +112,7 @@ size_t mkb_data_size(MKB *mkb)
 
 uint8_t mkb_type(MKB *mkb)
 {
-    const uint8_t *rec = _record(mkb, 0x10, NULL);
+    const uint8_t *rec = mkb_type_and_version_record(mkb);
 
     if (!rec) {
         return 0;
@@ -123,7 +123,7 @@ uint8_t mkb_type(MKB *mkb)
 
 uint32_t mkb_version(MKB *mkb)
 {
-    const uint8_t *rec = _record(mkb, 0x10, NULL);
+    const uint8_t *rec = mkb_type_and_version_record(mkb);
 
     if (!rec) {
         return 0;
@@ -134,7 +134,12 @@ uint32_t mkb_version(MKB *mkb)
 
 const uint8_t *mkb_type_and_version_record(MKB *mkb)
 {
-    const uint8_t *rec = _record(mkb, 0x10, NULL);
+    size_t len = 0;
+    const uint8_t *rec = _record(mkb, 0x10, &len);
+
+    if (len < 12) {
+        return NULL;
+    }
 
     return rec;
 }
@@ -144,6 +149,9 @@ const uint8_t *mkb_host_revokation_entries(MKB *mkb, size_t *len)
 {
     const uint8_t *rec = _record(mkb, 0x21, len);
 
+    if (*len < 4) {
+        return NULL;
+    }
     if (rec) {
         rec += 4;
         *len -= 4;
@@ -156,6 +164,9 @@ const uint8_t *mkb_drive_revokation_entries(MKB *mkb, size_t *len)
 {
     const uint8_t *rec = _record(mkb, 0x20, len);
 
+    if (*len < 4) {
+        return NULL;
+    }
     if (rec) {
         rec += 4;
         *len -= 4;
@@ -168,6 +179,9 @@ const uint8_t *mkb_subdiff_records(MKB *mkb, size_t *len)
 {
     const uint8_t *rec = _record(mkb, 0x04, len);
 
+    if (*len < 4) {
+        return NULL;
+    }
     if (rec) {
         rec += 4;
         *len -= 4;
@@ -180,6 +194,9 @@ const uint8_t *mkb_cvalues(MKB *mkb, size_t *len)
 {
     const uint8_t *rec = _record(mkb, 0x05, len);
 
+    if (*len < 4) {
+        return NULL;
+    }
     if (rec) {
         rec += 4;
         *len -= 4;
@@ -190,8 +207,12 @@ const uint8_t *mkb_cvalues(MKB *mkb, size_t *len)
 
 const uint8_t *mkb_mk_dv(MKB *mkb)
 {
-    const uint8_t *rec = _record(mkb, 0x81, NULL);
+    size_t len;
+    const uint8_t *rec = _record(mkb, 0x81, &len);
 
+    if (len < 20) {
+        return NULL;
+    }
     if (rec) {
         rec += 4;
     }
@@ -203,6 +224,9 @@ const uint8_t *mkb_signature(MKB *mkb, size_t *len)
 {
     const uint8_t *rec = _record(mkb, 0x02, len);
 
+    if (*len < 4) {
+        return NULL;
+    }
     if (rec) {
         rec += 4;
         *len -= 4;
