@@ -23,6 +23,7 @@
 #include "util/attributes.h"
 
 #include <stdint.h>
+#include <stddef.h> /* size_t */
 
 /* struct holding a digit and key pair for <ENTRY NUMBER> - <ENTRY> entries */
 typedef struct digit_key_pair_t digit_key_pair;
@@ -129,7 +130,7 @@ BD_PRIVATE int   keycache_save(const char *type, const uint8_t *disc_id,
 BD_PRIVATE int   keycache_find(const char *type, const uint8_t *disc_id,
                                  uint8_t *key, unsigned int len);
 
-BD_PRIVATE int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf); /* use buf=NULL to get version and size */
+BD_PRIVATE int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf, size_t buf_size); /* use buf=NULL to get version and size */
 BD_PRIVATE int cache_save(const char *name, uint32_t version, const void *data, uint32_t len);
 BD_PRIVATE int cache_remove(const char *name);
 

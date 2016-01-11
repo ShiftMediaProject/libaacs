@@ -175,14 +175,14 @@ static void _update_rl(MKB *mkb)
     uint32_t cache_version;
     size_t   rl_len;
 
-    if (!cache_get("drl", &cache_version, NULL, NULL) || cache_version < version) {
+    if (!cache_get("drl", &cache_version, NULL, NULL, 0) || cache_version < version) {
         const uint8_t *version_rec = mkb_type_and_version_record(mkb);
         const uint8_t *drl_rec     = mkb_drive_revokation_entries(mkb, &rl_len);
         if (drl_rec && rl_len > 8) {
             _save_rl("drl", version, version_rec, drl_rec, rl_len);
         }
     }
-    if (!cache_get("hrl", &cache_version, NULL, NULL) || cache_version < version) {
+    if (!cache_get("hrl", &cache_version, NULL, NULL, 0) || cache_version < version) {
         const uint8_t *version_rec = mkb_type_and_version_record(mkb);
         const uint8_t *hrl_rec     = mkb_host_revokation_entries(mkb, &rl_len);
         if (hrl_rec && rl_len > 8) {
@@ -1294,11 +1294,11 @@ static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkbv)
 
     *num_records = *mkbv = 0;
 
-    cache_get(type, &version, &len, NULL);
+    cache_get(type, &version, &len, NULL, 0);
 
     if (version > 0 && len > 24) {
         data = malloc(len);
-        if (cache_get(type, &version, &len, data) && len > 24) {
+        if (cache_get(type, &version, &len, data, len) && len > 24) {
 
             if (_rl_verify_signature(data, len)) {
                 *mkbv = version;

@@ -473,7 +473,7 @@ int cache_save(const char *name, uint32_t version, const void *data, uint32_t le
     return result;
 }
 
-int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf)
+int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf, size_t buf_size)
 {
     int result = 0;
     char *file = _cache_file(name);
@@ -491,6 +491,7 @@ int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf)
 
             if (fread(version, 1, 4, fp) == 4 &&
                 (!len || fread(len, 1, 4, fp) == 4) &&
+                (!len || (size_t)*len <= buf_size) &&
                 (!buf || fread(buf, 1, *len, fp) == *len)) {
 
               BD_DEBUG(DBG_FILE, "Read %d bytes from %s, version %d\n", 4 + (len ? 4 : 0) + (buf ? *len : 0), file, *version);
