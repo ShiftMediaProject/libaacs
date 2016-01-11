@@ -612,6 +612,9 @@ static int _parse_embedded(config_file *cf)
     for (jj = sizeof(internal_dk_list) / sizeof(internal_dk_list[0]) - 1; jj >= 0; --jj) {
         dk_list *e = calloc(1, sizeof(dk_list));
 
+        if (!e)
+            break;
+
         decrypt_key(e->key, internal_dk_list[jj], 16);
         e->node = internal_device_number;
         e->uv   = MKINT_BE32(internal_dk_list[jj] + 16);
@@ -630,6 +633,9 @@ static int _parse_embedded(config_file *cf)
     for (ii = 0; ii < sizeof(internal_pk_list) / sizeof(internal_pk_list[0]); ii++) {
         pk_list *e = calloc(1, sizeof(pk_list));
 
+        if (!e)
+            break;
+
         decrypt_key(e->key, internal_pk_list[ii], 16);
 
         if (_is_duplicate_pk(cf->pkl, e->key)) {
@@ -644,6 +650,9 @@ static int _parse_embedded(config_file *cf)
 
     for (ii = 0; ii < sizeof(internal_hc_list) / sizeof(internal_hc_list[0]); ii++) {
         cert_list  *e = calloc(1, sizeof(cert_list));
+
+        if (!e)
+            break;
 
         decrypt_key(e->host_priv_key, internal_hc_list[ii],      20);
         decrypt_key(e->host_cert,     internal_hc_list[ii] + 20, 92);
