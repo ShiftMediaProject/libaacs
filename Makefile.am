@@ -12,6 +12,9 @@ lib_LTLIBRARIES = libaacs.la
 libaacs_la_SOURCES=\
 	src/libaacs/aacs.h \
 	src/libaacs/aacs.c \
+	src/libaacs/cci_data.h \
+	src/libaacs/cci.h \
+	src/libaacs/cci.c \
 	src/libaacs/content_cert.h \
 	src/libaacs/content_cert.c \
 	src/libaacs/crypto.h \

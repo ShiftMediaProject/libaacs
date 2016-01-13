@@ -82,4 +82,10 @@ AACS_PUBLIC void           aacs_free_rl(AACS_RL_ENTRY **rl);
 
 AACS_PUBLIC uint32_t aacs_get_bus_encryption(AACS *);
 
+/* Copy Control Information */
+
+struct aacs_basic_cci;
+
+AACS_PUBLIC struct aacs_basic_cci *aacs_get_basic_cci(AACS *, uint32_t title);
+
 #endif /* AACS_H_ */

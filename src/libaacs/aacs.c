@@ -26,6 +26,8 @@
 
 #include "aacs-version.h"
 #include "aacs.h"
+#include "cci.h"
+#include "cci_data.h"
 #include "content_cert.h"
 #include "crypto.h"
 #include "mmc.h"
@@ -772,6 +774,58 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
         }
 }
 
+static size_t _read_cci_file(AACS *aacs, int cps_unit, void **data)
+{
+    char   *fname;
+    size_t  size = 0;
+
+    fname = str_printf("AACS" DIR_SEP "CPSUnit%05d.cci", cps_unit);
+    if (fname) {
+        size = _read_file(aacs, fname, data);
+        X_FREE(fname);
+
+        if (size >= 2048) {
+            return size;
+        }
+
+        X_FREE(*data);
+    }
+
+    /* try backup copy */
+
+    fname = str_printf("AACS" DIR_SEP "DUPLICATE" DIR_SEP "CPSUnit%05d.cci", cps_unit);
+    if (fname) {
+        size = _read_file(aacs, fname, data);
+        X_FREE(fname);
+
+        if (size >= 2048) {
+            return size;
+        }
+
+        X_FREE(*data);
+    }
+
+    return 0;
+}
+
+static AACS_CCI *_read_cci(AACS *aacs, int cps_unit)
+{
+    AACS_CCI *cci;
+    void     *data;
+    size_t    size;
+
+    size = _read_cci_file(aacs, cps_unit, &data);
+    if (!size) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed to read CPS unit usage file %d\n", cps_unit);
+        return NULL;
+    }
+
+    cci = cci_parse(data, size);
+    X_FREE(data);
+
+    return cci;
+}
+
 static int _calc_uks(AACS *aacs, config_file *cf)
 {
     AACS_FILE_H *fp = NULL;
@@ -1344,6 +1398,47 @@ uint32_t aacs_get_bus_encryption(AACS *aacs)
          (aacs->bec * AACS_BUS_ENCRYPTION_CAPABLE);
 }
 
+static int _cps_unit(AACS *aacs, uint32_t title)
+{
+    if (!aacs || !aacs->cps_units) {
+        BD_DEBUG(DBG_AACS|DBG_CRIT, "CPS units not read !\n");
+        return -1;
+    }
+
+    if (title == 0xffff) {
+        return aacs->cps_units[0];
+    } else if (title <= aacs->num_titles) {
+        return aacs->cps_units[title + 1];
+    }
+
+    BD_DEBUG(DBG_AACS|DBG_CRIT, "invalid title %u\n", title);
+    return -1;
+}
+
+struct aacs_basic_cci *aacs_get_basic_cci(AACS *aacs, uint32_t title)
+{
+    AACS_BASIC_CCI *data = NULL;
+    int cps_unit;
+
+    cps_unit = _cps_unit(aacs, title);
+    if (cps_unit < 0) {
+        return NULL;
+    }
+
+    AACS_CCI *cci = _read_cci(aacs, cps_unit);
+    if (!cci) {
+        return NULL;
+    }
+
+    const AACS_BASIC_CCI *bcci = cci_get_basic_cci(cci);
+    if (bcci) {
+        data = malloc(sizeof(*data));
+        memcpy(data, bcci, sizeof(*data));
+    }
+
+    cci_free(&cci);
+    return data;
+}
 
 void aacs_select_title(AACS *aacs, uint32_t title)
 {
