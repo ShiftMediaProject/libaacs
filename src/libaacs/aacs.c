@@ -826,6 +826,19 @@ static AACS_CCI *_read_cci(AACS *aacs, int cps_unit)
     return cci;
 }
 
+static int _check_cci_unencrypted(AACS *aacs, int cps_unit)
+{
+    int result = -1;
+
+    AACS_CCI *cci = _read_cci(aacs, cps_unit);
+    if (cci) {
+        result = cci_is_unencrypted(cci);
+        cci_free(&cci);
+    }
+
+    return result;
+}
+
 static int _calc_uks(AACS *aacs, config_file *cf)
 {
     AACS_FILE_H *fp = NULL;
@@ -833,6 +846,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
     uint64_t f_pos;
     unsigned int i;
     int error_code;
+    int vuk_tried = 0, vuk_error_code = AACS_SUCCESS;
 
     uint8_t mk[16] = {0}, vuk[16] = {0};
 
@@ -881,8 +895,20 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
         // Read keys
         for (i = 0; i < aacs->num_uks; i++) {
-            f_pos += 48;
 
+            int plain = _check_cci_unencrypted(aacs, i + 1);
+
+            if (!vuk_tried) {
+                /* Make sure we have VUK */
+                vuk_error_code = _calc_vuk(aacs, mk, vuk, cf);
+                vuk_tried = 1;
+            }
+            /* error out if VUK calculation fails and encrypted CPS unit is found */
+            if (!plain && vuk_error_code != AACS_SUCCESS) {
+                return vuk_error_code;
+            }
+
+            f_pos += 48;
             file_seek(fp, f_pos, SEEK_SET);
             if ((file_read(fp, buf, 16)) != 16) {
                 BD_DEBUG(DBG_AACS | DBG_CRIT, "Unit key %d: read error\n", i);

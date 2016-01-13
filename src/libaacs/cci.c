@@ -163,6 +163,47 @@ void cci_free(AACS_CCI **pp)
     }
 }
 
+int cci_is_unencrypted(AACS_CCI *cci)
+{
+    unsigned int ii;
+
+    for (ii = 0; ii < cci->num_entry; ii++) {
+        AACS_CCI_ENTRY *e = &cci->entry[ii];
+
+        if (e->type == cci_AACS_ENHANCED_TITLE_USAGE) {
+            BD_DEBUG(DBG_CCI, "Enhanced title usage CCI found\n");
+            return 0;
+        }
+
+        if (e->type == cci_AACS_BASIC_CCI) {
+            BD_DEBUG(DBG_CCI, "AACS basic CCI found\n");
+
+            /* Blu-ray Disc Pre-recorded Book, chapters 3.9.4.2 and 7.2 */
+            if (e->version == 0x0100 && e->data_length == 0x84 &&
+                e->u.basic_cci.cci == 0 && e->u.basic_cci.epn == 1 && /* copy freely, EPN unasserted */
+                e->u.basic_cci.image_constraint && /* High Definition Analog Output in High Definition Analog Form */
+                !e->u.basic_cci.digital_only &&  /* Output of decrypted content is allowed for Analog/Digital Outputs */
+                !e->u.basic_cci.apstb  /* APS off */ ) {
+
+                /* check all titles are basic titles */
+                int jj;
+                for (jj = 0; jj < (e->u.basic_cci.num_titles + 7) / 8; jj++) {
+                    if (e->u.basic_cci.title_type[jj]) {
+                        BD_DEBUG(DBG_CCI, "CCI: Enhanced title found\n");
+                        return 0;
+                    }
+                }
+
+                return 1;
+            }
+
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
 AACS_BASIC_CCI *cci_get_basic_cci(AACS_CCI *cci)
 {
     unsigned int ii;

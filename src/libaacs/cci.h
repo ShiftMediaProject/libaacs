@@ -29,6 +29,8 @@ typedef struct aacs_cci AACS_CCI;
 BD_PRIVATE AACS_CCI *cci_parse(const void *data, size_t len);
 BD_PRIVATE void      cci_free(AACS_CCI **);
 
+BD_PRIVATE int cci_is_unencrypted(AACS_CCI *cci);
+
 BD_PRIVATE struct aacs_basic_cci *cci_get_basic_cci(AACS_CCI *cci);
 
 #endif /* AACS_CCI_H_ */
