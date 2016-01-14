@@ -212,17 +212,17 @@ static int _parse_pk_file(config_file *cf, FILE *fp)
 
                 pk_list *e = calloc(1, sizeof(pk_list));
                 if (e) {
-                hexstring_to_hex_array(e->key, 16, str);
+                    hexstring_to_hex_array(e->key, 16, str);
 
-                if (_is_duplicate_pk(cf->pkl, e->key)) {
-                    BD_DEBUG(DBG_FILE, "Skipping duplicate processing key %s\n", str);
-                    X_FREE(e);
-                } else {
-                    e->next = cf->pkl;
-                    cf->pkl = e;
-                }
+                    if (_is_duplicate_pk(cf->pkl, e->key)) {
+                        BD_DEBUG(DBG_FILE, "Skipping duplicate processing key %s\n", str);
+                        X_FREE(e);
+                    } else {
+                        e->next = cf->pkl;
+                        cf->pkl = e;
+                    }
 
-                result++;
+                    result++;
                 }
             }
             X_FREE(str);
@@ -273,17 +273,17 @@ static int _parse_cert_file(config_file *cf, FILE *fp)
 
             cert_list  *e = calloc(1, sizeof(cert_list));
             if (e) {
-            hexstring_to_hex_array(e->host_priv_key, 20, host_priv_key);
-            hexstring_to_hex_array(e->host_cert, 92, host_cert);
+                hexstring_to_hex_array(e->host_priv_key, 20, host_priv_key);
+                hexstring_to_hex_array(e->host_cert, 92, host_cert);
 
-            if (_is_duplicate_cert(cf->host_cert_list, e)) {
-                BD_DEBUG(DBG_FILE, "Skipping duplicate certificate entry %s %s\n", host_priv_key, host_cert);
-                X_FREE(e);
-            } else {
-                e->next = cf->host_cert_list;
-                cf->host_cert_list = e;
-                result = 1;
-            }
+                if (_is_duplicate_cert(cf->host_cert_list, e)) {
+                    BD_DEBUG(DBG_FILE, "Skipping duplicate certificate entry %s %s\n", host_priv_key, host_cert);
+                    X_FREE(e);
+                } else {
+                    e->next = cf->host_cert_list;
+                    cf->host_cert_list = e;
+                    result = 1;
+                }
             }
         }
         X_FREE(host_priv_key);
