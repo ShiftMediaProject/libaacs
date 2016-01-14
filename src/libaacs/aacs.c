@@ -180,14 +180,14 @@ static void _update_rl(MKB *mkb)
     if (!cache_get("drl", &cache_version, NULL, NULL, 0) || cache_version < version) {
         const uint8_t *version_rec = mkb_type_and_version_record(mkb);
         const uint8_t *drl_rec     = mkb_drive_revokation_entries(mkb, &rl_len);
-        if (drl_rec && rl_len > 8) {
+        if (drl_rec && version_rec && rl_len > 8) {
             _save_rl("drl", version, version_rec, drl_rec, rl_len);
         }
     }
     if (!cache_get("hrl", &cache_version, NULL, NULL, 0) || cache_version < version) {
         const uint8_t *version_rec = mkb_type_and_version_record(mkb);
         const uint8_t *hrl_rec     = mkb_host_revokation_entries(mkb, &rl_len);
-        if (hrl_rec && rl_len > 8) {
+        if (hrl_rec && version_rec && rl_len > 8) {
             _save_rl("hrl", version, version_rec, hrl_rec, rl_len);
         }
     }
@@ -276,7 +276,7 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
 {
     /* calculate processing key and media key using device keys */
 
-    const uint8_t *uvs, *cvalues;
+    const uint8_t *uvs, *cvalues, *mk_dv;
     unsigned num_uvs;
     size_t len;
     char str[128];
@@ -285,6 +285,14 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
 
     uvs     = mkb_subdiff_records(mkb, &len);
     cvalues = mkb_cvalues(mkb, &len);
+    mk_dv   = mkb_mk_dv(mkb);
+
+    if (!uvs || !cvalues || !mk_dv) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Missing MKB records (uvs %p, cvalues %p, mk_dv %p)\n",
+                 (const void*)uvs, (const void*)cvalues, (const void*)mk_dv);
+        return AACS_ERROR_CORRUPTED_DISC;
+    }
+
     num_uvs = len / 5;
 
     if (num_uvs < 1) {
@@ -365,7 +373,7 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
         if ( _validate_pk(pk,
                           cvalues + uvs_idx * 16,
                           uvs + 1 + uvs_idx * 5,
-                          mkb_mk_dv(mkb),
+                          mk_dv,
                           mk)
              == AACS_SUCCESS) {
 
@@ -465,7 +473,7 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
     int a, num_uvs = 0;
     size_t len;
     MKB *mkb = NULL;
-    const uint8_t *rec, *uvs;
+    const uint8_t *rec, *uvs, *mk_dv;
 
     /* Skip if retrieved from config file */
     if (memcmp(mk, empty_key, 16)) {
@@ -486,6 +494,13 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
             return AACS_SUCCESS;
         }
 
+        mk_dv = mkb_mk_dv(mkb);
+        if (!mk_dv) {
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Missing MKB DV record\n");
+            mkb_close(mkb);
+            return AACS_ERROR_CORRUPTED_DISC;
+        }
+
         BD_DEBUG(DBG_AACS, "Get UVS...\n");
         uvs = mkb_subdiff_records(mkb, &len);
         rec = uvs;
@@ -498,13 +513,17 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 
         BD_DEBUG(DBG_AACS, "Get cvalues...\n");
         rec = mkb_cvalues(mkb, &len);
+        if (!rec) {
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Missing MKB CVALUES record\n");
+            mkb_close(mkb);
+            return AACS_ERROR_CORRUPTED_DISC;
+        }
 
         for (; pkl; pkl = pkl->next) {
                 BD_DEBUG(DBG_AACS, "Trying processing key...\n");
 
                 for (a = 0; a < num_uvs; a++) {
-                    if (AACS_SUCCESS == _validate_pk(pkl->key, rec + a * 16, uvs + 1 + a * 5,
-                      mkb_mk_dv(mkb), mk)) {
+                    if (AACS_SUCCESS == _validate_pk(pkl->key, rec + a * 16, uvs + 1 + a * 5, mk_dv, mk)) {
                         mkb_close(mkb);
 
                         char str[40];
