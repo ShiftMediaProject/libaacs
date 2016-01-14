@@ -187,6 +187,7 @@ MMCDEV *device_open(const char *path)
             dev->fd = fd;
             return dev;
         }
+        close(fd);
     }
 
     return NULL;
