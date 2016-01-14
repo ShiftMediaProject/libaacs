@@ -864,8 +864,8 @@ static int _calc_uks(AACS *aacs, config_file *cf)
     uint8_t  buf[16];
     uint64_t f_pos;
     unsigned int i;
-    int error_code;
-    int vuk_tried = 0, vuk_error_code = AACS_SUCCESS;
+    int error_code = AACS_SUCCESS;
+    int vuk_error_code;
 
     uint8_t mk[16] = {0}, vuk[16] = {0};
 
@@ -879,11 +879,8 @@ static int _calc_uks(AACS *aacs, config_file *cf)
         }
     }
 
-    /* Make sure we have VUK */
-    error_code = _calc_vuk(aacs, mk, vuk, cf);
-    if (error_code != AACS_SUCCESS) {
-        return error_code;
-    }
+    /* Try to calculate VUK */
+    vuk_error_code = _calc_vuk(aacs, mk, vuk, cf);
 
     BD_DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
@@ -915,16 +912,13 @@ static int _calc_uks(AACS *aacs, config_file *cf)
         // Read keys
         for (i = 0; i < aacs->num_uks; i++) {
 
-            int plain = _check_cci_unencrypted(aacs, i + 1);
-
-            if (!vuk_tried) {
-                /* Make sure we have VUK */
-                vuk_error_code = _calc_vuk(aacs, mk, vuk, cf);
-                vuk_tried = 1;
-            }
             /* error out if VUK calculation fails and encrypted CPS unit is found */
-            if (!plain && vuk_error_code != AACS_SUCCESS) {
-                return vuk_error_code;
+            if (vuk_error_code != AACS_SUCCESS) {
+                if (!_check_cci_unencrypted(aacs, i + 1)) {
+                    error_code = vuk_error_code;
+                    break;
+                }
+                BD_DEBUG(DBG_AACS | DBG_CRIT, "WARNING: VUK calculation failed but disc seems to be unencrypted.\n");
             }
 
             f_pos += 48;
