@@ -31,7 +31,6 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <limits.h>
-#include <direct.h>
 
 
 char *file_get_config_home(void)
