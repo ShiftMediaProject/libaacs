@@ -676,6 +676,9 @@ config_file *keydbcfg_config_load(const char *configfile_path)
     int config_ok = 0;
 
     config_file *cf = keydbcfg_new_config_file();
+    if (!cf) {
+        return NULL;
+    }
 
     /* try to load KEYDB.cfg */
 
