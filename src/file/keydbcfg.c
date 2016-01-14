@@ -94,9 +94,12 @@ static char *_load_file(FILE *fp)
         return NULL;
     }
 
-    data      = malloc(file_size + 1);
-    read_size = fread(data, 1, file_size, fp);
+    data = malloc(file_size + 1);
+    if (!data) {
+        return NULL;
+    }
 
+    read_size = fread(data, 1, file_size, fp);
     if (read_size != file_size) {
         BD_DEBUG(DBG_FILE, "Error reading file\n");
         X_FREE(data);
@@ -208,7 +211,7 @@ static int _parse_pk_file(config_file *cf, FILE *fp)
                 BD_DEBUG(DBG_FILE, "Found processing key %s\n", str);
 
                 pk_list *e = calloc(1, sizeof(pk_list));
-
+                if (e) {
                 hexstring_to_hex_array(e->key, 16, str);
 
                 if (_is_duplicate_pk(cf->pkl, e->key)) {
@@ -220,6 +223,7 @@ static int _parse_pk_file(config_file *cf, FILE *fp)
                 }
 
                 result++;
+                }
             }
             X_FREE(str);
 
@@ -268,6 +272,7 @@ static int _parse_cert_file(config_file *cf, FILE *fp)
             BD_DEBUG(DBG_FILE, "Found certificate: %s %s\n", host_priv_key, host_cert);
 
             cert_list  *e = calloc(1, sizeof(cert_list));
+            if (e) {
             hexstring_to_hex_array(e->host_priv_key, 20, host_priv_key);
             hexstring_to_hex_array(e->host_cert, 92, host_cert);
 
@@ -278,6 +283,7 @@ static int _parse_cert_file(config_file *cf, FILE *fp)
                 e->next = cf->host_cert_list;
                 cf->host_cert_list = e;
                 result = 1;
+            }
             }
         }
         X_FREE(host_priv_key);
@@ -362,13 +368,13 @@ int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, 
 {
     int result = 0;
     char *file = _keycache_file(type, disc_id);
+    char *key_str = calloc(2, len + 1);
 
-    if (file) {
+    if (file && key_str) {
         if (_mkpath(file)) {
             FILE *fp = fopen(file, "w");
 
             if (fp) {
-                char *key_str = calloc(1, len*2 + 1);
                 hex_array_to_hexstring(key_str, key, len);
 
                 if (fwrite(key_str, 1, len*2, fp) == len*2) {
@@ -379,14 +385,14 @@ int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, 
                     BD_DEBUG(DBG_FILE, "Error writing to %s\n", file);
                 }
 
-                free(key_str);
 
                 fclose(fp);
             }
         }
-
-        X_FREE(file);
     }
+
+    X_FREE(key_str);
+    X_FREE(file);
 
     return result;
 }
@@ -404,7 +410,7 @@ int keycache_find(const char *type, const uint8_t *disc_id, uint8_t *key, unsign
 
             BD_DEBUG(DBG_FILE, "Reading %s\n", file);
 
-            if (fread(key_str, 1, len*2, fp) == len*2) {
+            if (key_str && fread(key_str, 1, len*2, fp) == len*2) {
 
                 result = hexstring_to_hex_array(key, len, key_str);
                 if (!result) {
