@@ -1218,6 +1218,16 @@ void aacs_close(AACS *aacs)
     X_FREE(aacs);
 }
 
+static void _decrypt_unit_bus(AACS *aacs, uint8_t *buf)
+{
+    if (aacs->bee && aacs->bec) {
+        unsigned int i;
+        for (i = 0; i < ALIGNED_UNIT_LEN; i += SECTOR_LEN) {
+            _decrypt_bus(aacs, buf + i);
+        }
+    }
+}
+
 int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
 {
     unsigned int i;
@@ -1228,11 +1238,7 @@ int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
     }
 
     /* handle bus encryption first */
-    if (aacs->bee && aacs->bec) {
-        for (i = 0; i < ALIGNED_UNIT_LEN; i += SECTOR_LEN) {
-            _decrypt_bus(aacs, buf + i);
-        }
-    }
+    _decrypt_unit_bus(aacs, buf);
 
     /* decrypt in-place if current unit key is known */
     if (BD_LIKELY(aacs->cps_unit_selected) || BD_LIKELY(aacs->num_uks == 1)) {
