@@ -1,3 +1,4 @@
+- Add aacs_decrypt_bus().
 - Add aacs_get_bdj_root_cert_hash().
 - Add aacs_get_content_cert_id().
 - Verify content certificate signature.

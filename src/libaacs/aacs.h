@@ -51,6 +51,7 @@ AACS_PUBLIC AACS *aacs_open2(const char *path, const char *keyfile_path, int *er
 AACS_PUBLIC void aacs_close(AACS *aacs);
 AACS_PUBLIC void aacs_select_title(AACS *aacs, uint32_t title); /* 0 - top menu, 0xffff - first play */
 AACS_PUBLIC int  aacs_decrypt_unit(AACS *aacs, uint8_t *buf);
+AACS_PUBLIC int  aacs_decrypt_bus(AACS *aacs, uint8_t *buf);
 
 /* Disc information */
 AACS_PUBLIC int aacs_get_mkb_version(AACS *aacs);

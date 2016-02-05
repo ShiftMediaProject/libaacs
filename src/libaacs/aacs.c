@@ -1228,6 +1228,15 @@ static void _decrypt_unit_bus(AACS *aacs, uint8_t *buf)
     }
 }
 
+int aacs_decrypt_bus(AACS *aacs, uint8_t *buf)
+{
+    if (buf[0] & 0xc0) {
+        _decrypt_unit_bus(aacs, buf);
+    }
+
+    return 1;
+}
+
 int aacs_decrypt_unit(AACS *aacs, uint8_t *buf)
 {
     unsigned int i;
