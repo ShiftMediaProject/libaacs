@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int print_digit_key_pair_enties(digit_key_pair_list *list);
 static int print_title_entries(title_entry_list *list);
@@ -52,6 +53,7 @@ static int print_digit_key_pair_enties(digit_key_pair_list *list)
 /* Function that prints all entries parsed from a config file */
 static int print_title_entries(title_entry_list *list)
 {
+  static const uint8_t empty_key[16] = {0};
   char tmp[256];
 
   if (!list)
@@ -83,8 +85,8 @@ static int print_title_entries(title_entry_list *list)
       print_digit_key_pair_enties(cursor->entry.bn);
     }
 #endif
-    if (cursor->entry.vuk)
-      printf("  VUK: %s\n", cursor->entry.vuk);
+    if (memcmp(cursor->entry.vuk, empty_key, 16))
+      printf("  VUK: %s\n", str_print_hex(tmp, cursor->entry.vuk, 16));
 #if 0
     if (cursor->entry.pak)
     {

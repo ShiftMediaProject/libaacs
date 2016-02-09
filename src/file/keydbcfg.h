@@ -92,7 +92,7 @@ struct title_entry_t
   char *mek;
   char *vid;
   //digit_key_pair_list *bn;
-  char *vuk;
+  uint8_t vuk[16];
   //digit_key_pair_list *pak;
   //digit_key_pair_list *tk;
   digit_key_pair_list *uk;

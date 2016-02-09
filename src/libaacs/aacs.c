@@ -767,8 +767,8 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
                   str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, aacs->vid, 16));
         }
 
-        if (ce->entry.vuk) {
-            hexstring_to_hex_array(vuk, 16, ce->entry.vuk);
+        if (memcmp(ce->entry.vuk, empty_key, 16)) {
+            memcpy(vuk, ce->entry.vuk, 16);
 
             BD_DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
                   str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, vuk, 16));

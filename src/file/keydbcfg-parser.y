@@ -534,7 +534,6 @@ int keydbcfg_config_file_close(config_file *cfgfile)
     X_FREE(cfgfile->list->entry.mek);
     X_FREE(cfgfile->list->entry.vid);
     /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.bn);*/
-    X_FREE(cfgfile->list->entry.vuk);
     /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.pak);*/
     /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.tk);*/
     DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.uk);
@@ -725,8 +724,8 @@ static int add_entry(title_entry_list *list, int type, char *entry)
 
     case ENTRY_TYPE_VUK:
       CHECK_KEY_LENGTH("vuk", 32)
-      X_FREE(list->entry.vuk);
-      list->entry.vuk = entry;
+      hexstring_to_hex_array(list->entry.vuk, 16, entry);
+      X_FREE(entry);
       break;
 
     default:
