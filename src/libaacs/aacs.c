@@ -1317,7 +1317,10 @@ const uint8_t *aacs_get_mk(AACS *aacs)
     if (!memcmp(aacs->mk, empty_key, sizeof(aacs->mk))) {
         config_file *cf = keydbcfg_config_load(NULL);
         if (cf) {
-            _calc_mk(aacs, aacs->mk, cf->pkl, cf->dkl);
+            uint8_t mk[16] = {0};
+            if (_calc_mk(aacs, mk, cf->pkl, cf->dkl) == AACS_SUCCESS) {
+                memcpy(aacs->mk, mk, 16);
+            }
 
             keydbcfg_config_file_close(cf);
         }
