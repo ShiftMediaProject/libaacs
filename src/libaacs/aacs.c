@@ -598,7 +598,7 @@ static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uin
 static int _read_vid(AACS *aacs, cert_list *hcl)
 {
     /* Use VID given in config file if available */
-    if (memcmp(aacs->vid, empty_key, 16)) {
+    if (memcmp(aacs->vid, empty_key, sizeof(aacs->vid))) {
         return AACS_SUCCESS;
     }
 
@@ -1314,7 +1314,7 @@ const uint8_t *aacs_get_bdj_root_cert_hash(AACS *aacs)
 
 const uint8_t *aacs_get_mk(AACS *aacs)
 {
-    if (!memcmp(aacs->mk, empty_key, 16)) {
+    if (!memcmp(aacs->mk, empty_key, sizeof(aacs->mk))) {
         config_file *cf = keydbcfg_config_load(NULL);
         if (cf) {
             _calc_mk(aacs, aacs->mk, cf->pkl, cf->dkl);
@@ -1322,7 +1322,7 @@ const uint8_t *aacs_get_mk(AACS *aacs)
             keydbcfg_config_file_close(cf);
         }
 
-        if (!memcmp(aacs->mk, empty_key, 16)) {
+        if (!memcmp(aacs->mk, empty_key, sizeof(aacs->mk))) {
             BD_DEBUG(DBG_AACS | DBG_CRIT, "aacs_get_mk() failed\n");
             return NULL;
         }
@@ -1333,7 +1333,7 @@ const uint8_t *aacs_get_mk(AACS *aacs)
 
 const uint8_t *aacs_get_vid(AACS *aacs)
 {
-    if (!memcmp(aacs->vid, empty_key, 16)) {
+    if (!memcmp(aacs->vid, empty_key, sizeof(aacs->vid))) {
         /* get cached vid */
         if (keycache_find("vid", aacs->disc_id, aacs->vid, 16)) {
             BD_DEBUG(DBG_AACS, "Using cached VID\n");
@@ -1347,7 +1347,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
             keydbcfg_config_file_close(cf);
         }
 
-        if (!memcmp(aacs->vid, empty_key, 16)) {
+        if (!memcmp(aacs->vid, empty_key, sizeof(aacs->vid))) {
             BD_DEBUG(DBG_AACS | DBG_CRIT, "aacs_get_vid() failed\n");
             return NULL;
         }
@@ -1358,7 +1358,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
 
 const uint8_t *aacs_get_pmsn(AACS *aacs)
 {
-    if (!memcmp(aacs->pmsn, empty_key, 16)) {
+    if (!memcmp(aacs->pmsn, empty_key, sizeof(aacs->pmsn))) {
         config_file *cf = keydbcfg_config_load(NULL);
         if (cf) {
             _read_pmsn(aacs, cf->host_cert_list);
@@ -1366,7 +1366,7 @@ const uint8_t *aacs_get_pmsn(AACS *aacs)
             keydbcfg_config_file_close(cf);
         }
 
-        if (!memcmp(aacs->pmsn, empty_key, 16)) {
+        if (!memcmp(aacs->pmsn, empty_key, sizeof(aacs->pmsn))) {
             BD_DEBUG(DBG_AACS, "aacs_get_pmsn() failed\n");
             return NULL;
         }
