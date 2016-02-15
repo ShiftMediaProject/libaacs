@@ -285,7 +285,7 @@ static dk_list *_find_dk(dk_list *dkl, uint32_t *p_dev_key_v_mask, uint32_t uv, 
     return dkl;
 }
 
-static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
+static int _calc_mk_dks(MKB *mkb, dk_list *dkl, uint8_t *mk)
 {
     /* calculate processing key and media key using device keys */
 
@@ -494,36 +494,15 @@ static MKB *_mkb_open(AACS *aacs)
  * Calculate media key using a set of processing keys
  */
 
-static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
+static int _calc_mk_pks(MKB *mkb, pk_list *pkl, uint8_t *mk)
 {
     int a, num_uvs = 0;
     size_t len;
-    MKB *mkb = NULL;
     const uint8_t *rec, *uvs, *mk_dv;
-
-    /* Skip if retrieved from config file */
-    if (memcmp(mk, empty_key, 16)) {
-        return AACS_SUCCESS;
-    }
-
-    BD_DEBUG(DBG_AACS, "Calculate media key...\n");
-
-    if ((mkb = _mkb_open(aacs))) {
-
-        aacs->mkb_version = mkb_version(mkb);
-        _update_rl(mkb);
-
-        /* try device keys first */
-        if (dkl && _calc_pk_mk(mkb, dkl, mk) == AACS_SUCCESS) {
-            memcpy(aacs->mk, mk, sizeof(aacs->mk));
-            mkb_close(mkb);
-            return AACS_SUCCESS;
-        }
 
         mk_dv = mkb_mk_dv(mkb);
         if (!mk_dv) {
             BD_DEBUG(DBG_AACS | DBG_CRIT, "Missing MKB DV record\n");
-            mkb_close(mkb);
             return AACS_ERROR_CORRUPTED_DISC;
         }
 
@@ -541,7 +520,6 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
         rec = mkb_cvalues(mkb, &len);
         if (!rec) {
             BD_DEBUG(DBG_AACS | DBG_CRIT, "Missing MKB CVALUES record\n");
-            mkb_close(mkb);
             return AACS_ERROR_CORRUPTED_DISC;
         }
 
@@ -550,24 +528,57 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 
                 for (a = 0; a < num_uvs; a++) {
                     if (AACS_SUCCESS == _validate_pk(pkl->key, rec + a * 16, uvs + 1 + a * 5, mk_dv, mk)) {
-                        mkb_close(mkb);
 
                         char str[40];
                         BD_DEBUG(DBG_AACS, "Media key: %s\n", str_print_hex(str, mk, 16));
-                        memcpy(aacs->mk, mk, sizeof(aacs->mk));
                         return AACS_SUCCESS;
                     }
                 }
             }
 
-        mkb_close(mkb);
-
         BD_DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key. Missing right processing key ?\n");
         return AACS_ERROR_NO_PK;
+}
+
+/*
+ *
+ */
+
+static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
+{
+    MKB *mkb = NULL;
+    int result = AACS_ERROR_NO_PK;
+
+    /* Skip if retrieved from config file */
+    if (memcmp(mk, empty_key, 16)) {
+        return AACS_SUCCESS;
     }
 
-    BD_DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key - corrupted disc\n");
-    return AACS_ERROR_CORRUPTED_DISC;
+    BD_DEBUG(DBG_AACS, "Calculate media key...\n");
+
+    mkb = _mkb_open(aacs);
+    if (!mkb) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key - Failed opening MKB\n");
+        return AACS_ERROR_CORRUPTED_DISC;
+    }
+
+    aacs->mkb_version = mkb_version(mkb);
+    _update_rl(mkb);
+
+    /* try device keys first */
+    if (dkl) {
+        result = _calc_mk_dks(mkb, dkl, mk);
+    }
+    if (result != AACS_SUCCESS) {
+        result = _calc_mk_pks(mkb, pkl, mk);
+    }
+
+    if (result == AACS_SUCCESS) {
+        memcpy(aacs->mk, mk, sizeof(aacs->mk));
+    }
+
+    mkb_close(mkb);
+    return result;
 }
 
 /*
