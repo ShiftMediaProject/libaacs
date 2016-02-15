@@ -98,6 +98,10 @@ static const uint8_t empty_key[20] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 static const uint8_t aacs_iv[16]   = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
                                        0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
 
+/*
+ * Validate processing key using media key verification data
+ */
+
 static int _validate_pk(const uint8_t *pk,
                         const uint8_t *cvalue, const uint8_t *uv, const uint8_t *vd,
                         uint8_t *mk)
@@ -132,6 +136,10 @@ static int _validate_pk(const uint8_t *pk,
 
     return AACS_ERROR_NO_PK;
 }
+
+/*
+ * Revocation lists
+ */
 
 static int _rl_verify_signature(const uint8_t *rl, size_t size)
 {
@@ -193,6 +201,10 @@ static void _update_rl(MKB *mkb)
         }
     }
 }
+
+/*
+ * Derive media key using full set of device keys
+ */
 
 static uint32_t _calc_v_mask(uint32_t uv)
 {
@@ -390,6 +402,10 @@ static int _calc_pk_mk(MKB *mkb, dk_list *dkl, uint8_t *mk)
     return AACS_ERROR_NO_DK;
 }
 
+/*
+ * file access utils
+ */
+
 static AACS_FILE_H *_file_open(AACS *aacs, const char *file)
 {
     AACS_FILE_H *fp;
@@ -469,6 +485,10 @@ static MKB *_mkb_open(AACS *aacs)
     return mkb;
 }
 
+/*
+ * Calculate media key using a set of processing keys
+ */
+
 static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 {
     int a, num_uvs = 0;
@@ -544,6 +564,10 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
     BD_DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key - corrupted disc\n");
     return AACS_ERROR_CORRUPTED_DISC;
 }
+
+/*
+ * MMC device access
+ */
 
 static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uint8_t *p2)
 {
@@ -629,6 +653,10 @@ static int _read_pmsn(AACS *aacs, cert_list *hcl)
     }
     return error_code;
 }
+
+/*
+ * Unit key calculation
+ */
 
 static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
 {
@@ -952,6 +980,10 @@ static int _calc_uks(AACS *aacs, config_file *cf)
     return AACS_ERROR_CORRUPTED_DISC;
 }
 
+/*
+ *
+ */
+
 static int _calc_title_hash(AACS *aacs)
 {
     void    *data;
@@ -1035,6 +1067,10 @@ static int _get_bus_encryption_capable(const char *path)
     return bec;
 }
 
+/*
+ * Stream decryption
+ */
+
 static int _verify_ts(uint8_t *buf)
 {
     int i;
@@ -1097,6 +1133,10 @@ static void _decrypt_bus(AACS *aacs, uint8_t *buf)
     gcry_cipher_decrypt(gcry_h, buf + 16, SECTOR_LEN - 16, NULL, 0);
     gcry_cipher_close(gcry_h);
 }
+
+/*
+ * libaacs API
+ */
 
 void aacs_get_version(int *major, int *minor, int *micro)
 {
