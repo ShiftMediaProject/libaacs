@@ -500,44 +500,44 @@ static int _calc_mk_pks(MKB *mkb, pk_list *pkl, uint8_t *mk)
     size_t len;
     const uint8_t *rec, *uvs, *mk_dv;
 
-        mk_dv = mkb_mk_dv(mkb);
-        if (!mk_dv) {
-            BD_DEBUG(DBG_AACS | DBG_CRIT, "Missing MKB DV record\n");
-            return AACS_ERROR_CORRUPTED_DISC;
-        }
+    mk_dv = mkb_mk_dv(mkb);
+    if (!mk_dv) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Missing MKB DV record\n");
+        return AACS_ERROR_CORRUPTED_DISC;
+    }
 
-        BD_DEBUG(DBG_AACS, "Get UVS...\n");
-        uvs = mkb_subdiff_records(mkb, &len);
-        rec = uvs;
-        while (rec < uvs + len) {
-            if (rec[0] & 0xc0)
-                break;
-            rec += 5;
-            num_uvs++;
-        }
+    BD_DEBUG(DBG_AACS, "Get UVS...\n");
+    uvs = mkb_subdiff_records(mkb, &len);
+    rec = uvs;
+    while (rec < uvs + len) {
+        if (rec[0] & 0xc0)
+            break;
+        rec += 5;
+        num_uvs++;
+    }
 
-        BD_DEBUG(DBG_AACS, "Get cvalues...\n");
-        rec = mkb_cvalues(mkb, &len);
-        if (!rec) {
-            BD_DEBUG(DBG_AACS | DBG_CRIT, "Missing MKB CVALUES record\n");
-            return AACS_ERROR_CORRUPTED_DISC;
-        }
+    BD_DEBUG(DBG_AACS, "Get cvalues...\n");
+    rec = mkb_cvalues(mkb, &len);
+    if (!rec) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Missing MKB CVALUES record\n");
+        return AACS_ERROR_CORRUPTED_DISC;
+    }
 
-        for (; pkl; pkl = pkl->next) {
-                BD_DEBUG(DBG_AACS, "Trying processing key...\n");
+    for (; pkl; pkl = pkl->next) {
+        BD_DEBUG(DBG_AACS, "Trying processing key...\n");
 
-                for (a = 0; a < num_uvs; a++) {
-                    if (AACS_SUCCESS == _validate_pk(pkl->key, rec + a * 16, uvs + 1 + a * 5, mk_dv, mk)) {
+        for (a = 0; a < num_uvs; a++) {
+            if (AACS_SUCCESS == _validate_pk(pkl->key, rec + a * 16, uvs + 1 + a * 5, mk_dv, mk)) {
 
-                        char str[40];
-                        BD_DEBUG(DBG_AACS, "Media key: %s\n", str_print_hex(str, mk, 16));
-                        return AACS_SUCCESS;
-                    }
-                }
+                char str[40];
+                BD_DEBUG(DBG_AACS, "Media key: %s\n", str_print_hex(str, mk, 16));
+                return AACS_SUCCESS;
             }
+        }
+    }
 
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key. Missing right processing key ?\n");
-        return AACS_ERROR_NO_PK;
+    BD_DEBUG(DBG_AACS | DBG_CRIT, "Error calculating media key. Missing right processing key ?\n");
+    return AACS_ERROR_NO_PK;
 }
 
 /*
