@@ -473,6 +473,11 @@ static MKB *_mkb_open(AACS *aacs)
 
     size = _read_file(aacs, "AACS" DIR_SEP "MKB_RO.inf", &data);
     if (size < 4) {
+        /* retry with backup file */
+        X_FREE(data);
+        size = _read_file(aacs, "AACS" DIR_SEP "DUPLICATE" DIR_SEP "MKB_RO.inf", &data);
+    }
+    if (size < 4) {
         X_FREE(data);
         BD_DEBUG(DBG_AACS | DBG_CRIT, "Error reading MKB file (AACS/MKB_RO.inf)\n");
         return NULL;
