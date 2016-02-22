@@ -27,6 +27,7 @@
 
 #include <errno.h>
 #include <inttypes.h>
+#include <stdio.h> // remove()
 #include <stdlib.h>
 #include <string.h>
 
@@ -132,6 +133,11 @@ static AACS_FILE_H *_file_open(const char* filename, const char *cmode)
 }
 
 AACS_FILE_H* (*file_open)(const char* filename, const char *mode) = _file_open;
+
+int file_unlink(const char *file)
+{
+    return remove(file);
+}
 
 int file_mkdir(const char *dir)
 {

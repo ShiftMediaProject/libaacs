@@ -113,6 +113,14 @@ static AACS_FILE_H *_file_open(const char* filename, const char *mode)
 
 AACS_FILE_H* (*file_open)(const char* filename, const char *mode) = _file_open;
 
+int file_unlink(const char *file)
+{
+    wchar_t wfile[MAX_PATH];
+
+    MultiByteToWideChar(CP_UTF8, 0, file, -1, wfile, MAX_PATH);
+    return _wremove(wfile);
+}
+
 int file_mkdir(const char *dir)
 {
     wchar_t wdir[MAX_PATH];
