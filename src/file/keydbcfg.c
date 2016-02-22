@@ -29,8 +29,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 
 #define CFG_DIR        "aacs"
@@ -42,43 +40,6 @@
 #define MIN_FILE_SIZE  20
 #define MAX_FILE_SIZE  65535
 
-static int _mkpath(const char *path)
-{
-    struct stat s;
-    int result = 1;
-    char *dir = str_dup(path);
-    char *end = dir;
-
-    if (!dir) {
-        return -1;
-    }
-
-#ifdef _WIN32
-    end += 2; /* skip drive */
-#endif
-    while (*end == DIR_SEP_CHAR)
-        end++;
-
-    while ((end = strchr(end, DIR_SEP_CHAR))) {
-        *end = 0;
-
-        if (stat(dir, &s) != 0 || !S_ISDIR(s.st_mode)) {
-            BD_DEBUG(DBG_FILE, "Creating directory %s\n", dir);
-
-            if (file_mkdir(dir) == -1) {
-                BD_DEBUG(DBG_FILE | DBG_CRIT, "Error creating directory %s\n", dir);
-                result = 0;
-                break;
-            }
-        }
-
-        *end++ = DIR_SEP_CHAR;
-    }
-
-    X_FREE(dir);
-
-    return result;
-}
 
 static char *_load_file(FILE *fp)
 {
@@ -134,7 +95,7 @@ static FILE *_open_cfg_file_user(const char *file_name, char **path, const char 
     }
 
     if (*mode == 'w') {
-        if (!_mkpath(cfg_file)) {
+        if (file_mkdirs(cfg_file) < 0) {
             X_FREE(cfg_file);
             return NULL;
         }
@@ -371,7 +332,7 @@ int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, 
     char *key_str = calloc(2, len + 1);
 
     if (file && key_str) {
-        if (_mkpath(file)) {
+        if (!file_mkdirs(file)) {
             FILE *fp = fopen(file, "w");
 
             if (fp) {
@@ -455,7 +416,7 @@ int cache_save(const char *name, uint32_t version, const void *data, uint32_t le
     char *file = _cache_file(name);
 
     if (file) {
-        if (_mkpath(file)) {
+        if (!file_mkdirs(file)) {
             FILE *fp = fopen(file, "w");
 
             if (fp) {
