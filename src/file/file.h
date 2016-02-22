@@ -41,8 +41,16 @@
 #define file_close(X)    X->close(X)
 #define file_seek(X,Y,Z) X->seek(X,Y,Z)
 #define file_tell(X)     X->tell(X)
-#define file_read(X,Y,Z) X->read(X,Y,Z)
-#define file_write(X,Y,Z) X->write(X,Y,Z)
+
+static inline int64_t file_read(AACS_FILE_H *fp, void *buf, int64_t size) {
+    return fp->read(fp, buf, size);
+}
+
+static inline int64_t file_write(AACS_FILE_H *fp, const void *buf, int64_t size) {
+    return fp->write ? fp->write(fp, buf, size) : 0;
+}
+
+
 BD_PRIVATE int64_t file_size(AACS_FILE_H *fp);
 
 BD_PRIVATE extern AACS_FILE_H *(*file_open)(const char* filename, const char *mode);
