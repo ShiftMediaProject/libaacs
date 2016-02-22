@@ -1,9 +1,11 @@
 - Add aacs_decrypt_bus().
 - Add aacs_get_bdj_root_cert_hash().
 - Add aacs_get_content_cert_id().
+- Improve error resilience.
 - Verify content certificate signature.
 - Fix build with gcrypt < 1.6.0.
 - Fix possible crash (debug log output that includes discid)
+- Fix config file path issues in Windows (non-ASCII paths)
 
 2015-03-13: Version 0.8.1
  - Accept NULL mount / device path when application handles file system access.
