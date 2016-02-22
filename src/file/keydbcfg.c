@@ -333,12 +333,12 @@ int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, 
 
     if (file && key_str) {
         if (!file_mkdirs(file)) {
-            FILE *fp = fopen(file, "w");
+            AACS_FILE_H *fp = file_open(file, "w");
 
             if (fp) {
                 hex_array_to_hexstring(key_str, key, len);
 
-                if (fwrite(key_str, 1, len*2, fp) == len*2) {
+                if (file_write(fp, key_str, len*2) == len*2) {
                     BD_DEBUG(DBG_FILE, "Wrote %s to %s\n", type, file);
                     result = 1;
 
@@ -347,7 +347,7 @@ int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, 
                 }
 
 
-                fclose(fp);
+                file_close(fp);
             }
         }
     }
@@ -364,14 +364,14 @@ int keycache_find(const char *type, const uint8_t *disc_id, uint8_t *key, unsign
     char *file = _keycache_file(type, disc_id);
 
     if (file) {
-        FILE *fp = fopen(file, "r");
+        AACS_FILE_H *fp = file_open(file, "r");
 
         if (fp) {
             char *key_str = malloc(len*2);
 
             BD_DEBUG(DBG_FILE, "Reading %s\n", file);
 
-            if (key_str && fread(key_str, 1, len*2, fp) == len*2) {
+            if (key_str && file_read(fp, key_str, len*2) == len*2) {
 
                 result = hexstring_to_hex_array(key, len, key_str);
                 if (!result) {
@@ -379,12 +379,12 @@ int keycache_find(const char *type, const uint8_t *disc_id, uint8_t *key, unsign
                 }
 
             } else {
-              BD_DEBUG(DBG_FILE, "Error reading from %s\n", file);
+                BD_DEBUG(DBG_FILE, "Error reading from %s\n", file);
             }
 
             X_FREE(key_str);
 
-            fclose(fp);
+            file_close(fp);
 
         } else {
             BD_DEBUG(DBG_FILE, "%s not found\n", file);
@@ -417,12 +417,12 @@ int cache_save(const char *name, uint32_t version, const void *data, uint32_t le
 
     if (file) {
         if (!file_mkdirs(file)) {
-            FILE *fp = fopen(file, "w");
+            AACS_FILE_H *fp = file_open(file, "w");
 
             if (fp) {
-                if (fwrite(&version, 1, 4, fp) == 4 &&
-                    fwrite(&len, 1, 4, fp) == 4 &&
-                    fwrite(data, 1, len, fp) == len) {
+                if (file_write(fp, &version, 4)   == 4 &&
+                    file_write(fp, &len,     4)   == 4 &&
+                    file_write(fp, data,     len) == len) {
                     BD_DEBUG(DBG_FILE, "Wrote %d bytes to %s\n", len + 8, file);
                     result = 1;
 
@@ -430,7 +430,7 @@ int cache_save(const char *name, uint32_t version, const void *data, uint32_t le
                     BD_DEBUG(DBG_FILE, "Error writing to %s\n", file);
                 }
 
-                fclose(fp);
+                file_close(fp);
             }
         }
 
@@ -451,15 +451,15 @@ int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf, siz
     }
 
     if (file) {
-        FILE *fp = fopen(file, "r");
+        AACS_FILE_H *fp = file_open(file, "r");
 
         if (fp) {
             BD_DEBUG(DBG_FILE, "Reading %s\n", file);
 
-            if (fread(version, 1, 4, fp) == 4 &&
-                (!len || fread(len, 1, 4, fp) == 4) &&
+            if (file_read(fp, version, 4) == 4 &&
+                (!len || file_read(fp, len, 4) == 4) &&
                 (!len || (size_t)*len <= buf_size) &&
-                (!buf || fread(buf, 1, *len, fp) == *len)) {
+                (!buf || file_read(fp, buf, *len) == *len)) {
 
               BD_DEBUG(DBG_FILE, "Read %d bytes from %s, version %d\n", 4 + (len ? 4 : 0) + (buf ? *len : 0), file, *version);
               result = 1;
@@ -468,7 +468,7 @@ int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf, siz
               BD_DEBUG(DBG_FILE, "Error reading from %s\n", file);
             }
 
-            fclose(fp);
+            file_close(fp);
 
         } else {
             BD_DEBUG(DBG_FILE, "%s not found\n", file);
@@ -497,12 +497,12 @@ int cache_remove(const char *name)
 int config_save(const char *name, const void *data, uint32_t len)
 {
     char *path = NULL;
-    FILE *fp = _open_cfg_file_user(name, &path, "w");
+    AACS_FILE_H *fp = _open_cfg_file_user(name, &path, "w");
     int result = 0;
 
     if (fp) {
-        if (fwrite(&len, 1, 4, fp) == 4 &&
-            fwrite(data, 1, len, fp) == len) {
+        if (file_write(fp, &len, 4) == 4 &&
+            file_write(fp, data, len) == len) {
           BD_DEBUG(DBG_FILE, "Wrote %d bytes to %s\n", len + 4, path);
           result = 1;
 
@@ -510,7 +510,7 @@ int config_save(const char *name, const void *data, uint32_t len)
             BD_DEBUG(DBG_FILE | DBG_CRIT, "Error writing to %s\n", path);
         }
 
-        fclose(fp);
+        file_close(fp);
     }
 
     X_FREE(path);
@@ -521,7 +521,7 @@ int config_save(const char *name, const void *data, uint32_t len)
 int config_get(const char *name, uint32_t *len, void *buf)
 {
     char *path = NULL;
-    FILE *fp = _open_cfg_file_user(name, &path, "r");
+    AACS_FILE_H *fp = _open_cfg_file_user(name, &path, "r");
     int result = 0;
     uint32_t size = *len;
 
@@ -530,8 +530,8 @@ int config_get(const char *name, uint32_t *len, void *buf)
     if (fp) {
         BD_DEBUG(DBG_FILE, "Reading %s\n", path);
 
-        if (fread(len, 1, 4, fp) == 4 && (size <= *len) &&
-            (!buf || fread(buf, 1, *len, fp) == *len)) {
+        if (file_read(fp, len, 4) == 4 && (size <= *len) &&
+            (!buf || file_read(fp, buf, *len) == *len)) {
 
             BD_DEBUG(DBG_FILE, "Read %d bytes from %s\n", 4 + (buf ? *len : 0), path);
             result = 1;
@@ -540,7 +540,7 @@ int config_get(const char *name, uint32_t *len, void *buf)
             BD_DEBUG(DBG_FILE | DBG_CRIT, "Error reading from %s\n", path);
         }
 
-        fclose(fp);
+        file_close(fp);
     }
 
     X_FREE(path);
