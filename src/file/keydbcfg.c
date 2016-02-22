@@ -26,7 +26,6 @@
 #include "util/logging.h"
 #include "util/macro.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,33 +40,29 @@
 #define MAX_FILE_SIZE  65535
 
 
-static char *_load_file(FILE *fp)
+static char *_load_file(AACS_FILE_H *fp)
 {
     char *data = NULL;
-    long file_size, read_size;
+    int64_t size;
 
-    fseek(fp, 0, SEEK_END);
-    file_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-
-    if (file_size < MIN_FILE_SIZE || file_size > MAX_FILE_SIZE) {
+    size = file_size(fp);
+    if (size < MIN_FILE_SIZE || size > MAX_FILE_SIZE) {
         BD_DEBUG(DBG_FILE, "Invalid file size\n");
         return NULL;
     }
 
-    data = malloc(file_size + 1);
+    data = malloc(size + 1);
     if (!data) {
         return NULL;
     }
 
-    read_size = fread(data, 1, file_size, fp);
-    if (read_size != file_size) {
+    if (file_read(fp, data, size) != size) {
         BD_DEBUG(DBG_FILE, "Error reading file\n");
         X_FREE(data);
         return NULL;
     }
 
-    data[file_size] = 0;
+    data[size] = 0;
 
     return data;
 }
@@ -86,7 +81,7 @@ static char *_config_file_user(const char *file_name)
     return result;
 }
 
-static FILE *_open_cfg_file_user(const char *file_name, char **path, const char *mode)
+static AACS_FILE_H *_open_cfg_file_user(const char *file_name, char **path, const char *mode)
 {
     char *cfg_file = _config_file_user(file_name);
 
@@ -101,7 +96,7 @@ static FILE *_open_cfg_file_user(const char *file_name, char **path, const char 
         }
     }
 
-    FILE *fp = fopen(cfg_file, mode);
+    AACS_FILE_H *fp = file_open(cfg_file, mode);
 
     BD_DEBUG(DBG_FILE, fp ? "Opened %s for %s\n" : "%s not found\n", cfg_file, mode);
 
@@ -114,7 +109,7 @@ static FILE *_open_cfg_file_user(const char *file_name, char **path, const char 
     return fp;
 }
 
-static FILE *_open_cfg_file_system(const char *file_name, char **path)
+static AACS_FILE_H *_open_cfg_file_system(const char *file_name, char **path)
 {
     const char *dir = NULL;
 
@@ -125,7 +120,7 @@ static FILE *_open_cfg_file_system(const char *file_name, char **path)
             continue;
         }
 
-        FILE *fp = fopen(cfg_file, "r");
+        AACS_FILE_H *fp = file_open(cfg_file, "r");
         if (fp) {
             BD_DEBUG(DBG_FILE, "Reading %s\n", cfg_file);
 
@@ -157,7 +152,7 @@ static int _is_duplicate_pk(pk_list *list, const uint8_t *e)
     return 0;
 }
 
-static int _parse_pk_file(config_file *cf, FILE *fp)
+static int _parse_pk_file(config_file *cf, AACS_FILE_H *fp)
 {
     char *data   = _load_file(fp);
     int   result = 0;
@@ -211,7 +206,7 @@ static int _is_duplicate_cert(cert_list *list, cert_list *e)
   return 0;
 }
 
-static int _parse_cert_file(config_file *cf, FILE *fp)
+static int _parse_cert_file(config_file *cf, AACS_FILE_H *fp)
 {
     char *data   = _load_file(fp);
     int   result = 0;
@@ -269,19 +264,19 @@ static int _is_duplicate_dk(dk_list *list, dk_list *e)
 static int _load_pk_file(config_file *cf)
 {
     static const char pk_file_name[] = PK_FILE_NAME;
-    FILE *fp;
+    AACS_FILE_H *fp;
     int result = 0;
 
     fp = _open_cfg_file_user(pk_file_name, NULL, "r");
     if (fp) {
         result += _parse_pk_file(cf, fp);
-        fclose(fp);
+        file_close(fp);
     }
 
     fp = _open_cfg_file_system(pk_file_name, NULL);
     if (fp) {
         result += _parse_pk_file(cf, fp);
-        fclose(fp);
+        file_close(fp);
     }
 
     return result;
@@ -290,19 +285,19 @@ static int _load_pk_file(config_file *cf)
 static int _load_cert_file(config_file *cf)
 {
     static const char cert_file_name[] = CERT_FILE_NAME;
-    FILE *fp;
+    AACS_FILE_H *fp;
     int result = 0;
 
     fp = _open_cfg_file_user(cert_file_name, NULL, "r");
     if (fp) {
         result += _parse_cert_file(cf, fp);
-        fclose(fp);
+        file_close(fp);
     }
 
     fp = _open_cfg_file_system(cert_file_name, NULL);
     if (fp) {
         result += _parse_cert_file(cf, fp);
-        fclose(fp);
+        file_close(fp);
     }
 
     return result;
@@ -553,8 +548,8 @@ static char *_find_config_file(void)
 {
     static const char cfg_file_name[] = CFG_FILE_NAME;
 
-    char       *cfg_file = NULL;
-    FILE       *fp       = NULL;
+    char        *cfg_file = NULL;
+    AACS_FILE_H *fp       = NULL;
 
     fp = _open_cfg_file_user(cfg_file_name, &cfg_file, "r");
     if (!fp) {
@@ -563,7 +558,7 @@ static char *_find_config_file(void)
 
     if (fp) {
         BD_DEBUG(DBG_FILE, "found config file: %s\n", cfg_file);
-        fclose(fp);
+        file_close(fp);
     }
 
     return cfg_file;
