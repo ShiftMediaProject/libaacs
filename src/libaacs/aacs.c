@@ -172,9 +172,9 @@ static void _save_rl(const char *name, uint32_t version, const uint8_t *version_
         memcpy(data,      version_rec, 12);
         memcpy(data + 12, rl_rec,      rl_len);
         if (!_rl_verify_signature(data, rl_len + 12)) {
-          BD_DEBUG(DBG_AACS | DBG_CRIT, "invalid %s signature, not using it\n", name);
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "invalid %s signature, not using it\n", name);
         } else {
-          cache_save(name, version, data, rl_len + 12);
+            cache_save(name, version, data, rl_len + 12);
         }
         X_FREE(data);
     }
