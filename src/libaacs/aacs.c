@@ -783,59 +783,59 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
     aacs->uks = NULL;
     aacs->num_uks = 0;
 
-        while (ce && ce->entry.discid) {
-            if (!memcmp(aacs->disc_id, ce->entry.discid, 20)) {
-                BD_DEBUG(DBG_AACS, "Found config entry for discid %s\n",
-                      str_print_hex(str, ce->entry.discid, 20));
-                break;
-            }
-
-            ce = ce->next;
-        }
-        if (!ce) {
-            return;
+    while (ce && ce->entry.discid) {
+        if (!memcmp(aacs->disc_id, ce->entry.discid, 20)) {
+            BD_DEBUG(DBG_AACS, "Found config entry for discid %s\n",
+                     str_print_hex(str, ce->entry.discid, 20));
+            break;
         }
 
-        if (ce->entry.mek) {
-            hexstring_to_hex_array(mk, 16, ce->entry.mek);
+        ce = ce->next;
+    }
+    if (!ce) {
+        return;
+    }
 
-            BD_DEBUG(DBG_AACS, "Found media key for %s: %s\n",
-                  str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, mk, 16));
-        }
+    if (ce->entry.mek) {
+        hexstring_to_hex_array(mk, 16, ce->entry.mek);
 
-        if (ce->entry.vid) {
-            hexstring_to_hex_array(aacs->vid, sizeof(aacs->vid),
-                                    ce->entry.vid);
+        BD_DEBUG(DBG_AACS, "Found media key for %s: %s\n",
+                 str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, mk, 16));
+    }
 
-            BD_DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
-                  str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, aacs->vid, 16));
-        }
+    if (ce->entry.vid) {
+        hexstring_to_hex_array(aacs->vid, sizeof(aacs->vid),
+                               ce->entry.vid);
 
-        if (memcmp(ce->entry.vuk, empty_key, 16)) {
-            memcpy(vuk, ce->entry.vuk, 16);
+        BD_DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
+                 str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, aacs->vid, 16));
+    }
 
-            BD_DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
-                  str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, vuk, 16));
-        }
+    if (memcmp(ce->entry.vuk, empty_key, 16)) {
+        memcpy(vuk, ce->entry.vuk, 16);
 
-        if (ce->entry.uk) {
-            BD_DEBUG(DBG_AACS, "Acquire CPS unit keys from keydb config file...\n");
+        BD_DEBUG(DBG_AACS, "Found volume unique key for %s: %s\n",
+                 str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, vuk, 16));
+    }
 
-            digit_key_pair_list *ukcursor = ce->entry.uk;
-            while (ukcursor && ukcursor->key_pair.key) {
-                aacs->num_uks++;
+    if (ce->entry.uk) {
+        BD_DEBUG(DBG_AACS, "Acquire CPS unit keys from keydb config file...\n");
 
-                aacs->uks = (uint8_t*)realloc(aacs->uks, 16 * aacs->num_uks);
-                hexstring_to_hex_array(aacs->uks + (16 * (aacs->num_uks - 1)), 16,
+        digit_key_pair_list *ukcursor = ce->entry.uk;
+        while (ukcursor && ukcursor->key_pair.key) {
+            aacs->num_uks++;
+
+            aacs->uks = (uint8_t*)realloc(aacs->uks, 16 * aacs->num_uks);
+            hexstring_to_hex_array(aacs->uks + (16 * (aacs->num_uks - 1)), 16,
                                       ukcursor->key_pair.key);
 
-                BD_DEBUG(DBG_AACS, "Unit key %d from keydb entry: %s\n",
-                      aacs->num_uks,
-                      str_print_hex(str, aacs->uks + (16 * (aacs->num_uks - 1)), 16));
+            BD_DEBUG(DBG_AACS, "Unit key %d from keydb entry: %s\n",
+                     aacs->num_uks,
+                     str_print_hex(str, aacs->uks + (16 * (aacs->num_uks - 1)), 16));
 
-                ukcursor = ukcursor->next;
-            }
+            ukcursor = ukcursor->next;
         }
+    }
 }
 
 static size_t _read_cci_file(AACS *aacs, int cps_unit, void **data)
