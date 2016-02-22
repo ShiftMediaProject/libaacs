@@ -469,7 +469,15 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   if (!cfgfile || !path)
     return 0;
 
+#ifdef _WIN32
+  wchar_t wfilename[MAX_PATH];
+  if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, wfilename, MAX_PATH))
+    return 0;
+  }
+  fp = _wfopen(wfilename, L"r");
+#else
   FILE * fp = fopen(path, "r");
+#endif
   if (!fp)
     return 0;
 
