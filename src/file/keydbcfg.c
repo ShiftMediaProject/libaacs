@@ -525,7 +525,7 @@ int cache_remove(const char *name)
     if (!file) {
         return 0;
     }
-    int result = !remove(file);
+    int result = !file_unlink(file);
     if (!result) {
         BD_DEBUG(DBG_FILE, "Error removing %s\n", file);
     }
