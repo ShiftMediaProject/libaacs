@@ -121,6 +121,19 @@ int file_unlink(const char *file)
     return _wremove(wfile);
 }
 
+int file_path_exists(const char *path)
+{
+    wchar_t wpath[MAX_PATH];
+
+    MultiByteToWideChar(CP_UTF8, 0, path, -1, wpath, MAX_PATH);
+
+    DWORD dwAttrib = GetFileAttributesW(wpath);
+    if (dwAttrib != INVALID_FILE_ATTRIBUTES) {
+        return 0;
+    }
+    return -1;
+}
+
 int file_mkdir(const char *dir)
 {
     wchar_t wdir[MAX_PATH];

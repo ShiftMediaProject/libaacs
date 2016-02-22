@@ -139,6 +139,12 @@ int file_unlink(const char *file)
     return remove(file);
 }
 
+int file_path_exists(const char *path)
+{
+    struct stat s;
+    return stat(path, &s);
+}
+
 int file_mkdir(const char *dir)
 {
     return mkdir(dir, S_IRWXU);
