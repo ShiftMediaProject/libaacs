@@ -28,6 +28,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 /* Disable some warnings triggered by generated parser */
 #if defined __GNUC__
 #pragma GCC diagnostic ignored "-Wimplicit-function-declaration"
@@ -471,12 +475,12 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
 
 #ifdef _WIN32
   wchar_t wfilename[MAX_PATH];
-  if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, wfilename, MAX_PATH))
+  if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path, -1, wfilename, MAX_PATH)) {
     return 0;
   }
-  fp = _wfopen(wfilename, L"r");
+  FILE *fp = _wfopen(wfilename, L"r");
 #else
-  FILE * fp = fopen(path, "r");
+  FILE *fp = fopen(path, "r");
 #endif
   if (!fp)
     return 0;
