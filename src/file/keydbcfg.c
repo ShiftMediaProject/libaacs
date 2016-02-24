@@ -544,24 +544,29 @@ int config_get(const char *name, uint32_t *len, void *buf)
 }
 
 
-static char *_find_config_file(void)
+static int _load_config_file(config_file *cf, int system)
 {
     static const char cfg_file_name[] = CFG_FILE_NAME;
 
     char        *cfg_file = NULL;
     AACS_FILE_H *fp       = NULL;
+    int          result   = 0;
 
-    fp = _open_cfg_file_user(cfg_file_name, &cfg_file, "r");
-    if (!fp) {
+    if (system) {
         fp = _open_cfg_file_system(cfg_file_name, &cfg_file);
+    } else {
+        fp = _open_cfg_file_user(cfg_file_name, &cfg_file, "r");
     }
 
     if (fp) {
         BD_DEBUG(DBG_FILE, "found config file: %s\n", cfg_file);
         file_close(fp);
+
+        result = keydbcfg_parse_config(cf, cfg_file);
     }
 
-    return cfg_file;
+    X_FREE(cfg_file);
+    return result;
 }
 
 #include "keydb.h"
@@ -653,12 +658,11 @@ config_file *keydbcfg_config_load(const char *configfile_path)
         config_ok = keydbcfg_parse_config(cf, configfile_path);
 
     } else {
-        /* If no configfile path given, check for config files in user's home or
+        /* If no configfile path given, check for config files in user's home and
          * under /etc.
          */
-        char *cfgfile = _find_config_file();
-        config_ok = keydbcfg_parse_config(cf, cfgfile);
-        X_FREE(cfgfile);
+        config_ok = _load_config_file(cf, 0);
+        config_ok = _load_config_file(cf, 1) || config_ok;
     }
 
     /* Try to load simple (aacskeys) config files */
