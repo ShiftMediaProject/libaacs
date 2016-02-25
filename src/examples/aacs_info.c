@@ -1,6 +1,6 @@
 /*
  * This file is part of libaacs
- * Copyright (C) 2010  npzacs
+ * Copyright (C) 2010-2016  npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -89,6 +89,7 @@ static void _dump_rl(const char *type, AACS_RL_ENTRY *rl, int num_entries, int m
 int main (int argc, char **argv)
 {
     int major, minor, micro, error_code = AACS_SUCCESS;
+    AACS *aacs = NULL;
 
     if (argc < 2) {
         fprintf(stderr, "Usage: aacs_info <path-to-disc-root> [<path-to-config-file>]\n");
@@ -98,16 +99,19 @@ int main (int argc, char **argv)
     aacs_get_version(&major, &minor, &micro);
     printf("Opening %s using libaacs %d.%d.%d ...\n", argv[1], major, minor, micro);
 
-    AACS *aacs = aacs_open2(argv[1], argc > 2 ? argv[2] : NULL, &error_code);
+    aacs = aacs_init();
+    if (!aacs) {
+	exit(EXIT_FAILURE);
+    }
+
+    error_code = aacs_open_device(aacs, argv[1], argc > 2 ? argv[2] : NULL);
+
     if (error_code) {
         fprintf(stderr, "libaacs open failed: %s\n", _error_str(error_code));
     } else {
         printf("libaacs open succeed.\n");
     }
 
-    if (!aacs) {
-	exit(EXIT_FAILURE);
-    }
 
     const uint8_t *vid = aacs_get_vid(aacs);
     const uint8_t *mk  = aacs_get_mk(aacs);
