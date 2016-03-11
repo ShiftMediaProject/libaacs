@@ -570,6 +570,7 @@ static int _parse_embedded(config_file *cf)
 {
     int result = 0, jj;
     unsigned ii;
+    static const uint8_t empty_key[20] = {0};
 
     /* reverse order to maintain key positions (items are added to list head) */
     for (jj = sizeof(internal_dk_list) / sizeof(internal_dk_list[0]) - 1; jj >= 0; --jj) {
@@ -601,7 +602,9 @@ static int _parse_embedded(config_file *cf)
 
         decrypt_key(e->key, internal_pk_list[ii], 16);
 
-        if (_is_duplicate_pk(cf->pkl, e->key)) {
+        if (!memcmp(e->key, empty_key, 16) ||
+            _is_duplicate_pk(cf->pkl, e->key)) {
+
             X_FREE(e);
 
         } else {
@@ -620,7 +623,9 @@ static int _parse_embedded(config_file *cf)
         decrypt_key(e->host_priv_key, internal_hc_list[ii],      20);
         decrypt_key(e->host_cert,     internal_hc_list[ii] + 20, 92);
 
-        if (_is_duplicate_cert(cf->host_cert_list, e)) {
+        if (!memcmp(e->host_priv_key, empty_key, 20) ||
+            _is_duplicate_cert(cf->host_cert_list, e)) {
+
             X_FREE(e);
 
         } else {
