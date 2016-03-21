@@ -79,6 +79,8 @@ struct aacs {
     uint32_t  num_titles;
     uint16_t *cps_units;  /* [0] = first play ; [1] = top menu ; [2] = title 1 ... */
 
+    int       no_cache; /* do not use cached keys */
+
     /* bus encryption */
     int       bee;        /* bus encryption enabled flag in content certificate */
     int       bec;        /* bus encryption capable flag in drive certificate */
@@ -687,7 +689,7 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
     }
 
     /* get cached vuk */
-    if (keycache_find("vuk", aacs->disc_id, vuk, 16)) {
+    if (!aacs->no_cache && keycache_find("vuk", aacs->disc_id, vuk, 16)) {
         BD_DEBUG(DBG_AACS, "Using cached VUK\n");
         return AACS_SUCCESS;
     }
@@ -1192,6 +1194,8 @@ AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
 
 AACS *aacs_init()
 {
+    AACS *aacs;
+
     BD_DEBUG(DBG_AACS, "libaacs "AACS_VERSION_STRING" [%u]\n", (unsigned)sizeof(AACS));
 
     BD_DEBUG(DBG_AACS, "Initializing libgcrypt...\n");
@@ -1200,7 +1204,11 @@ AACS *aacs_init()
         return NULL;
     }
 
-    return calloc(1, sizeof(AACS));
+    aacs = calloc(1, sizeof(AACS));
+    if (aacs) {
+        aacs->no_cache = !!getenv("AACS_NO_CACHE");
+    }
+    return aacs;
 }
 
 void aacs_set_fopen(AACS *aacs, void *handle, AACS_FILE_OPEN2 p)
@@ -1398,7 +1406,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
 {
     if (!memcmp(aacs->vid, empty_key, sizeof(aacs->vid))) {
         /* get cached vid */
-        if (keycache_find("vid", aacs->disc_id, aacs->vid, 16)) {
+        if (!aacs->no_cache && keycache_find("vid", aacs->disc_id, aacs->vid, 16)) {
             BD_DEBUG(DBG_AACS, "Using cached VID\n");
             return aacs->vid;
         }
