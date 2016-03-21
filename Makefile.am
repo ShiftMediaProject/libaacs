@@ -23,6 +23,8 @@ libaacs_la_SOURCES=\
 	src/libaacs/mkb.c \
 	src/libaacs/mmc.h \
 	src/libaacs/mmc.c \
+	src/libaacs/unit_key.h \
+	src/libaacs/unit_key.c \
 	src/file/dirs.h \
 	src/file/file.h \
 	src/file/file.c \
