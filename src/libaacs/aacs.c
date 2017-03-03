@@ -162,11 +162,11 @@ static void _save_rl(const char *name, uint32_t version, const uint8_t *version_
         return;
     }
 
-    if (rl_rec && version_rec) {
-        rl_rec -= 4;
-        rl_len += 4;
+    rl_rec -= 4;
+    rl_len += 4;
 
-        uint8_t *data = malloc(12 + rl_len);
+    uint8_t *data = malloc(12 + rl_len);
+    if (data) {
         memcpy(data,      version_rec, 12);
         memcpy(data + 12, rl_rec,      rl_len);
         if (!_rl_verify_signature(data, rl_len + 12)) {
@@ -1422,7 +1422,7 @@ static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkbv)
 
     if (version > 0 && len > 24) {
         data = malloc(len);
-        if (cache_get(type, &version, &len, data, len) && len > 24) {
+        if (data && cache_get(type, &version, &len, data, len) && len > 24) {
 
             if (_rl_verify_signature(data, len)) {
                 *mkbv = version;
@@ -1503,7 +1503,9 @@ struct aacs_basic_cci *aacs_get_basic_cci(AACS *aacs, uint32_t title)
     const AACS_BASIC_CCI *bcci = cci_get_basic_cci(cci);
     if (bcci) {
         data = malloc(sizeof(*data));
-        memcpy(data, bcci, sizeof(*data));
+        if (data) {
+            memcpy(data, bcci, sizeof(*data));
+        }
     }
 
     cci_free(&cci);

@@ -255,8 +255,10 @@ char *str_get_hex_string(const char *p, int n)
     }
 
     char *s = malloc(n + 1);
-    memcpy(s, p, n);
-    s[n] = 0;
+    if (s) {
+        memcpy(s, p, n);
+        s[n] = 0;
+    }
 
     return s;
 }
