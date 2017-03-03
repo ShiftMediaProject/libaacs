@@ -444,6 +444,9 @@ int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf, siz
     if (len) {
         *len = 0;
     }
+    if (!len) {
+        buf = NULL;
+    }
 
     if (file) {
         AACS_FILE_H *fp = file_open(file, "r");
