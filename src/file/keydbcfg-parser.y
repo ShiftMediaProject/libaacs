@@ -563,7 +563,7 @@ static dk_list *new_dk_list(void)
 {
   dk_list *dkl = (dk_list *)calloc(1, sizeof(*dkl));
   if (!dkl) {
-    printf("Error allocating memory for new certificate list!\n");
+    fprintf(stderr, "Error allocating memory for new certificate list!\n");
   }
   return dkl;
 }
@@ -606,7 +606,7 @@ static pk_list *new_pk_list(void)
 {
   pk_list *pkl = (pk_list *)calloc(1, sizeof(*pkl));
   if (!pkl) {
-    printf("Error allocating memory for new pk list!\n");
+    fprintf(stderr, "Error allocating memory for new pk list!\n");
   }
   return pkl;
 }
@@ -638,7 +638,7 @@ static cert_list *new_cert_list(void)
 {
   cert_list *list = (cert_list *)calloc(1, sizeof(*list));
   if (!list) {
-    printf("Error allocating memory for new certificate list!\n");
+    fprintf(stderr, "Error allocating memory for new certificate list!\n");
   }
   return list;
 }
@@ -679,7 +679,7 @@ title_entry_list *new_title_entry_list(void)
 {
   title_entry_list *list = (title_entry_list *)calloc(1, sizeof(*list));
   if (!list) {
-    printf("Error allocating memory for new title entry list!\n");
+    fprintf(stderr, "Error allocating memory for new title entry list!\n");
   }
   return list;
 }
@@ -696,7 +696,7 @@ static int add_entry(title_entry_list *list, int type, char *entry)
 {
   if (!list)
   {
-    printf("Error: No title list passed as parameter.\n");
+    fprintf(stderr, "Error: No title list passed as parameter.\n");
     return 0;
   }
 
@@ -735,7 +735,7 @@ static int add_entry(title_entry_list *list, int type, char *entry)
 
     default:
       X_FREE(entry);
-      printf("WARNING: entry type passed in unknown\n");
+      fprintf(stderr, "WARNING: entry type passed in unknown\n");
       return 0;
   }
 
@@ -747,7 +747,7 @@ static digit_key_pair_list *new_digit_key_pair_list(void)
 {
   digit_key_pair_list *list = (digit_key_pair_list *)calloc(1, sizeof(*list));
   if (!list) {
-    printf("Error allocating memory for new digit key pair entry list!\n");
+    fprintf(stderr, "Error allocating memory for new digit key pair entry list!\n");
   }
   return list;
 }
@@ -758,7 +758,7 @@ static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
 {
   if (!list)
   {
-    printf("Error: No digit key pair list passed as parameter.\n");
+    fprintf(stderr, "Error: No digit key pair list passed as parameter.\n");
     return NULL;
   }
 
@@ -777,7 +777,7 @@ static int add_date_entry(title_entry_list *list, unsigned int year,
 {
   if (!list)
   {
-    printf("Error: No title list passed as parameter.\n");
+    fprintf(stderr, "Error: No title list passed as parameter.\n");
     return 0;
   }
 
