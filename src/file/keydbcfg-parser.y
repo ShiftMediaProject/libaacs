@@ -502,8 +502,7 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
 /* Function that returns pointer to new config file object */
 config_file *keydbcfg_new_config_file(void)
 {
-  config_file *cfgfile = (config_file *)malloc(sizeof(*cfgfile));
-  memset(cfgfile, 0, sizeof(*cfgfile));
+  config_file *cfgfile = (config_file *)calloc(1, sizeof(*cfgfile));
   return cfgfile;
 }
 
@@ -562,8 +561,10 @@ int keydbcfg_config_file_close(config_file *cfgfile)
 /* Function to return new dk_list object */
 static dk_list *new_dk_list(void)
 {
-  dk_list *dkl = (dk_list *)malloc(sizeof(*dkl));
-  memset(dkl, 0, sizeof(*dkl));
+  dk_list *dkl = (dk_list *)calloc(1, sizeof(*dkl));
+  if (!dkl) {
+    printf("Error allocating memory for new certificate list!\n");
+  }
   return dkl;
 }
 
@@ -603,8 +604,10 @@ static void add_dk_entry(config_file *cf, char *key, char *node, char *uv, char 
 /* Function to return new pk_list object */
 static pk_list *new_pk_list(void)
 {
-  pk_list *pkl = (pk_list *)malloc(sizeof(*pkl));
-  memset(pkl, 0, sizeof(*pkl));
+  pk_list *pkl = (pk_list *)calloc(1, sizeof(*pkl));
+  if (!pkl) {
+    printf("Error allocating memory for new pk list!\n");
+  }
   return pkl;
 }
 
@@ -633,15 +636,10 @@ static void add_pk_entry(config_file *cf, char *key)
 /* Function to create new certificate list */
 static cert_list *new_cert_list(void)
 {
-  cert_list *list = (cert_list *)malloc(sizeof(*list));
-  if (!list)
-  {
+  cert_list *list = (cert_list *)calloc(1, sizeof(*list));
+  if (!list) {
     printf("Error allocating memory for new certificate list!\n");
-    return NULL;
   }
-
-  memset(list, 0, sizeof(*list));
-
   return list;
 }
 
@@ -679,15 +677,10 @@ static void add_cert_entry(config_file *cf, char *host_priv_key, char *host_cert
 /* Function that returns pointer to new title entry list */
 title_entry_list *new_title_entry_list(void)
 {
-  title_entry_list *list = (title_entry_list *)malloc(sizeof(*list));
-  if (!list)
-  {
+  title_entry_list *list = (title_entry_list *)calloc(1, sizeof(*list));
+  if (!list) {
     printf("Error allocating memory for new title entry list!\n");
-    return NULL;
   }
-
-  memset(list, 0, sizeof(*list));
-
   return list;
 }
 
@@ -752,15 +745,10 @@ static int add_entry(title_entry_list *list, int type, char *entry)
 /* Function that returns pointer to new digit key pair list */
 static digit_key_pair_list *new_digit_key_pair_list(void)
 {
-  digit_key_pair_list *list = (digit_key_pair_list *)malloc(sizeof(*list));
-  if (!list)
-  {
+  digit_key_pair_list *list = (digit_key_pair_list *)calloc(1, sizeof(*list));
+  if (!list) {
     printf("Error allocating memory for new digit key pair entry list!\n");
-    return NULL;
   }
-
-  memset(list, 0, sizeof(*list));
-
   return list;
 }
 
