@@ -289,8 +289,10 @@ disc_info
         celist->next = new_title_entry_list();
         celist = celist->next;
       }
-      add_entry(celist, ENTRY_TYPE_DISCID, $1);
-      /*add_entry(celist, ENTRY_TYPE_TITLE, $3);*/
+      if (celist) {
+        add_entry(celist, ENTRY_TYPE_DISCID, $1);
+        /*add_entry(celist, ENTRY_TYPE_TITLE, $3);*/
+      }
     }
   ;
 
@@ -454,15 +456,19 @@ hexstring_list
   : hexstring_list HEXSTRING
     {
       char *str = (char*)malloc(strlen($1) + strlen($2) + 1);
-      strcpy(str, $1);
-      strcat(str, $2);
+      if (str) {
+        strcpy(str, $1);
+        strcat(str, $2);
+      }
       $$ = str;
       X_FREE($1);
     }
   | HEXSTRING
     {
       char *str = (char*)malloc(strlen($1) + 1);
-      strcpy(str, $1);
+      if (str) {
+        strcpy(str, $1);
+      }
       $$ = str;
     }
   ;
@@ -571,10 +577,9 @@ static dk_list *new_dk_list(void)
 /* Function to add dk to config file */
 static void add_dk_entry(config_file *cf, char *key, char *node, char *uv, char *u_mask_shift)
 {
-  if (strlen(key) != 32) {
+  if (!key || !node || strlen(key) != 32) {
     fprintf(stderr, "ignoring bad DK entry %s\n", key);
-    X_FREE(key);
-    return;
+    goto out;
   }
 
   dk_list *entry = cf->dkl;
@@ -585,20 +590,25 @@ static void add_dk_entry(config_file *cf, char *key, char *node, char *uv, char 
     entry->next = new_dk_list();
     entry = entry->next;
   }
+  if (!entry) {
+    goto out;
+  }
 
   hexstring_to_hex_array(entry->key, 16, key);
-  X_FREE(key);
   entry->node = strtoul(node, NULL, 16);
-  X_FREE(node);
 
   if (uv) {
     entry->uv = strtoul(uv, NULL, 16);
-    X_FREE(uv);
   }
   if (u_mask_shift) {
     entry->u_mask_shift = strtoul(u_mask_shift, NULL, 16);
-    X_FREE(u_mask_shift);
   }
+
+out:
+  X_FREE(key);
+  X_FREE(node);
+  X_FREE(uv);
+  X_FREE(u_mask_shift);
 }
 
 /* Function to return new pk_list object */
@@ -614,10 +624,9 @@ static pk_list *new_pk_list(void)
 /* Function to add pk to config file */
 static void add_pk_entry(config_file *cf, char *key)
 {
-  if (strlen(key) != 32) {
+  if (!key || strlen(key) != 32) {
     fprintf(stderr, "ignoring bad PK entry %s\n", key);
-    X_FREE(key);
-    return;
+    goto out;
   }
 
   pk_list *entry = cf->pkl;
@@ -629,7 +638,11 @@ static void add_pk_entry(config_file *cf, char *key)
     entry = entry->next;
   }
 
-  hexstring_to_hex_array(entry->key, 16, key);
+  if (entry) {
+    hexstring_to_hex_array(entry->key, 16, key);
+  }
+
+out:
   X_FREE(key);
 }
 
@@ -646,17 +659,13 @@ static cert_list *new_cert_list(void)
 /* Function to add certificate list entry into config file object */
 static void add_cert_entry(config_file *cf, char *host_priv_key, char *host_cert)
 {
-  if (strlen(host_priv_key) != 40) {
+  if (!host_priv_key || strlen(host_priv_key) != 40) {
     fprintf(stderr, "ignoring bad private key entry %s\n", host_priv_key);
-    X_FREE(host_priv_key);
-    X_FREE(host_cert);
-    return;
+    goto out;
   }
-  if (strlen(host_cert) != 184) {
+  if (!host_cert || strlen(host_cert) != 184) {
     fprintf(stderr, "ignoring bad certificate entry %s\n", host_cert);
-    X_FREE(host_priv_key);
-    X_FREE(host_cert);
-    return;
+    goto out;
   }
 
   cert_list *entry = cf->host_cert_list;
@@ -668,9 +677,13 @@ static void add_cert_entry(config_file *cf, char *host_priv_key, char *host_cert
     entry = entry->next;
   }
 
-  hexstring_to_hex_array(entry->host_priv_key, 20, host_priv_key);
+  if (entry) {
+    hexstring_to_hex_array(entry->host_priv_key, 20, host_priv_key);
+    hexstring_to_hex_array(entry->host_cert, 92, host_cert);
+  }
+
+out:
   X_FREE(host_priv_key);
-  hexstring_to_hex_array(entry->host_cert, 92, host_cert);
   X_FREE(host_cert);
 }
 
@@ -685,7 +698,7 @@ title_entry_list *new_title_entry_list(void)
 }
 
 #define CHECK_KEY_LENGTH(name, len)                               \
-  if (strlen(entry) != len) {                                     \
+  if (!entry || strlen(entry) != len) {                           \
     fprintf(stderr, "Ignoring bad "name" entry %s\n", entry);     \
     X_FREE(entry);                                                \
     break;                                                        \
