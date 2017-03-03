@@ -231,7 +231,7 @@ static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mas
         }
 
         uint8_t curr_key[16];
-        if (!(uv & (1ul << i))) {
+        if (i < 0 || !(uv & (1ul << i))) {
             memcpy(curr_key, left_child, 16);
         } else {
             memcpy(curr_key, right_child, 16);
