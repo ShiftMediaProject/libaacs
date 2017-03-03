@@ -65,9 +65,6 @@ static int print_title_entries(title_entry_list *list)
   title_entry_list *cursor = list;
   while (cursor)
   {
-    if (!cursor->entry.discid)
-      break;
-
     printf("DISCID: %s\n", str_print_hex(tmp, cursor->entry.discid, 20));
 #if 0
     printf("  Title: %s\n", cursor->entry.title);

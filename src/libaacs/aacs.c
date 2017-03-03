@@ -733,7 +733,7 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
     char str[48];
     char str2[48];
 
-    while (ce && ce->entry.discid) {
+    while (ce) {
         if (!memcmp(aacs->disc_id, ce->entry.discid, 20)) {
             BD_DEBUG(DBG_AACS, "Found config entry for discid %s\n",
                      str_print_hex(str, ce->entry.discid, 20));
