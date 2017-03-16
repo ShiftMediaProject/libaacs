@@ -141,10 +141,19 @@ static int _validate_pk(const uint8_t *pk,
 
 static int _rl_verify_signature(const uint8_t *rl, size_t size)
 {
-    int    entries = MKINT_BE32(rl + 12 + 8);
-    size_t len     = 12 + 12 + 8 * entries; /* type_and_version_rec=12, rl_header=12, rl=entries*8 */
+    if (size < 40) {
+        BD_DEBUG(DBG_AACS, "too small revocation list\n");
+        return 0;
+    }
 
-    if (len + 40 > size) {
+    uint32_t entries = MKINT_BE32(rl + 12 + 8);
+    if (entries >= (0xffffffff - 24 - 40) / 8) {
+        BD_DEBUG(DBG_AACS, "invalid revocation list\n");
+        return 0;
+    }
+
+    size_t len = 12 + 12 + 8 * entries; /* type_and_version_rec=12, rl_header=12, rl=entries*8 */
+    if (len > size - 40) {
         BD_DEBUG(DBG_AACS, "revocation list size mismatch\n");
         return 0;
     }

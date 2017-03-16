@@ -238,11 +238,16 @@ const uint8_t *mkb_signature(MKB *mkb, size_t *len)
 
 static int _cert_is_revoked(const uint8_t *rl, size_t rl_size, const uint8_t *cert_id_bin)
 {
-    if (rl) {
+    if (rl && rl_size > 8) {
         uint64_t cert_id = MKINT_BE48(cert_id_bin);
         /*int total = MKINT_BE32(rl);*/
-        int entries = MKINT_BE32(rl + 4);
-        int ii;
+        uint32_t entries = MKINT_BE32(rl + 4);
+        unsigned ii;
+
+        if (entries >= (0xffffffff - 8 - 40) / 8) {
+            BD_DEBUG(DBG_MKB, "invalid revocation list\n");
+            return 0;
+        }
 
         size_t rec_len = 4 + 4 + 8 * entries + 40;
         if (rec_len > rl_size) {
