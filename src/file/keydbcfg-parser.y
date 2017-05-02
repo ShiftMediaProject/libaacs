@@ -289,10 +289,8 @@ disc_info
         celist->next = new_title_entry_list();
         celist = celist->next;
       }
-      if (celist) {
-        add_entry(celist, ENTRY_TYPE_DISCID, $1);
-        /*add_entry(celist, ENTRY_TYPE_TITLE, $3);*/
-      }
+      add_entry(celist, ENTRY_TYPE_DISCID, $1);
+      /*add_entry(celist, ENTRY_TYPE_TITLE, $3);*/
     }
   ;
 
