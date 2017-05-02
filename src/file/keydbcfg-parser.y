@@ -492,7 +492,7 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   void *scanner;
   libaacs_yylex_init(&scanner);
   libaacs_yyset_in(fp, scanner);
-  int retval = yyparse(scanner, cfgfile, NULL, NULL);
+  int retval = yyparse(scanner, cfgfile, cfgfile->list, NULL);
   libaacs_yylex_destroy(scanner);
 
   fclose(fp);
