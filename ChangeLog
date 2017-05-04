@@ -1,11 +1,18 @@
+2017-05-04: Version 0.9.0
 - Add aacs_decrypt_bus().
 - Add aacs_get_bdj_root_cert_hash().
 - Add aacs_get_content_cert_id().
+- Add support for unencrypted content in AACS-enabled discs.
 - Improve error resilience.
+- Improve support for broken discs (use on-disc backup files).
 - Verify content certificate signature.
+- Load and merge multiple KEYDB.cfg files.
 - Fix build with gcrypt < 1.6.0.
 - Fix possible crash (debug log output that includes discid)
 - Fix config file path issues in Windows (non-ASCII paths)
+- Fix dll exports in Windows.
+- Fix resource leaks.
+- Reduced memory footprint.
 
 2015-03-13: Version 0.8.1
  - Accept NULL mount / device path when application handles file system access.
