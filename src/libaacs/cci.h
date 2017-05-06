@@ -1,6 +1,6 @@
 /*
  * This file is part of libaacs
- * Copyright (C) 2009-2010  Obliter0n
+ * Copyright (C) 2016  npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,19 +17,20 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MACRO_H_
-#define MACRO_H_
+#ifndef AACS_CCI_H_
+#define AACS_CCI_H_
 
-#include <stdlib.h>  /* free() */
+#include "util/attributes.h"
 
-#define MKINT_BE16(X) ( (X)[0] << 8 | (X)[1] )
-#define MKINT_BE24(X) ( (X)[0] << 16 | (X)[1] << 8 | (X)[2] )
-#define MKINT_BE32(X) ( (uint32_t)(X)[0] << 24 | (X)[1] << 16 |  (X)[2] << 8 | (X)[3] )
-#define MKINT_BE48(X) ( (uint64_t)((X)[0]) << 40 | (uint64_t)((X)[1]) << 32 | (uint64_t)((X)[2]) << 24 | \
-                        (uint64_t)((X)[3]) << 16 | (uint64_t)((X)[4]) << 8  | (uint64_t)((X)[5]) )
+#include <stddef.h>
 
-#define X_FREE(X)     ( free(X), X = NULL )
+typedef struct aacs_cci AACS_CCI;
 
-#define BD_MAX_SSIZE ((int64_t)(((size_t)-1)>>1))
+BD_PRIVATE AACS_CCI *cci_parse(const void *data, size_t len);
+BD_PRIVATE void      cci_free(AACS_CCI **);
 
-#endif /* MACRO_H_ */
+BD_PRIVATE int cci_is_unencrypted(AACS_CCI *cci);
+
+BD_PRIVATE struct aacs_basic_cci *cci_get_basic_cci(AACS_CCI *cci);
+
+#endif /* AACS_CCI_H_ */

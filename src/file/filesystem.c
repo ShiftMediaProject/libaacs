@@ -17,19 +17,16 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MACRO_H_
-#define MACRO_H_
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <stdlib.h>  /* free() */
+#include "file.h"
 
-#define MKINT_BE16(X) ( (X)[0] << 8 | (X)[1] )
-#define MKINT_BE24(X) ( (X)[0] << 16 | (X)[1] << 8 | (X)[2] )
-#define MKINT_BE32(X) ( (uint32_t)(X)[0] << 24 | (X)[1] << 16 |  (X)[2] << 8 | (X)[3] )
-#define MKINT_BE48(X) ( (uint64_t)((X)[0]) << 40 | (uint64_t)((X)[1]) << 32 | (uint64_t)((X)[2]) << 24 | \
-                        (uint64_t)((X)[3]) << 16 | (uint64_t)((X)[4]) << 8  | (uint64_t)((X)[5]) )
 
-#define X_FREE(X)     ( free(X), X = NULL )
-
-#define BD_MAX_SSIZE ((int64_t)(((size_t)-1)>>1))
-
-#endif /* MACRO_H_ */
+AACS_FILE_OPEN aacs_register_file(AACS_FILE_OPEN p)
+{
+    AACS_FILE_OPEN old = file_open;
+    file_open = p;
+    return old;
+}

@@ -1,6 +1,6 @@
 /*
  * This file is part of libaacs
- * Copyright (C) 2010  npzacs
+ * Copyright (C) 2010-2016  npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -89,6 +89,7 @@ static void _dump_rl(const char *type, AACS_RL_ENTRY *rl, int num_entries, int m
 int main (int argc, char **argv)
 {
     int major, minor, micro, error_code = AACS_SUCCESS;
+    AACS *aacs = NULL;
 
     if (argc < 2) {
         fprintf(stderr, "Usage: aacs_info <path-to-disc-root> [<path-to-config-file>]\n");
@@ -98,30 +99,41 @@ int main (int argc, char **argv)
     aacs_get_version(&major, &minor, &micro);
     printf("Opening %s using libaacs %d.%d.%d ...\n", argv[1], major, minor, micro);
 
-    AACS *aacs = aacs_open2(argv[1], argc > 2 ? argv[2] : NULL, &error_code);
+    aacs = aacs_init();
+    if (!aacs) {
+	exit(EXIT_FAILURE);
+    }
+
+    error_code = aacs_open_device(aacs, argv[1], argc > 2 ? argv[2] : NULL);
+
     if (error_code) {
         fprintf(stderr, "libaacs open failed: %s\n", _error_str(error_code));
     } else {
         printf("libaacs open succeed.\n");
     }
 
-    if (!aacs) {
-	exit(EXIT_FAILURE);
-    }
 
     const uint8_t *vid = aacs_get_vid(aacs);
+    const uint8_t *mk  = aacs_get_mk(aacs);
     const uint8_t *id  = aacs_get_disc_id(aacs);
     const uint8_t *pmsn = aacs_get_pmsn(aacs);
     const int      bec  = aacs_get_bus_encryption(aacs);
     const uint8_t *binding_id = aacs_get_device_binding_id(aacs);
+    const uint8_t *bdj_hash   = aacs_get_bdj_root_cert_hash(aacs);
+    const uint8_t *cc_id      = aacs_get_content_cert_id(aacs);
+
     printf("Disc ID: %s\n", id  ? _hex2str(id,  20) : "???");
     printf("VID    : %s\n", vid ? _hex2str(vid, 16) : "???");
+    printf("MK     : %s\n", mk  ? _hex2str(mk, 16) : "???");
     printf("MKBv   : %d\n", aacs_get_mkb_version(aacs));
     printf("PMSN   : %s\n", pmsn ? _hex2str(pmsn, 16) : "???");
     printf("Bus encryption:\n");
     printf("  Device support:   %s\n", (bec & AACS_BUS_ENCRYPTION_CAPABLE) ? "yes" : "no");
     printf("  Enabled in media: %s\n", (bec & AACS_BUS_ENCRYPTION_ENABLED) ? "yes" : "no");
-    printf("Device binding ID:  %s\n", binding_id ? _hex2str(binding_id, 16) : "???");
+    printf("Content Certificate ID: %s\n", cc_id      ? _hex2str(cc_id,      6)  : "???");
+    printf("BD-J Root Cert hash:    %s\n", bdj_hash   ? _hex2str(bdj_hash,   20) : "???");
+    printf("Device binding ID:      %s\n", binding_id ? _hex2str(binding_id, 16) : "???");
+
 
     aacs_close(aacs);
 

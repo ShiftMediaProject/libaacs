@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int print_digit_key_pair_enties(digit_key_pair_list *list);
 static int print_title_entries(title_entry_list *list);
@@ -52,6 +53,7 @@ static int print_digit_key_pair_enties(digit_key_pair_list *list)
 /* Function that prints all entries parsed from a config file */
 static int print_title_entries(title_entry_list *list)
 {
+  static const uint8_t empty_key[16] = {0};
   char tmp[256];
 
   if (!list)
@@ -63,24 +65,26 @@ static int print_title_entries(title_entry_list *list)
   title_entry_list *cursor = list;
   while (cursor)
   {
-    if (!cursor->entry.discid)
-      break;
-
     printf("DISCID: %s\n", str_print_hex(tmp, cursor->entry.discid, 20));
+#if 0
     printf("  Title: %s\n", cursor->entry.title);
     printf("  Date: %u-%u-%u\n", cursor->entry.date.year,
       cursor->entry.date.month, cursor->entry.date.day);
+#endif
     if (cursor->entry.mek)
       printf("  MEK: %s\n", cursor->entry.mek);
     if (cursor->entry.vid)
       printf("  VID: %s\n", cursor->entry.vid);
+#if 0
     if (cursor->entry.bn)
     {
       printf("  BN:\n");
       print_digit_key_pair_enties(cursor->entry.bn);
     }
-    if (cursor->entry.vuk)
-      printf("  VUK: %s\n", cursor->entry.vuk);
+#endif
+    if (memcmp(cursor->entry.vuk, empty_key, 16))
+      printf("  VUK: %s\n", str_print_hex(tmp, cursor->entry.vuk, 16));
+#if 0
     if (cursor->entry.pak)
     {
       printf("  PAK:\n");
@@ -91,6 +95,7 @@ static int print_title_entries(title_entry_list *list)
       printf("  TK:\n");
       print_digit_key_pair_enties(cursor->entry.tk);
     }
+#endif
     if (cursor->entry.uk)
     {
       printf("  UK:\n");

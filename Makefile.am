@@ -11,17 +11,25 @@ AM_YFLAGS = -d -p libaacs_yy
 lib_LTLIBRARIES = libaacs.la
 libaacs_la_SOURCES=\
 	src/libaacs/aacs.h \
-	src/libaacs/mmc.h \
-	src/libaacs/mkb.h \
 	src/libaacs/aacs.c \
-	src/libaacs/mmc.c \
-	src/libaacs/crypto.c \
+	src/libaacs/cci_data.h \
+	src/libaacs/cci.h \
+	src/libaacs/cci.c \
+	src/libaacs/content_cert.h \
+	src/libaacs/content_cert.c \
 	src/libaacs/crypto.h \
+	src/libaacs/crypto.c \
+	src/libaacs/mkb.h \
 	src/libaacs/mkb.c \
+	src/libaacs/mmc.h \
+	src/libaacs/mmc.c \
+	src/libaacs/unit_key.h \
+	src/libaacs/unit_key.c \
 	src/file/dirs.h \
 	src/file/file.h \
+	src/file/file.c \
 	src/file/filesystem.h \
-	src/file/file_posix.c \
+	src/file/filesystem.c \
 	src/file/keydbcfg.c \
 	src/file/keydbcfg.h \
 	src/file/keydb.h \
@@ -42,15 +50,18 @@ EXTRA_libaacs_la_SOURCES=\
 if HAVE_DARWIN
 libaacs_la_SOURCES+= \
 	src/file/dirs_darwin.c \
+	src/file/file_posix.c \
 	src/file/mmc_device_darwin.c
 else
 if HAVE_WIN32
 libaacs_la_SOURCES+= \
 	src/file/dirs_win32.c \
+	src/file/file_win32.c \
 	src/file/mmc_device_win32.c
 else
 libaacs_la_SOURCES+= \
 	src/file/dirs_xdg.c \
+	src/file/file_posix.c \
 	src/file/mmc_device_linux.c \
 	src/file/path.c
 endif

@@ -1,6 +1,6 @@
 /*
  * This file is part of libaacs
- * Copyright (C) 2009-2010  Obliter0n
+ * Copyright (C) 2015  npzacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,19 +17,25 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MACRO_H_
-#define MACRO_H_
+#ifndef CONTENT_CERT_H_
+#define CONTENT_CERT_H_
 
-#include <stdlib.h>  /* free() */
+#include "util/attributes.h"
 
-#define MKINT_BE16(X) ( (X)[0] << 8 | (X)[1] )
-#define MKINT_BE24(X) ( (X)[0] << 16 | (X)[1] << 8 | (X)[2] )
-#define MKINT_BE32(X) ( (uint32_t)(X)[0] << 24 | (X)[1] << 16 |  (X)[2] << 8 | (X)[3] )
-#define MKINT_BE48(X) ( (uint64_t)((X)[0]) << 40 | (uint64_t)((X)[1]) << 32 | (uint64_t)((X)[2]) << 24 | \
-                        (uint64_t)((X)[3]) << 16 | (uint64_t)((X)[4]) << 8  | (uint64_t)((X)[5]) )
+#include <stdlib.h>
+#include <stdint.h>
 
-#define X_FREE(X)     ( free(X), X = NULL )
+typedef struct content_cert CONTENT_CERT;
 
-#define BD_MAX_SSIZE ((int64_t)(((size_t)-1)>>1))
+struct content_cert {
+    uint8_t bus_encryption_enabled_flag;
 
-#endif /* MACRO_H_ */
+    uint8_t cc_id[6];
+    uint8_t bdj_root_cert_hash[20];
+};
+
+
+BD_PRIVATE CONTENT_CERT *cc_parse(const void *data, size_t len);
+BD_PRIVATE void          cc_free(CONTENT_CERT **);
+
+#endif /* CONTENT_CERT_H_ */

@@ -399,6 +399,10 @@ MMCDEV *device_open(const char *path)
     int     rc;
 
     dev = calloc(1, sizeof(MMCDEV));
+    if (!dev) {
+        BD_DEBUG(DBG_MKB | DBG_CRIT, "out of memory\n");
+        return NULL;
+    }
 
     rc = mmc_open_iokit (path, dev);
     if (0 != rc) {

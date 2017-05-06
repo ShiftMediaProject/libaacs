@@ -26,7 +26,6 @@
 #include "util/strutl.h"
 #include "util/logging.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -45,7 +44,7 @@ char *file_get_config_home(void)
 {
     const char *xdg_home = getenv("XDG_CONFIG_HOME");
     if (xdg_home && *xdg_home) {
-        return str_printf("%s", xdg_home);
+        return str_dup(xdg_home);
     }
 
     const char *user_home = getenv("HOME");
@@ -61,7 +60,7 @@ char *file_get_data_home(void)
 {
     const char *xdg_home = getenv("XDG_DATA_HOME");
     if (xdg_home && *xdg_home) {
-        return str_printf("%s", xdg_home);
+        return str_dup(xdg_home);
     }
 
     const char *user_home = getenv("HOME");
@@ -77,7 +76,7 @@ char *file_get_cache_home(void)
 {
     const char *xdg_cache = getenv("XDG_CACHE_HOME");
     if (xdg_cache && *xdg_cache) {
-        return str_printf("%s", xdg_cache);
+        return str_dup(xdg_cache);
     }
 
     const char *user_home = getenv("HOME");
@@ -99,6 +98,9 @@ const char *file_get_config_system(const char *dir)
         if (xdg_sys && *xdg_sys) {
 
             dirs = calloc(1, strlen(xdg_sys) + 2);
+            if (!dirs) {
+                return NULL;
+            }
             strcpy(dirs, xdg_sys);
 
             char *pt = dirs;

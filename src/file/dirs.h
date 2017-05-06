@@ -22,10 +22,6 @@
 
 #include "util/attributes.h"
 
-#ifdef _WIN32
-BD_PRIVATE int         win32_mkdir(const char *dir);
-#endif
-
 /*
  * Config, cache and data dirs
  */

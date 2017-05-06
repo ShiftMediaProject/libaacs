@@ -20,25 +20,14 @@
 #include "keydbcfg.h"
 
 #include "dirs.h"
+#include "file.h"
 
 #include "util/strutl.h"
 #include "util/logging.h"
 #include "util/macro.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#ifdef _WIN32
-# define mkdir(p,m) win32_mkdir(p)
-# define DIR_SEP_CHAR '\\'
-# define DIR_SEP      "\\"
-#else
-# define DIR_SEP_CHAR '/'
-# define DIR_SEP      "/"
-#endif
 
 
 #define CFG_DIR        "aacs"
@@ -50,64 +39,30 @@
 #define MIN_FILE_SIZE  20
 #define MAX_FILE_SIZE  65535
 
-static int _mkpath(const char *path)
-{
-    struct stat s;
-    int result = 1;
-    char *dir = str_printf("%s", path);
-    char *end = dir;
 
-#ifdef _WIN32
-    end += 2; /* skip drive */
-#endif
-    while (*end == DIR_SEP_CHAR)
-        end++;
-
-    while ((end = strchr(end, DIR_SEP_CHAR))) {
-        *end = 0;
-
-        if (stat(dir, &s) != 0 || !S_ISDIR(s.st_mode)) {
-            BD_DEBUG(DBG_FILE, "Creating directory %s\n", dir);
-
-            if (mkdir(dir, S_IRWXU|S_IRWXG|S_IRWXO) == -1) {
-                BD_DEBUG(DBG_FILE | DBG_CRIT, "Error creating directory %s\n", dir);
-                result = 0;
-                break;
-            }
-        }
-
-        *end++ = DIR_SEP_CHAR;
-    }
-
-    X_FREE(dir);
-
-    return result;
-}
-
-static char *_load_file(FILE *fp)
+static char *_load_file(AACS_FILE_H *fp)
 {
     char *data = NULL;
-    long file_size, read_size;
+    int64_t size;
 
-    fseek(fp, 0, SEEK_END);
-    file_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-
-    if (file_size < MIN_FILE_SIZE || file_size > MAX_FILE_SIZE) {
+    size = file_size(fp);
+    if (size < MIN_FILE_SIZE || size > MAX_FILE_SIZE) {
         BD_DEBUG(DBG_FILE, "Invalid file size\n");
         return NULL;
     }
 
-    data      = malloc(file_size + 1);
-    read_size = fread(data, 1, file_size, fp);
+    data = malloc(size + 1);
+    if (!data) {
+        return NULL;
+    }
 
-    if (read_size != file_size) {
+    if (file_read(fp, data, size) != size) {
         BD_DEBUG(DBG_FILE, "Error reading file\n");
         X_FREE(data);
         return NULL;
     }
 
-    data[file_size] = 0;
+    data[size] = 0;
 
     return data;
 }
@@ -126,7 +81,7 @@ static char *_config_file_user(const char *file_name)
     return result;
 }
 
-static FILE *_open_cfg_file_user(const char *file_name, char **path, const char *mode)
+static AACS_FILE_H *_open_cfg_file_user(const char *file_name, char **path, const char *mode)
 {
     char *cfg_file = _config_file_user(file_name);
 
@@ -135,13 +90,13 @@ static FILE *_open_cfg_file_user(const char *file_name, char **path, const char 
     }
 
     if (*mode == 'w') {
-        if (!_mkpath(cfg_file)) {
+        if (file_mkdirs(cfg_file) < 0) {
             X_FREE(cfg_file);
             return NULL;
         }
     }
 
-    FILE *fp = fopen(cfg_file, mode);
+    AACS_FILE_H *fp = file_open(cfg_file, mode);
 
     BD_DEBUG(DBG_FILE, fp ? "Opened %s for %s\n" : "%s not found\n", cfg_file, mode);
 
@@ -154,15 +109,18 @@ static FILE *_open_cfg_file_user(const char *file_name, char **path, const char 
     return fp;
 }
 
-static FILE *_open_cfg_file_system(const char *file_name, char **path)
+static AACS_FILE_H *_open_cfg_file_system(const char *file_name, char **path)
 {
     const char *dir = NULL;
 
     while (NULL != (dir = file_get_config_system(dir))) {
 
         char *cfg_file = str_printf("%s"DIR_SEP"%s"DIR_SEP"%s", dir, CFG_DIR, file_name);
+        if (!cfg_file) {
+            continue;
+        }
 
-        FILE *fp = fopen(cfg_file, "r");
+        AACS_FILE_H *fp = file_open(cfg_file, "r");
         if (fp) {
             BD_DEBUG(DBG_FILE, "Reading %s\n", cfg_file);
 
@@ -194,7 +152,7 @@ static int _is_duplicate_pk(pk_list *list, const uint8_t *e)
     return 0;
 }
 
-static int _parse_pk_file(config_file *cf, FILE *fp)
+static int _parse_pk_file(config_file *cf, AACS_FILE_H *fp)
 {
     char *data   = _load_file(fp);
     int   result = 0;
@@ -209,18 +167,19 @@ static int _parse_pk_file(config_file *cf, FILE *fp)
                 BD_DEBUG(DBG_FILE, "Found processing key %s\n", str);
 
                 pk_list *e = calloc(1, sizeof(pk_list));
+                if (e) {
+                    hexstring_to_hex_array(e->key, 16, str);
 
-                hexstring_to_hex_array(e->key, 16, str);
+                    if (_is_duplicate_pk(cf->pkl, e->key)) {
+                        BD_DEBUG(DBG_FILE, "Skipping duplicate processing key %s\n", str);
+                        X_FREE(e);
+                    } else {
+                        e->next = cf->pkl;
+                        cf->pkl = e;
+                    }
 
-                if (_is_duplicate_pk(cf->pkl, e->key)) {
-                    BD_DEBUG(DBG_FILE, "Skipping duplicate processing key %s\n", str);
-                    X_FREE(e);
-                } else {
-                    e->next = cf->pkl;
-                    cf->pkl = e;
+                    result++;
                 }
-
-                result++;
             }
             X_FREE(str);
 
@@ -247,7 +206,7 @@ static int _is_duplicate_cert(cert_list *list, cert_list *e)
   return 0;
 }
 
-static int _parse_cert_file(config_file *cf, FILE *fp)
+static int _parse_cert_file(config_file *cf, AACS_FILE_H *fp)
 {
     char *data   = _load_file(fp);
     int   result = 0;
@@ -269,16 +228,18 @@ static int _parse_cert_file(config_file *cf, FILE *fp)
             BD_DEBUG(DBG_FILE, "Found certificate: %s %s\n", host_priv_key, host_cert);
 
             cert_list  *e = calloc(1, sizeof(cert_list));
-            hexstring_to_hex_array(e->host_priv_key, 20, host_priv_key);
-            hexstring_to_hex_array(e->host_cert, 92, host_cert);
+            if (e) {
+                hexstring_to_hex_array(e->host_priv_key, 20, host_priv_key);
+                hexstring_to_hex_array(e->host_cert, 92, host_cert);
 
-            if (_is_duplicate_cert(cf->host_cert_list, e)) {
-                BD_DEBUG(DBG_FILE, "Skipping duplicate certificate entry %s %s\n", host_priv_key, host_cert);
-                X_FREE(e);
-            } else {
-                e->next = cf->host_cert_list;
-                cf->host_cert_list = e;
-                result = 1;
+                if (_is_duplicate_cert(cf->host_cert_list, e)) {
+                    BD_DEBUG(DBG_FILE, "Skipping duplicate certificate entry %s %s\n", host_priv_key, host_cert);
+                    X_FREE(e);
+                } else {
+                    e->next = cf->host_cert_list;
+                    cf->host_cert_list = e;
+                    result = 1;
+                }
             }
         }
         X_FREE(host_priv_key);
@@ -303,19 +264,19 @@ static int _is_duplicate_dk(dk_list *list, dk_list *e)
 static int _load_pk_file(config_file *cf)
 {
     static const char pk_file_name[] = PK_FILE_NAME;
-    FILE *fp;
+    AACS_FILE_H *fp;
     int result = 0;
 
     fp = _open_cfg_file_user(pk_file_name, NULL, "r");
     if (fp) {
         result += _parse_pk_file(cf, fp);
-        fclose(fp);
+        file_close(fp);
     }
 
     fp = _open_cfg_file_system(pk_file_name, NULL);
     if (fp) {
         result += _parse_pk_file(cf, fp);
-        fclose(fp);
+        file_close(fp);
     }
 
     return result;
@@ -324,19 +285,19 @@ static int _load_pk_file(config_file *cf)
 static int _load_cert_file(config_file *cf)
 {
     static const char cert_file_name[] = CERT_FILE_NAME;
-    FILE *fp;
+    AACS_FILE_H *fp;
     int result = 0;
 
     fp = _open_cfg_file_user(cert_file_name, NULL, "r");
     if (fp) {
         result += _parse_cert_file(cf, fp);
-        fclose(fp);
+        file_close(fp);
     }
 
     fp = _open_cfg_file_system(cert_file_name, NULL);
     if (fp) {
         result += _parse_cert_file(cf, fp);
-        fclose(fp);
+        file_close(fp);
     }
 
     return result;
@@ -363,16 +324,16 @@ int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, 
 {
     int result = 0;
     char *file = _keycache_file(type, disc_id);
+    char *key_str = calloc(2, len + 1);
 
-    if (file) {
-        if (_mkpath(file)) {
-            FILE *fp = fopen(file, "w");
+    if (file && key_str) {
+        if (!file_mkdirs(file)) {
+            AACS_FILE_H *fp = file_open(file, "w");
 
             if (fp) {
-                char *key_str = calloc(1, len*2 + 1);
                 hex_array_to_hexstring(key_str, key, len);
 
-                if (fwrite(key_str, 1, len*2, fp) == len*2) {
+                if (file_write(fp, key_str, len*2) == len*2) {
                     BD_DEBUG(DBG_FILE, "Wrote %s to %s\n", type, file);
                     result = 1;
 
@@ -380,14 +341,14 @@ int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, 
                     BD_DEBUG(DBG_FILE, "Error writing to %s\n", file);
                 }
 
-                free(key_str);
 
-                fclose(fp);
+                file_close(fp);
             }
         }
-
-        X_FREE(file);
     }
+
+    X_FREE(key_str);
+    X_FREE(file);
 
     return result;
 }
@@ -398,14 +359,14 @@ int keycache_find(const char *type, const uint8_t *disc_id, uint8_t *key, unsign
     char *file = _keycache_file(type, disc_id);
 
     if (file) {
-        FILE *fp = fopen(file, "r");
+        AACS_FILE_H *fp = file_open(file, "r");
 
         if (fp) {
             char *key_str = malloc(len*2);
 
             BD_DEBUG(DBG_FILE, "Reading %s\n", file);
 
-            if (fread(key_str, 1, len*2, fp) == len*2) {
+            if (key_str && file_read(fp, key_str, len*2) == len*2) {
 
                 result = hexstring_to_hex_array(key, len, key_str);
                 if (!result) {
@@ -413,12 +374,12 @@ int keycache_find(const char *type, const uint8_t *disc_id, uint8_t *key, unsign
                 }
 
             } else {
-              BD_DEBUG(DBG_FILE, "Error reading from %s\n", file);
+                BD_DEBUG(DBG_FILE, "Error reading from %s\n", file);
             }
 
-            free(key_str);
+            X_FREE(key_str);
 
-            fclose(fp);
+            file_close(fp);
 
         } else {
             BD_DEBUG(DBG_FILE, "%s not found\n", file);
@@ -450,13 +411,13 @@ int cache_save(const char *name, uint32_t version, const void *data, uint32_t le
     char *file = _cache_file(name);
 
     if (file) {
-        if (_mkpath(file)) {
-            FILE *fp = fopen(file, "w");
+        if (!file_mkdirs(file)) {
+            AACS_FILE_H *fp = file_open(file, "w");
 
             if (fp) {
-                if (fwrite(&version, 1, 4, fp) == 4 &&
-                    fwrite(&len, 1, 4, fp) == 4 &&
-                    fwrite(data, 1, len, fp) == len) {
+                if (file_write(fp, &version, 4)   == 4 &&
+                    file_write(fp, &len,     4)   == 4 &&
+                    file_write(fp, data,     len) == len) {
                     BD_DEBUG(DBG_FILE, "Wrote %d bytes to %s\n", len + 8, file);
                     result = 1;
 
@@ -464,7 +425,7 @@ int cache_save(const char *name, uint32_t version, const void *data, uint32_t le
                     BD_DEBUG(DBG_FILE, "Error writing to %s\n", file);
                 }
 
-                fclose(fp);
+                file_close(fp);
             }
         }
 
@@ -474,7 +435,7 @@ int cache_save(const char *name, uint32_t version, const void *data, uint32_t le
     return result;
 }
 
-int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf)
+int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf, size_t buf_size)
 {
     int result = 0;
     char *file = _cache_file(name);
@@ -483,16 +444,20 @@ int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf)
     if (len) {
         *len = 0;
     }
+    if (!len) {
+        buf = NULL;
+    }
 
     if (file) {
-        FILE *fp = fopen(file, "r");
+        AACS_FILE_H *fp = file_open(file, "r");
 
         if (fp) {
             BD_DEBUG(DBG_FILE, "Reading %s\n", file);
 
-            if (fread(version, 1, 4, fp) == 4 &&
-                (!len || fread(len, 1, 4, fp) == 4) &&
-                (!buf || fread(buf, 1, *len, fp) == *len)) {
+            if (file_read(fp, version, 4) == 4 &&
+                (!len || file_read(fp, len, 4) == 4) &&
+                (!len || (size_t)*len <= buf_size) &&
+                (!buf || file_read(fp, buf, *len) == *len)) {
 
               BD_DEBUG(DBG_FILE, "Read %d bytes from %s, version %d\n", 4 + (len ? 4 : 0) + (buf ? *len : 0), file, *version);
               result = 1;
@@ -501,7 +466,7 @@ int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf)
               BD_DEBUG(DBG_FILE, "Error reading from %s\n", file);
             }
 
-            fclose(fp);
+            file_close(fp);
 
         } else {
             BD_DEBUG(DBG_FILE, "%s not found\n", file);
@@ -516,7 +481,10 @@ int cache_get(const char *name, uint32_t *version, uint32_t *len, void *buf)
 int cache_remove(const char *name)
 {
     char *file = _cache_file(name);
-    int result = !remove(file);
+    if (!file) {
+        return 0;
+    }
+    int result = !file_unlink(file);
     if (!result) {
         BD_DEBUG(DBG_FILE, "Error removing %s\n", file);
     }
@@ -524,51 +492,15 @@ int cache_remove(const char *name)
     return result;
 }
 
-void *cache_get_or_update(const char *type, const void *data, uint32_t *len, uint32_t version)
-{
-    uint32_t cache_len, cache_version;
-    uint8_t *cache_data = NULL;
-
-    /* get cache version */
-    cache_get(type, &cache_version, &cache_len, NULL);
-
-    /* if cached data is later, use it */
-    if (cache_len && cache_version > version) {
-        cache_data = malloc(cache_len);
-
-        if (cache_get(type, &cache_version, &cache_len, cache_data)) {
-            BD_DEBUG(DBG_AACS, "Using cached %s. Version: %d\n", type, cache_version);
-            *len = cache_len;
-            return cache_data;
-        }
-
-        /* read failed, fall back to older version */
-        X_FREE(cache_data);
-    }
-
-    if (data) {
-        cache_data = malloc(*len);
-        memcpy(cache_data, data, *len);
-
-        /* cached data is older, update cache */
-        if (cache_version < version) {
-            cache_save(type, version, data, *len);
-            BD_DEBUG(DBG_AACS, "Updated cached %s. Version: %d\n", type, version);
-        }
-    }
-
-    return cache_data;
-}
-
 int config_save(const char *name, const void *data, uint32_t len)
 {
     char *path = NULL;
-    FILE *fp = _open_cfg_file_user(name, &path, "w");
+    AACS_FILE_H *fp = _open_cfg_file_user(name, &path, "w");
     int result = 0;
 
     if (fp) {
-        if (fwrite(&len, 1, 4, fp) == 4 &&
-            fwrite(data, 1, len, fp) == len) {
+        if (file_write(fp, &len, 4) == 4 &&
+            file_write(fp, data, len) == len) {
           BD_DEBUG(DBG_FILE, "Wrote %d bytes to %s\n", len + 4, path);
           result = 1;
 
@@ -576,7 +508,7 @@ int config_save(const char *name, const void *data, uint32_t len)
             BD_DEBUG(DBG_FILE | DBG_CRIT, "Error writing to %s\n", path);
         }
 
-        fclose(fp);
+        file_close(fp);
     }
 
     X_FREE(path);
@@ -587,7 +519,7 @@ int config_save(const char *name, const void *data, uint32_t len)
 int config_get(const char *name, uint32_t *len, void *buf)
 {
     char *path = NULL;
-    FILE *fp = _open_cfg_file_user(name, &path, "r");
+    AACS_FILE_H *fp = _open_cfg_file_user(name, &path, "r");
     int result = 0;
     uint32_t size = *len;
 
@@ -596,8 +528,8 @@ int config_get(const char *name, uint32_t *len, void *buf)
     if (fp) {
         BD_DEBUG(DBG_FILE, "Reading %s\n", path);
 
-        if (fread(len, 1, 4, fp) == 4 && (size <= *len) &&
-            (!buf || fread(buf, 1, *len, fp) == *len)) {
+        if (file_read(fp, len, 4) == 4 && (size <= *len) &&
+            (!buf || file_read(fp, buf, *len) == *len)) {
 
             BD_DEBUG(DBG_FILE, "Read %d bytes from %s\n", 4 + (buf ? *len : 0), path);
             result = 1;
@@ -606,7 +538,7 @@ int config_get(const char *name, uint32_t *len, void *buf)
             BD_DEBUG(DBG_FILE | DBG_CRIT, "Error reading from %s\n", path);
         }
 
-        fclose(fp);
+        file_close(fp);
     }
 
     X_FREE(path);
@@ -615,24 +547,29 @@ int config_get(const char *name, uint32_t *len, void *buf)
 }
 
 
-static char *_find_config_file(void)
+static int _load_config_file(config_file *cf, int system)
 {
     static const char cfg_file_name[] = CFG_FILE_NAME;
 
-    char       *cfg_file = NULL;
-    FILE       *fp       = NULL;
+    char        *cfg_file = NULL;
+    AACS_FILE_H *fp       = NULL;
+    int          result   = 0;
 
-    fp = _open_cfg_file_user(cfg_file_name, &cfg_file, "r");
-    if (!fp) {
+    if (system) {
         fp = _open_cfg_file_system(cfg_file_name, &cfg_file);
+    } else {
+        fp = _open_cfg_file_user(cfg_file_name, &cfg_file, "r");
     }
 
     if (fp) {
         BD_DEBUG(DBG_FILE, "found config file: %s\n", cfg_file);
-        fclose(fp);
+        file_close(fp);
+
+        result = keydbcfg_parse_config(cf, cfg_file);
     }
 
-    return cfg_file;
+    X_FREE(cfg_file);
+    return result;
 }
 
 #include "keydb.h"
@@ -641,10 +578,14 @@ static int _parse_embedded(config_file *cf)
 {
     int result = 0, jj;
     unsigned ii;
+    static const uint8_t empty_key[20] = {0};
 
     /* reverse order to maintain key positions (items are added to list head) */
     for (jj = sizeof(internal_dk_list) / sizeof(internal_dk_list[0]) - 1; jj >= 0; --jj) {
         dk_list *e = calloc(1, sizeof(dk_list));
+
+        if (!e)
+            break;
 
         decrypt_key(e->key, internal_dk_list[jj], 16);
         e->node = internal_device_number;
@@ -664,9 +605,14 @@ static int _parse_embedded(config_file *cf)
     for (ii = 0; ii < sizeof(internal_pk_list) / sizeof(internal_pk_list[0]); ii++) {
         pk_list *e = calloc(1, sizeof(pk_list));
 
+        if (!e)
+            break;
+
         decrypt_key(e->key, internal_pk_list[ii], 16);
 
-        if (_is_duplicate_pk(cf->pkl, e->key)) {
+        if (!memcmp(e->key, empty_key, 16) ||
+            _is_duplicate_pk(cf->pkl, e->key)) {
+
             X_FREE(e);
 
         } else {
@@ -679,10 +625,15 @@ static int _parse_embedded(config_file *cf)
     for (ii = 0; ii < sizeof(internal_hc_list) / sizeof(internal_hc_list[0]); ii++) {
         cert_list  *e = calloc(1, sizeof(cert_list));
 
+        if (!e)
+            break;
+
         decrypt_key(e->host_priv_key, internal_hc_list[ii],      20);
         decrypt_key(e->host_cert,     internal_hc_list[ii] + 20, 92);
 
-        if (_is_duplicate_cert(cf->host_cert_list, e)) {
+        if (!memcmp(e->host_priv_key, empty_key, 20) ||
+            _is_duplicate_cert(cf->host_cert_list, e)) {
+
             X_FREE(e);
 
         } else {
@@ -700,6 +651,9 @@ config_file *keydbcfg_config_load(const char *configfile_path)
     int config_ok = 0;
 
     config_file *cf = keydbcfg_new_config_file();
+    if (!cf) {
+        return NULL;
+    }
 
     /* try to load KEYDB.cfg */
 
@@ -707,12 +661,11 @@ config_file *keydbcfg_config_load(const char *configfile_path)
         config_ok = keydbcfg_parse_config(cf, configfile_path);
 
     } else {
-        /* If no configfile path given, check for config files in user's home or
+        /* If no configfile path given, check for config files in user's home and
          * under /etc.
          */
-        char *cfgfile = _find_config_file();
-        config_ok = keydbcfg_parse_config(cf, cfgfile);
-        X_FREE(cfgfile);
+        config_ok = _load_config_file(cf, 0);
+        config_ok = _load_config_file(cf, 1) || config_ok;
     }
 
     /* Try to load simple (aacskeys) config files */

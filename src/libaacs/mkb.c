@@ -17,8 +17,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "mkb.h"
-#include "file/file.h"
+
 #include "util/macro.h"
 #include "util/logging.h"
 #include "util/strutl.h"
@@ -48,36 +52,32 @@ static const uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
             return mkb->buf + pos;
         }
 
+        if (len == 0) {
+            BD_DEBUG(DBG_MKB, "Couldn't retrieve MKB record 0x%02x - len=0 (%p)\n", type,
+                  (void*)(mkb->buf + pos));
+            break;
+        }
+
         pos += len;
     }
 
     return NULL;
 }
 
-MKB *mkb_read(AACS_FILE_H *fp)
+MKB *mkb_init(uint8_t *data, size_t len)
 {
     MKB *mkb = malloc(sizeof(MKB));
 
-    file_seek(fp, 0, SEEK_END);
-    mkb->size = file_tell(fp);
-    file_seek(fp, 0, SEEK_SET);
-
-    mkb->buf = malloc(mkb->size);
-
-    file_read(fp, mkb->buf, mkb->size);
-
-    BD_DEBUG(DBG_MKB, "MKB size: %u\n", (unsigned)mkb->size);
-    BD_DEBUG(DBG_MKB, "MKB version: %d\n", mkb_version(mkb));
-
-    return mkb;
-}
-
-MKB *mkb_init(uint8_t *data, int len)
-{
-    MKB *mkb = malloc(sizeof(MKB));
+    if (!mkb) {
+        BD_DEBUG(DBG_MKB | DBG_CRIT, "out of memory\n");
+        return NULL;
+    }
 
     mkb->size = len;
     mkb->buf  = data;
+
+    BD_DEBUG(DBG_MKB, "MKB size: %u\n", (unsigned)mkb->size);
+    BD_DEBUG(DBG_MKB, "MKB version: %d\n", mkb_version(mkb));
 
     return mkb;
 }
@@ -112,21 +112,34 @@ size_t mkb_data_size(MKB *mkb)
 
 uint8_t mkb_type(MKB *mkb)
 {
-    const uint8_t *rec = _record(mkb, 0x10, NULL);
+    const uint8_t *rec = mkb_type_and_version_record(mkb);
+
+    if (!rec) {
+        return 0;
+    }
 
     return MKINT_BE32(rec + 4);
 }
 
 uint32_t mkb_version(MKB *mkb)
 {
-    const uint8_t *rec = _record(mkb, 0x10, NULL);
+    const uint8_t *rec = mkb_type_and_version_record(mkb);
+
+    if (!rec) {
+        return 0;
+    }
 
     return MKINT_BE32(rec + 8);
 }
 
 const uint8_t *mkb_type_and_version_record(MKB *mkb)
 {
-    const uint8_t *rec = _record(mkb, 0x10, NULL);
+    size_t len = 0;
+    const uint8_t *rec = _record(mkb, 0x10, &len);
+
+    if (len < 12) {
+        return NULL;
+    }
 
     return rec;
 }
@@ -136,6 +149,9 @@ const uint8_t *mkb_host_revokation_entries(MKB *mkb, size_t *len)
 {
     const uint8_t *rec = _record(mkb, 0x21, len);
 
+    if (*len < 4) {
+        return NULL;
+    }
     if (rec) {
         rec += 4;
         *len -= 4;
@@ -148,6 +164,9 @@ const uint8_t *mkb_drive_revokation_entries(MKB *mkb, size_t *len)
 {
     const uint8_t *rec = _record(mkb, 0x20, len);
 
+    if (*len < 4) {
+        return NULL;
+    }
     if (rec) {
         rec += 4;
         *len -= 4;
@@ -158,41 +177,77 @@ const uint8_t *mkb_drive_revokation_entries(MKB *mkb, size_t *len)
 
 const uint8_t *mkb_subdiff_records(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x04, len) + 4;
-    *len -= 4;
+    const uint8_t *rec = _record(mkb, 0x04, len);
+
+    if (*len < 4) {
+        return NULL;
+    }
+    if (rec) {
+        rec += 4;
+        *len -= 4;
+    }
 
     return rec;
 }
 
 const uint8_t *mkb_cvalues(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x05, len) + 4;
-    *len -= 4;
+    const uint8_t *rec = _record(mkb, 0x05, len);
+
+    if (*len < 4) {
+        return NULL;
+    }
+    if (rec) {
+        rec += 4;
+        *len -= 4;
+    }
 
     return rec;
 }
 
 const uint8_t *mkb_mk_dv(MKB *mkb)
 {
-    return _record(mkb, 0x81, NULL) + 4;
+    size_t len;
+    const uint8_t *rec = _record(mkb, 0x81, &len);
+
+    if (len < 20) {
+        return NULL;
+    }
+    if (rec) {
+        rec += 4;
+    }
+
+    return rec;
 }
 
 const uint8_t *mkb_signature(MKB *mkb, size_t *len)
 {
     const uint8_t *rec = _record(mkb, 0x02, len);
-    *len -= 4;
 
-    return rec + 4;
+    if (*len < 4) {
+        return NULL;
+    }
+    if (rec) {
+        rec += 4;
+        *len -= 4;
+    }
+
+    return rec;
 
 }
 
 static int _cert_is_revoked(const uint8_t *rl, size_t rl_size, const uint8_t *cert_id_bin)
 {
-    if (rl) {
+    if (rl && rl_size > 8) {
         uint64_t cert_id = MKINT_BE48(cert_id_bin);
         /*int total = MKINT_BE32(rl);*/
-        int entries = MKINT_BE32(rl + 4);
-        int ii;
+        uint32_t entries = MKINT_BE32(rl + 4);
+        unsigned ii;
+
+        if (entries >= (0xffffffff - 8 - 40) / 8) {
+            BD_DEBUG(DBG_MKB, "invalid revocation list\n");
+            return 0;
+        }
 
         size_t rec_len = 4 + 4 + 8 * entries + 40;
         if (rec_len > rl_size) {

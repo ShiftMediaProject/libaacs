@@ -115,7 +115,6 @@ MMCDEV *device_open(const char *path)
     size_t      path_len;
     struct stat st;
     int         fd = -1;
-    MMCDEV     *dev = NULL;
 
     /* resolve path */
     if (!aacs_resolve_path(path, resolved_path)) {
@@ -133,8 +132,6 @@ MMCDEV *device_open(const char *path)
         BD_DEBUG(DBG_MMC | DBG_CRIT, "stat(%s) failed\n", resolved_path);
         return NULL;
     }
-
-    dev = calloc(1, sizeof(MMCDEV));
 
     if (S_ISBLK(st.st_mode)) {
         /* opening device */
@@ -185,10 +182,15 @@ MMCDEV *device_open(const char *path)
 #endif
 
     if (fd >= 0) {
-        dev = calloc(1, sizeof(MMCDEV));
-        dev->fd = fd;
+        MMCDEV *dev = calloc(1, sizeof(MMCDEV));
+        if (dev) {
+            dev->fd = fd;
+            return dev;
+        }
+        close(fd);
     }
-    return dev;
+
+    return NULL;
 }
 
 void device_close(MMCDEV **pp)

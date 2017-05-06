@@ -161,6 +161,12 @@ MMCDEV *device_open(const char *path)
     BD_DEBUG(DBG_MMC, "Windows MMC drive %s opened\n", volume);
 
     dev = calloc(1, sizeof(MMCDEV));
+    if (!dev) {
+        BD_DEBUG(DBG_MKB | DBG_CRIT, "out of memory\n");
+        CloseHandle(fd);
+        return NULL;
+    }
+
     dev->fd = fd;
     return dev;
 }

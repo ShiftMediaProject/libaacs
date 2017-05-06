@@ -38,6 +38,7 @@
 #ifdef HAVE_PTHREAD_H
 #if GCRYPT_VERSION_NUMBER < 0x010600
 #include <pthread.h>
+#include <errno.h>
 #endif
 #endif
 
@@ -322,6 +323,12 @@ static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
       mpi_d ? "(d %m)" : ""
       );
 
+    if (!strfmt) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "out of memory\n");
+        err = GPG_ERR_ENOMEM;
+        goto error;
+    }
+
     /* Now build the S-expression */
     GCRY_VERIFY("gcry_sexp_build",
                 gcry_sexp_build(p_sexp_key, NULL, strfmt, mpi_d));
@@ -540,6 +547,16 @@ int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, ui
                                                0x0B, 0x99, 0x67, 0x28, 0xBF, 0x4B, 0x91, 0x7F, 0x6A, 0x27 };
 
     return !_aacs_verify(signature, aacs_la_pubkey_x, aacs_la_pubkey_y, data, len);
+}
+
+int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, uint32_t len)
+{
+    static const uint8_t aacs_cc_pubkey_x[] = { 0x78, 0x4C, 0xF5, 0xC3, 0x63, 0x97, 0xA4, 0x39, 0x04, 0x06,
+                                                0xA4, 0x9F, 0x78, 0x00, 0xC7, 0x7D, 0xE9, 0x0C, 0xB3, 0x4C };
+    static const uint8_t aacs_cc_pubkey_y[] = { 0x00, 0x1D, 0xF3, 0x6B, 0x8F, 0x2E, 0xCF, 0x83, 0xCD, 0xEE,
+                                                0x43, 0x8F, 0x7F, 0xD1, 0xF4, 0x80, 0x6F, 0xD2, 0x0D, 0xE7 };
+
+    return !_aacs_verify(signature, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
 }
 
 int crypto_aacs_verify_cert(const uint8_t *cert)

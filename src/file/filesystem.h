@@ -43,7 +43,7 @@ typedef AACS_FILE_H* (*AACS_FILE_OPEN)(const char* filename, const char *mode);
  * @param p function pointer
  * @return previous function pointer registered
  */
-AACS_FILE_OPEN aacs_register_file(AACS_FILE_OPEN p);
+AACS_PUBLIC AACS_FILE_OPEN aacs_register_file(AACS_FILE_OPEN p);
 
 /**
  *
@@ -66,7 +66,7 @@ typedef AACS_FILE_H* (*AACS_FILE_OPEN2)(void *handle, const char* filename);
  * @param p function pointer
  */
 struct aacs;
-void aacs_set_fopen(struct aacs *aacs, void *handle, AACS_FILE_OPEN2 p);
+AACS_PUBLIC void aacs_set_fopen(struct aacs *aacs, void *handle, AACS_FILE_OPEN2 p);
 
 
 #endif /* AACS_FILESYSTEM_H_ */
