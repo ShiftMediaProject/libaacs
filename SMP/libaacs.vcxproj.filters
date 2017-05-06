@@ -45,9 +45,6 @@
     <ClCompile Include="..\src\file\dirs_win32.c">
       <Filter>Source Files\file</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\file\file_posix.c">
-      <Filter>Source Files\file</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\file\keydbcfg.c">
       <Filter>Source Files\file</Filter>
     </ClCompile>
@@ -64,6 +61,24 @@
       <Filter>Source Files\file</Filter>
     </ClCompile>
     <ClCompile Include="..\src\file\mmc_device_win32.c">
+      <Filter>Source Files\file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libaacs\content_cert.c">
+      <Filter>Source Files\libaacs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libaacs\unit_key.c">
+      <Filter>Source Files\libaacs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libaacs\cci.c">
+      <Filter>Source Files\libaacs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\file\file_win32.c">
+      <Filter>Source Files\file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\file\filesystem.c">
+      <Filter>Source Files\file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\file\file.c">
       <Filter>Source Files\file</Filter>
     </ClCompile>
   </ItemGroup>
@@ -119,11 +134,18 @@
     <ClInclude Include="..\src\file\mmc_device.h">
       <Filter>Header Files\file</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="libaacs.def">
-      <Filter>Resource Files</Filter>
-    </None>
+    <ClInclude Include="..\src\libaacs\content_cert.h">
+      <Filter>Header Files\libaacs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libaacs\unit_key.h">
+      <Filter>Header Files\libaacs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libaacs\cci.h">
+      <Filter>Header Files\libaacs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libaacs\cci_data.h">
+      <Filter>Header Files\libaacs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="readme.txt" />

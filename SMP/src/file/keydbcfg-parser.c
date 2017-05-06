@@ -223,6 +223,10 @@ int libaacs_yyparse (void *scanner, config_file *cf, title_entry_list *celist, d
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 /* Disable some warnings triggered by generated parser */
 #if defined __GNUC__
 #pragma GCC diagnostic ignored "-Wimplicit-function-declaration"
@@ -249,14 +253,14 @@ int libaacs_yyparse (void *scanner, config_file *cf, title_entry_list *celist, d
 enum
 {
   ENTRY_TYPE_DISCID,
-  ENTRY_TYPE_TITLE,
-  ENTRY_TYPE_DATE,
+  /*ENTRY_TYPE_TITLE,*/
+  /*ENTRY_TYPE_DATE,*/
   ENTRY_TYPE_MEK,
   ENTRY_TYPE_VID,
-  ENTRY_TYPE_BN,
+  /*ENTRY_TYPE_BN,*/
   ENTRY_TYPE_VUK,
-  ENTRY_TYPE_PAK,
-  ENTRY_TYPE_TK,
+  /*ENTRY_TYPE_PAK,*/
+  /*ENTRY_TYPE_TK,*/
   ENTRY_TYPE_UK
 };
 
@@ -273,8 +277,10 @@ static int add_entry(title_entry_list *list, int type, char *entry);
 static digit_key_pair_list *new_digit_key_pair_list(void);
 static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
                               int type, unsigned int digit, char *key);
+/*
 static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
+*/
 void yyerror (void *scanner, config_file *cf,
               title_entry_list *celist, digit_key_pair_list *dkplist,
               const char *msg);
@@ -583,13 +589,13 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   148,   148,   149,   150,   151,   155,   156,   160,   161,
-     162,   163,   164,   173,   177,   181,   185,   192,   197,   202,
-     207,   212,   216,   223,   230,   237,   241,   248,   253,   258,
-     263,   268,   269,   273,   274,   278,   292,   296,   300,   301,
-     305,   306,   307,   308,   309,   310,   311,   312,   316,   323,
-     330,   337,   344,   345,   349,   361,   368,   375,   376,   380,
-     392,   399,   400,   404,   416,   423,   424,   428,   440,   448
+       0,   154,   154,   155,   156,   157,   161,   162,   166,   167,
+     168,   169,   170,   179,   183,   187,   191,   198,   203,   208,
+     213,   218,   222,   229,   236,   243,   247,   254,   259,   264,
+     269,   274,   275,   279,   280,   284,   298,   302,   306,   307,
+     311,   312,   313,   314,   315,   316,   317,   318,   322,   331,
+     338,   345,   352,   353,   357,   371,   378,   385,   386,   390,
+     404,   411,   412,   416,   430,   437,   438,   442,   454,   464
 };
 #endif
 
@@ -1624,15 +1630,7 @@ yyreduce:
         celist = celist->next;
       }
       add_entry(celist, ENTRY_TYPE_DISCID, (yyvsp[-2].string));
-      add_entry(celist, ENTRY_TYPE_TITLE, (yyvsp[0].string));
-    }
-
-    break;
-
-  case 48:
-
-    {
-      add_date_entry(celist, (yyvsp[-4].digit), (yyvsp[-2].digit), (yyvsp[0].digit));
+      /*add_entry(celist, ENTRY_TYPE_TITLE, $3);*/
     }
 
     break;
@@ -1661,19 +1659,6 @@ yyreduce:
 
     break;
 
-  case 54:
-
-    {
-      if (!dkplist)
-      {
-        dkplist = new_digit_key_pair_list();
-        celist->entry.bn = dkplist;
-      }
-      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_BN, (yyvsp[-2].digit), (yyvsp[0].string));
-    }
-
-    break;
-
   case 55:
 
     {
@@ -1690,36 +1675,10 @@ yyreduce:
 
     break;
 
-  case 59:
-
-    {
-      if (!dkplist)
-      {
-        dkplist = new_digit_key_pair_list();
-        celist->entry.pak = dkplist;
-      }
-      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_PAK, (yyvsp[-2].digit), (yyvsp[0].string));
-    }
-
-    break;
-
   case 60:
 
     {
       dkplist = NULL;
-    }
-
-    break;
-
-  case 63:
-
-    {
-      if (!dkplist)
-      {
-        dkplist = new_digit_key_pair_list();
-        celist->entry.tk = dkplist;
-      }
-      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_TK, (yyvsp[-2].digit), (yyvsp[0].string));
     }
 
     break;
@@ -1749,8 +1708,10 @@ yyreduce:
 
     {
       char *str = (char*)malloc(strlen((yyvsp[-1].string)) + strlen((yyvsp[0].string)) + 1);
-      strcpy(str, (yyvsp[-1].string));
-      strcat(str, (yyvsp[0].string));
+      if (str) {
+        strcpy(str, (yyvsp[-1].string));
+        strcat(str, (yyvsp[0].string));
+      }
       (yyval.string) = str;
       X_FREE((yyvsp[-1].string));
     }
@@ -1761,7 +1722,9 @@ yyreduce:
 
     {
       char *str = (char*)malloc(strlen((yyvsp[0].string)) + 1);
-      strcpy(str, (yyvsp[0].string));
+      if (str) {
+        strcpy(str, (yyvsp[0].string));
+      }
       (yyval.string) = str;
     }
 
@@ -2004,14 +1967,22 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   if (!cfgfile || !path)
     return 0;
 
-  FILE * fp = fopen(path, "r");
+#ifdef _WIN32
+  wchar_t wfilename[MAX_PATH];
+  if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path, -1, wfilename, MAX_PATH)) {
+    return 0;
+  }
+  FILE *fp = _wfopen(wfilename, L"r");
+#else
+  FILE *fp = fopen(path, "r");
+#endif
   if (!fp)
     return 0;
 
   void *scanner;
   libaacs_yylex_init(&scanner);
   libaacs_yyset_in(fp, scanner);
-  int retval = yyparse(scanner, cfgfile, NULL, NULL);
+  int retval = yyparse(scanner, cfgfile, cfgfile->list, NULL);
   libaacs_yylex_destroy(scanner);
 
   fclose(fp);
@@ -2025,8 +1996,7 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
 /* Function that returns pointer to new config file object */
 config_file *keydbcfg_new_config_file(void)
 {
-  config_file *cfgfile = (config_file *)malloc(sizeof(*cfgfile));
-  memset(cfgfile, 0, sizeof(*cfgfile));
+  config_file *cfgfile = (config_file *)calloc(1, sizeof(*cfgfile));
   return cfgfile;
 }
 
@@ -2065,13 +2035,12 @@ int keydbcfg_config_file_close(config_file *cfgfile)
   while (cfgfile->list)
   {
     title_entry_list *next = cfgfile->list->next;
-    X_FREE(cfgfile->list->entry.title);
+    /*X_FREE(cfgfile->list->entry.title);*/
     X_FREE(cfgfile->list->entry.mek);
     X_FREE(cfgfile->list->entry.vid);
-    DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.bn);
-    X_FREE(cfgfile->list->entry.vuk);
-    DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.pak);
-    DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.tk);
+    /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.bn);*/
+    /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.pak);*/
+    /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.tk);*/
     DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.uk);
     X_FREE(cfgfile->list);
     cfgfile->list = next;
@@ -2086,18 +2055,19 @@ int keydbcfg_config_file_close(config_file *cfgfile)
 /* Function to return new dk_list object */
 static dk_list *new_dk_list(void)
 {
-  dk_list *dkl = (dk_list *)malloc(sizeof(*dkl));
-  memset(dkl, 0, sizeof(*dkl));
+  dk_list *dkl = (dk_list *)calloc(1, sizeof(*dkl));
+  if (!dkl) {
+    fprintf(stderr, "Error allocating memory for new certificate list!\n");
+  }
   return dkl;
 }
 
 /* Function to add dk to config file */
 static void add_dk_entry(config_file *cf, char *key, char *node, char *uv, char *u_mask_shift)
 {
-  if (strlen(key) != 32) {
+  if (!key || !node || strlen(key) != 32) {
     fprintf(stderr, "ignoring bad DK entry %s\n", key);
-    X_FREE(key);
-    return;
+    goto out;
   }
 
   dk_list *entry = cf->dkl;
@@ -2108,37 +2078,43 @@ static void add_dk_entry(config_file *cf, char *key, char *node, char *uv, char 
     entry->next = new_dk_list();
     entry = entry->next;
   }
+  if (!entry) {
+    goto out;
+  }
 
   hexstring_to_hex_array(entry->key, 16, key);
-  X_FREE(key);
   entry->node = strtoul(node, NULL, 16);
-  X_FREE(node);
 
   if (uv) {
     entry->uv = strtoul(uv, NULL, 16);
-    X_FREE(uv);
   }
   if (u_mask_shift) {
     entry->u_mask_shift = strtoul(u_mask_shift, NULL, 16);
-    X_FREE(u_mask_shift);
   }
+
+out:
+  X_FREE(key);
+  X_FREE(node);
+  X_FREE(uv);
+  X_FREE(u_mask_shift);
 }
 
 /* Function to return new pk_list object */
 static pk_list *new_pk_list(void)
 {
-  pk_list *pkl = (pk_list *)malloc(sizeof(*pkl));
-  memset(pkl, 0, sizeof(*pkl));
+  pk_list *pkl = (pk_list *)calloc(1, sizeof(*pkl));
+  if (!pkl) {
+    fprintf(stderr, "Error allocating memory for new pk list!\n");
+  }
   return pkl;
 }
 
 /* Function to add pk to config file */
 static void add_pk_entry(config_file *cf, char *key)
 {
-  if (strlen(key) != 32) {
+  if (!key || strlen(key) != 32) {
     fprintf(stderr, "ignoring bad PK entry %s\n", key);
-    X_FREE(key);
-    return;
+    goto out;
   }
 
   pk_list *entry = cf->pkl;
@@ -2150,39 +2126,34 @@ static void add_pk_entry(config_file *cf, char *key)
     entry = entry->next;
   }
 
-  hexstring_to_hex_array(entry->key, 16, key);
+  if (entry) {
+    hexstring_to_hex_array(entry->key, 16, key);
+  }
+
+out:
   X_FREE(key);
 }
 
 /* Function to create new certificate list */
 static cert_list *new_cert_list(void)
 {
-  cert_list *list = (cert_list *)malloc(sizeof(*list));
-  if (!list)
-  {
-    printf("Error allocating memory for new certificate list!\n");
-    return NULL;
+  cert_list *list = (cert_list *)calloc(1, sizeof(*list));
+  if (!list) {
+    fprintf(stderr, "Error allocating memory for new certificate list!\n");
   }
-
-  memset(list, 0, sizeof(*list));
-
   return list;
 }
 
 /* Function to add certificate list entry into config file object */
 static void add_cert_entry(config_file *cf, char *host_priv_key, char *host_cert)
 {
-  if (strlen(host_priv_key) != 40) {
+  if (!host_priv_key || strlen(host_priv_key) != 40) {
     fprintf(stderr, "ignoring bad private key entry %s\n", host_priv_key);
-    X_FREE(host_priv_key);
-    X_FREE(host_cert);
-    return;
+    goto out;
   }
-  if (strlen(host_cert) != 184) {
+  if (!host_cert || strlen(host_cert) != 184) {
     fprintf(stderr, "ignoring bad certificate entry %s\n", host_cert);
-    X_FREE(host_priv_key);
-    X_FREE(host_cert);
-    return;
+    goto out;
   }
 
   cert_list *entry = cf->host_cert_list;
@@ -2194,29 +2165,28 @@ static void add_cert_entry(config_file *cf, char *host_priv_key, char *host_cert
     entry = entry->next;
   }
 
-  hexstring_to_hex_array(entry->host_priv_key, 20, host_priv_key);
+  if (entry) {
+    hexstring_to_hex_array(entry->host_priv_key, 20, host_priv_key);
+    hexstring_to_hex_array(entry->host_cert, 92, host_cert);
+  }
+
+out:
   X_FREE(host_priv_key);
-  hexstring_to_hex_array(entry->host_cert, 92, host_cert);
   X_FREE(host_cert);
 }
 
 /* Function that returns pointer to new title entry list */
 title_entry_list *new_title_entry_list(void)
 {
-  title_entry_list *list = (title_entry_list *)malloc(sizeof(*list));
-  if (!list)
-  {
-    printf("Error allocating memory for new title entry list!\n");
-    return NULL;
+  title_entry_list *list = (title_entry_list *)calloc(1, sizeof(*list));
+  if (!list) {
+    fprintf(stderr, "Error allocating memory for new title entry list!\n");
   }
-
-  memset(list, 0, sizeof(*list));
-
   return list;
 }
 
 #define CHECK_KEY_LENGTH(name, len)                               \
-  if (strlen(entry) != len) {                                     \
+  if (!entry || strlen(entry) != len) {                           \
     fprintf(stderr, "Ignoring bad "name" entry %s\n", entry);     \
     X_FREE(entry);                                                \
     break;                                                        \
@@ -2227,7 +2197,7 @@ static int add_entry(title_entry_list *list, int type, char *entry)
 {
   if (!list)
   {
-    printf("Error: No title list passed as parameter.\n");
+    fprintf(stderr, "Error: No title list passed as parameter.\n");
     return 0;
   }
 
@@ -2239,12 +2209,13 @@ static int add_entry(title_entry_list *list, int type, char *entry)
       X_FREE(entry);
       break;
 
+#if 0
     case ENTRY_TYPE_TITLE:
       X_FREE(list->entry.title);
       list->entry.title = (char*)malloc(strlen(entry) + 1);
       strcpy(list->entry.title, entry);
       break;
-
+#endif
     case ENTRY_TYPE_MEK:
       CHECK_KEY_LENGTH("mek", 32)
       X_FREE(list->entry.mek);
@@ -2259,13 +2230,13 @@ static int add_entry(title_entry_list *list, int type, char *entry)
 
     case ENTRY_TYPE_VUK:
       CHECK_KEY_LENGTH("vuk", 32)
-      X_FREE(list->entry.vuk);
-      list->entry.vuk = entry;
+      hexstring_to_hex_array(list->entry.vuk, 16, entry);
+      X_FREE(entry);
       break;
 
     default:
       X_FREE(entry);
-      printf("WARNING: entry type passed in unknown\n");
+      fprintf(stderr, "WARNING: entry type passed in unknown\n");
       return 0;
   }
 
@@ -2275,15 +2246,10 @@ static int add_entry(title_entry_list *list, int type, char *entry)
 /* Function that returns pointer to new digit key pair list */
 static digit_key_pair_list *new_digit_key_pair_list(void)
 {
-  digit_key_pair_list *list = (digit_key_pair_list *)malloc(sizeof(*list));
-  if (!list)
-  {
-    printf("Error allocating memory for new digit key pair entry list!\n");
-    return NULL;
+  digit_key_pair_list *list = (digit_key_pair_list *)calloc(1, sizeof(*list));
+  if (!list) {
+    fprintf(stderr, "Error allocating memory for new digit key pair entry list!\n");
   }
-
-  memset(list, 0, sizeof(*list));
-
   return list;
 }
 
@@ -2293,7 +2259,7 @@ static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
 {
   if (!list)
   {
-    printf("Error: No digit key pair list passed as parameter.\n");
+    fprintf(stderr, "Error: No digit key pair list passed as parameter.\n");
     return NULL;
   }
 
@@ -2306,12 +2272,13 @@ static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
 }
 
 /* Function to add a date entry */
+#if 0
 static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day)
 {
   if (!list)
   {
-    printf("Error: No title list passed as parameter.\n");
+    fprintf(stderr, "Error: No title list passed as parameter.\n");
     return 0;
   }
 
@@ -2321,6 +2288,7 @@ static int add_date_entry(title_entry_list *list, unsigned int year,
 
   return 1;
 }
+#endif
 
 /* Our definition of yyerror */
 void yyerror (void *scanner, config_file *cf,
