@@ -1443,18 +1443,26 @@ static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkbv)
             if (_rl_verify_signature(data, len)) {
                 *mkbv = version;
                 *num_records = MKINT_BE32((uint8_t*)data + 20);
-                memmove(data, (uint8_t*)data + 24, len - 24);
+                uint8_t *p = (uint8_t *)data + 24;
                 len -= 24;
 
                 if ((int)(len/8) < *num_records) {
                     *num_records = len/8;
                 }
 
-                int ii;
-                AACS_RL_ENTRY *rl = data;
-                for (ii = 0; ii < *num_records; ii++) {
-                    rl[ii].range = MKINT_BE16((uint8_t*)&rl[ii].range);
+                AACS_RL_ENTRY *rl = calloc(*num_records, sizeof(*rl));
+
+                if (rl) {
+                    int ii;
+                    for (ii = 0; ii < *num_records; ii++) {
+                        rl[ii].range = MKINT_BE16(p);
+                        p += 2;
+                        memcpy(rl[ii].id, p, 6);
+                        p += 6;
+                    }
                 }
+
+                X_FREE(data);
 
                 return rl;
             }
@@ -1465,7 +1473,7 @@ static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkbv)
         X_FREE(data);
     }
 
-    return data;
+    return NULL;
 }
 
 AACS_RL_ENTRY *aacs_get_hrl(int *num_records, int *mkbv)
