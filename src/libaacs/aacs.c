@@ -1437,6 +1437,11 @@ static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkbv)
                 *mkbv = version;
                 *num_records = MKINT_BE32((uint8_t*)data + 20);
                 memmove(data, (uint8_t*)data + 24, len - 24);
+                len -= 24;
+
+                if ((int)(len/8) < *num_records) {
+                    *num_records = len/8;
+                }
 
                 int ii;
                 AACS_RL_ENTRY *rl = data;
