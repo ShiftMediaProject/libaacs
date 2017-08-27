@@ -374,11 +374,11 @@
       <AdditionalLibraryDirectories>$(OutDir)\lib\x86\;$(ProjectDir)\..\..\prebuilt\lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -398,8 +398,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -414,8 +414,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -448,11 +448,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <AdditionalLibraryDirectories>$(OutDir)\lib\x64\;$(ProjectDir)\..\..\prebuilt\lib\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -472,8 +472,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -488,8 +488,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -526,11 +526,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <MinimumRequiredVersion>5.1</MinimumRequiredVersion>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -550,8 +550,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -566,8 +566,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -604,11 +604,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <MinimumRequiredVersion>5.1</MinimumRequiredVersion>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -628,8 +628,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -644,8 +644,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -680,11 +680,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -704,8 +704,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -720,8 +720,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -756,11 +756,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -780,8 +780,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -796,8 +796,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -839,11 +839,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <AdditionalLibraryDirectories>$(OutDir)\lib\x86\;$(ProjectDir)\..\..\prebuilt\lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -863,8 +863,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -880,8 +880,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
     </PreBuildEvent>
     <CustomBuildStep>
       <Message>Custom Clean Step</Message>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -920,11 +920,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <AdditionalLibraryDirectories>$(OutDir)\lib\x86\;$(ProjectDir)\..\..\prebuilt\lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -944,8 +944,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -960,8 +960,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -1003,11 +1003,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <AdditionalLibraryDirectories>$(OutDir)\lib\x64\;$(ProjectDir)\..\..\prebuilt\lib\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -1027,8 +1027,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -1044,8 +1044,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
     </PreBuildEvent>
     <CustomBuildStep>
       <Message>Custom Clean Step</Message>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -1084,11 +1084,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <AdditionalLibraryDirectories>$(OutDir)\lib\x64\;$(ProjectDir)\..\..\prebuilt\lib\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -1108,8 +1108,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -1124,8 +1124,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -1169,11 +1169,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <MinimumRequiredVersion>5.1</MinimumRequiredVersion>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -1193,8 +1193,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -1209,8 +1209,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -1254,11 +1254,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <MinimumRequiredVersion>5.1</MinimumRequiredVersion>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -1278,8 +1278,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -1294,8 +1294,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -1338,11 +1338,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -1362,8 +1362,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -1378,8 +1378,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
@@ -1422,11 +1422,11 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir $(OutDir)\include
-mkdir $(OutDir)\include\libaacs
-copy ..\src\libaacs\aacs.h $(OutDir)\include\libaacs
-copy .\src\libaacs\aacs-version.h $(OutDir)\include\libaacs
-copy ..\src\file\filesystem.h $(OutDir)\include\libaacs
+      <Command>mkdir "$(OutDir)"\include
+mkdir "$(OutDir)"\include\libaacs
+copy ..\src\libaacs\aacs.h "$(OutDir)"\include\libaacs
+copy .\src\libaacs\aacs-version.h "$(OutDir)"\include\libaacs
+copy ..\src\file\filesystem.h "$(OutDir)"\include\libaacs
 mkdir $(OutDir)\licenses
 copy ..\COPYING $(OutDir)\licenses\libaacs.txt</Command>
     </PostBuildEvent>
@@ -1446,8 +1446,8 @@ del ..\src\file\keydbcfg-parser.c
 if exist ..\src\file\keydbcfg-parser.h (
 del ..\src\file\keydbcfg-parser.h
 )
-if exist $(OutDir)\include\libaacs (
-rd /s /q $(OutDir)\include\libaacs
+if exist "$(OutDir)"\include\libaacs (
+rd /s /q "$(OutDir)"\include\libaacs
 cd ../
 cd $(ProjectDir)
 )
@@ -1462,8 +1462,8 @@ win_bison.exe -l -y -d -p libaacs_yy -o ./src/file/keydbcfg-parser.c ../src/file
 )</Command>
     </PreBuildEvent>
     <CustomBuildStep>
-      <Command>if exist $(OutDir)\include\libaacs (
-rmdir /s /q $(OutDir)\include\libaacs
+      <Command>if exist "$(OutDir)"\include\libaacs (
+rmdir /s /q "$(OutDir)"\include\libaacs
 )
 if exist $(OutDir)\licenses\libaacs.txt (
 del /f /q $(OutDir)\licenses\libaacs.txt
