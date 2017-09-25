@@ -114,22 +114,20 @@ static int _open_block_device(const char *path)
     struct stat st;
     int         fd;
 
-    if (stat(path, &st)) {
-        BD_DEBUG(DBG_MMC | DBG_CRIT, "stat(%s) failed\n", path);
-        return -1;
-    }
-
-    if (!S_ISBLK(st.st_mode)) {
-        return -1;
-    }
-
-    BD_DEBUG(DBG_MMC, "Opening block device %s\n", path);
     fd = open(path, O_RDONLY | O_NONBLOCK);
     if (fd < 0) {
-        BD_DEBUG(DBG_MMC | DBG_CRIT, "Error opening block device %s\n", path);
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Error opening %s\n", path);
+        return -1;
     }
 
-    return fd;
+    if (!fstat(fd, &st) && S_ISBLK(st.st_mode)) {
+        BD_DEBUG(DBG_MMC, "Opened block device %s\n", path);
+        return fd;
+    }
+
+    BD_DEBUG(DBG_MMC, "%s is not a block device\n", path);
+    close(fd);
+    return -1;
 }
 
 MMCDEV *device_open(const char *path)
