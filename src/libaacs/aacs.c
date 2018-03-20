@@ -570,7 +570,10 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
     }
 
     aacs->mkb_version = mkb_version(mkb);
-    _update_rl(mkb);
+
+    if (!aacs->no_cache) {
+        _update_rl(mkb);
+    }
 
     /* try device keys first */
     if (dkl) {
@@ -654,8 +657,10 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
         BD_DEBUG(DBG_AACS, "Error reading VID!\n");
     } else {
         /* cache vid */
-        if (memcmp(aacs->disc_id, empty_key, sizeof(aacs->disc_id))) {
-            keycache_save("vid", aacs->disc_id, aacs->vid, 16);
+        if (!aacs->no_cache) {
+            if (memcmp(aacs->disc_id, empty_key, sizeof(aacs->disc_id))) {
+                keycache_save("vid", aacs->disc_id, aacs->vid, 16);
+            }
         }
     }
     return error_code;
@@ -728,8 +733,10 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
     BD_DEBUG(DBG_AACS, "Volume unique key: %s\n", str_print_hex(str, vuk, 16));
 
     /* cache vuk */
-    if (memcmp(aacs->disc_id, empty_key, sizeof(aacs->disc_id))) {
-        keycache_save("vuk", aacs->disc_id, vuk, 16);
+    if (!aacs->no_cache) {
+        if (memcmp(aacs->disc_id, empty_key, sizeof(aacs->disc_id))) {
+            keycache_save("vuk", aacs->disc_id, vuk, 16);
+        }
     }
 
     return AACS_SUCCESS;
