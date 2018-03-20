@@ -74,7 +74,8 @@ AACS_PUBLIC AACS *aacs_init(void);
  * path can be NULL.
  *
  * If files stored in AACS/ are not accessible from the file system (ex. unmounted disc),
- * application should provide file system access for libaacs (see aacs_set_fopen()).
+ * application should provide file system access for libaacs
+ * (see filesystem.h:aacs_set_fopen()).
  *
  * @param  aacs  AACS object
  * @param  path  path to device or disc root or NULL
