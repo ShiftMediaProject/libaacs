@@ -1164,6 +1164,12 @@ AACS *aacs_init()
     }
     return aacs;
 }
+void aacs_set_key_caching(AACS *aacs, int enable)
+{
+    if (aacs) {
+        aacs->no_cache = !enable;
+    }
+}
 
 void aacs_set_fopen(AACS *aacs, void *handle, AACS_FILE_OPEN2 p)
 {

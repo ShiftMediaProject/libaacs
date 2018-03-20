@@ -68,6 +68,15 @@ AACS_PUBLIC void aacs_get_version(int *major, int *minor, int *micro);
 AACS_PUBLIC AACS *aacs_init(void);
 
 /**
+ * Disable / enable key caching.
+ *
+ * Controls if keys and revocation lists are cached locally.
+ * Disabling caching disables updating the cache and using data from cache.
+ * Enabled by default.
+ */
+AACS_PUBLIC void aacs_set_key_caching(AACS *, int enable);
+
+/**
  * Open AACS disc / device.
  *
  * If device is not accessible (reading from .iso file or network stream),
