@@ -48,6 +48,7 @@ struct mmc {
     uint8_t drive_cert[92];
 
     uint8_t read_drive_cert;
+    uint8_t aacs_version;
 };
 
 /*
@@ -226,8 +227,9 @@ static int _mmc_check_aacs(MMC *mmc)
         uint16_t feature = MKINT_BE16(buf+8);
         if (feature == 0x010d) {
             mmc->read_drive_cert = !!(buf[4+8] & 0x10);
+            mmc->aacs_version = buf[7+8];
             BD_DEBUG(DBG_MMC, "AACS feature descriptor:\n");
-            BD_DEBUG(DBG_MMC, "  AACS version: %d\n", buf[7+8]);
+            BD_DEBUG(DBG_MMC, "  AACS version: %d\n", mmc->aacs_version);
             BD_DEBUG(DBG_MMC, "  AACS active: %d\n", buf[2+8] & 1);
             BD_DEBUG(DBG_MMC, "  Binding Nonce generation support: %d\n", buf[4+8] & 1);
             BD_DEBUG(DBG_MMC, "  Binding Nonce block count: %d\n", buf[5+8]);
@@ -383,6 +385,14 @@ MMC *mmc_open(const char *path)
     if (!_mmc_check_aacs(mmc)) {
         BD_DEBUG(DBG_MMC | DBG_CRIT, "AACS not active or supported by the drive\n");
 #ifndef _WIN32
+        mmc_close (mmc);
+        return NULL;
+#endif
+    }
+
+    if (mmc->aacs_version > 1) {
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "WARNING: unsupported AACS2 drive detected.\n");
+#if 0
         mmc_close (mmc);
         return NULL;
 #endif
