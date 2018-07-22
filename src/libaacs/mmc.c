@@ -225,16 +225,15 @@ static int _mmc_check_aacs(MMC *mmc)
     if (_mmc_get_configuration(mmc, 0x010d, buf, 16)) {
         uint16_t feature = MKINT_BE16(buf+8);
         if (feature == 0x010d) {
+            mmc->read_drive_cert = !!(buf[4+8] & 0x10);
             BD_DEBUG(DBG_MMC, "AACS feature descriptor:\n");
             BD_DEBUG(DBG_MMC, "  AACS version: %d\n", buf[7+8]);
             BD_DEBUG(DBG_MMC, "  AACS active: %d\n", buf[2+8] & 1);
             BD_DEBUG(DBG_MMC, "  Binding Nonce generation support: %d\n", buf[4+8] & 1);
             BD_DEBUG(DBG_MMC, "  Binding Nonce block count: %d\n", buf[5+8]);
             BD_DEBUG(DBG_MMC, "  Bus encryption support: %d\n", !!(buf[4+8] & 2));
-            BD_DEBUG(DBG_MMC, "  Read drive certificate: %d\n", !!(buf[4+8] & 0x10));
+            BD_DEBUG(DBG_MMC, "  Read drive certificate: %d\n", mmc->read_drive_cert);
             BD_DEBUG(DBG_MMC, "  AGID count: %d\n", buf[6+8] & 0xf);
-
-            mmc->read_drive_cert = !!(buf[4+8] & 0x10);
 
             return buf[2+8] & 1;
         }
