@@ -555,7 +555,7 @@ int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, ui
     return !_aacs_verify(signature, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
 }
 
-int crypto_aacs_verify_cert(const uint8_t *cert)
+static int crypto_aacs_verify_cert(const uint8_t *cert)
 {
     if (MKINT_BE16(cert+2) != 0x5c) {
         BD_DEBUG(DBG_AACS, "Certificate length is invalid (0x%04x), expected 0x005c\n",

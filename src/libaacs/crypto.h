@@ -39,7 +39,6 @@ BD_PRIVATE void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t
 BD_PRIVATE int  crypto_aacs_verify(const uint8_t *cert, const uint8_t *signature, const uint8_t *data, uint32_t len);
 BD_PRIVATE int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, uint32_t len);
 BD_PRIVATE int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, uint32_t len);
-BD_PRIVATE int  crypto_aacs_verify_cert(const uint8_t *cert);
 BD_PRIVATE int  crypto_aacs_verify_host_cert(const uint8_t *cert);
 BD_PRIVATE int  crypto_aacs_verify_drive_cert(const uint8_t *cert);
 
