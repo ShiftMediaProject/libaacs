@@ -31,7 +31,14 @@ struct content_cert {
     uint8_t bus_encryption_enabled_flag;
 
     uint8_t cc_id[6];
-    uint8_t bdj_root_cert_hash[20];
+
+    /*
+     * BD-J root certificte hash
+     * aacs1: SHA1   (20 bytes)
+     * aacs2: SHA256 (32 bytes)
+     */
+    uint8_t aacs2; /* 0 - aacs1, 1 - aacs2 */
+    uint8_t bdj_root_cert_hash[32];
 };
 
 
