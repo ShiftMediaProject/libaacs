@@ -249,14 +249,31 @@ void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key,
  * build S-expressions
  */
 
+static const char *_aacs1_curve(void)
+{
+  return
+    "(p #00"AACS_EC_p"#)"
+    "(a #00"AACS_EC_a"#)"
+    "(b #00"AACS_EC_b"#)"
+    "(g #04"
+        AACS_EC_G_x
+        AACS_EC_G_y
+    "#)"
+    "(n #00"AACS_EC_n"#)";
+}
+
 static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
                                    const uint8_t *q_x, const uint8_t *q_y,
-                                   const uint8_t *priv_key)
+                                   const uint8_t *priv_key,
+                                   const char *curve,
+                                   size_t key_len)
 {
     gcry_mpi_t    mpi_d = NULL;
     unsigned char Q[41];
     char          str_Q[sizeof(Q) * 2 + 1];
     gcry_error_t  err;
+
+    BD_ASSERT (key_len == 20);
 
     /* Assign MPI values for ECDSA parameters Q and d.
      * Values are:
@@ -267,17 +284,17 @@ static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
      * Note: The MPI values for Q are in the form "<format>||Q.x||Q.y".
      */
     memcpy(&Q[0],  "\x04", 1); // format
-    memcpy(&Q[1],  q_x, 20);   // Q.x
-    memcpy(&Q[21], q_y, 20);   // Q.y
+    memcpy(&Q[1],  q_x, key_len);   // Q.x
+    memcpy(&Q[1 + key_len], q_y, key_len);   // Q.y
     if (priv_key) {
-        gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, priv_key, 20, NULL);
+        gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, priv_key, key_len, NULL);
     }
 
     /* Show the values of the MPIs Q.x, Q.y, and d when debugging */
     if (GCRYPT_DEBUG) {
         gcry_mpi_t mpi_Q_x, mpi_Q_y;
-        gcry_mpi_scan(&mpi_Q_x, GCRYMPI_FMT_USG, q_x, 20, NULL);
-        gcry_mpi_scan(&mpi_Q_y, GCRYMPI_FMT_USG, q_y, 20, NULL);
+        gcry_mpi_scan(&mpi_Q_x, GCRYMPI_FMT_USG, q_x, key_len, NULL);
+        gcry_mpi_scan(&mpi_Q_y, GCRYMPI_FMT_USG, q_y, key_len, NULL);
         gcry_mpi_dump(mpi_Q_x);
         printf("\n");
         gcry_mpi_dump(mpi_Q_y);
@@ -303,22 +320,16 @@ static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
     /* Points are currently only supported in standard format, so get a
      * hexstring out of Q.
      */
-    hex_array_to_hexstring(str_Q, Q, sizeof(Q));
+    hex_array_to_hexstring(str_Q, Q, 1 + 2*key_len);
 
     char *strfmt = str_printf(
       "(%s"
       "(ecdsa"
-      "(p #00"AACS_EC_p"#)"
-      "(a #00"AACS_EC_a"#)"
-      "(b #00"AACS_EC_b"#)"
-      "(g #04"
-          AACS_EC_G_x
-          AACS_EC_G_y
-          "#)"
-      "(n #00"AACS_EC_n"#)"
+      "%s"
       "(q #%s#)"
       "%s))",
       mpi_d ? "private-key" : "public-key",
+      curve,
       str_Q,
       mpi_d ? "(d %m)" : ""
       );
@@ -348,15 +359,26 @@ error:
     return err;
 }
 
-static gcry_error_t _aacs_sexp_sha1(gcry_sexp_t *p_sexp_data,
-                                    const uint8_t *block, uint32_t len)
+static gcry_error_t _aacs_sexp_hash(gcry_sexp_t *p_sexp_data,
+                                    const uint8_t *block, uint32_t len,
+                                    enum gcry_md_algos hash_type)
 {
     gcry_mpi_t   mpi_md = NULL;
     uint8_t      md[20];
     gcry_error_t err;
+    size_t hash_size;
 
-    gcry_md_hash_buffer(GCRY_MD_SHA1, md, block, len);
-    gcry_mpi_scan(&mpi_md, GCRYMPI_FMT_USG, md, sizeof(md), NULL);
+    switch (hash_type) {
+    case GCRY_MD_SHA1:
+        hash_size = 20;
+        break;
+    default:
+        BD_ASSERT_UNREACHABLE ("unsupported hash algorithm");
+        return GPG_ERR_UNKNOWN_ALGORITHM;
+    }
+
+    gcry_md_hash_buffer(hash_type, md, block, len);
+    gcry_mpi_scan(&mpi_md, GCRYMPI_FMT_USG, md, hash_size, NULL);
 
     /* Dump information about the md MPI when debugging */
     if (GCRYPT_DEBUG) {
@@ -396,14 +418,15 @@ static gcry_error_t _aacs_sexp_sha1(gcry_sexp_t *p_sexp_data,
 }
 
 static gcry_error_t _aacs_sexp_signature(gcry_sexp_t *p_sexp_sign,
-                                         const uint8_t *signature)
+                                         const uint8_t *signature,
+                                         size_t key_len)
 {
     gcry_mpi_t   mpi_r = NULL;
     gcry_mpi_t   mpi_s = NULL;
     gcry_error_t err;
 
-    gcry_mpi_scan(&mpi_r, GCRYMPI_FMT_USG, signature,      20, NULL);
-    gcry_mpi_scan(&mpi_s, GCRYMPI_FMT_USG, signature + 20, 20, NULL);
+    gcry_mpi_scan(&mpi_r, GCRYMPI_FMT_USG, signature,           key_len, NULL);
+    gcry_mpi_scan(&mpi_s, GCRYMPI_FMT_USG, signature + key_len, key_len, NULL);
 
     /* Dump information about the md MPI when debugging */
     if (GCRYPT_DEBUG) {
@@ -447,7 +470,7 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     gcry_error_t err;
 
     GCRY_VERIFY("_aacs_sexp_key",
-                _aacs_sexp_key(&sexp_key, cert + 12, cert + 32, priv_key));
+                _aacs_sexp_key(&sexp_key, cert + 12, cert + 32, priv_key, _aacs1_curve(), 20));
 
     /* Calculate the sha1 hash from the nonce and host key point and covert
      * the hash into an MPI.
@@ -455,8 +478,8 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     memcpy(&block[0], nonce, 20);
     memcpy(&block[20], point, 40);
 
-    GCRY_VERIFY("_aacs_sexp_sha1",
-                _aacs_sexp_sha1(&sexp_data, block, sizeof(block)));
+    GCRY_VERIFY("_aacs_sexp_hash",
+                _aacs_sexp_hash(&sexp_data, block, sizeof(block), GCRY_MD_SHA1));
 
     /* Sign the hash with the ECDSA key. The resulting s-expression should be
      * in the form:
@@ -501,7 +524,7 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     gcry_mpi_release(mpi_s);
 }
 
-static int _aacs_verify(const uint8_t *signature,
+static int _aacs_verify(const uint8_t *signature, enum gcry_md_algos hash_type,
                         const uint8_t *q_x, const uint8_t *q_y,
                         const uint8_t *data, uint32_t len)
 {
@@ -509,15 +532,27 @@ static int _aacs_verify(const uint8_t *signature,
     gcry_sexp_t  sexp_sig  = NULL;
     gcry_sexp_t  sexp_data = NULL;
     gcry_error_t err;
+    const char *curve;
+    size_t key_len;
+
+    switch (hash_type) {
+    case GCRY_MD_SHA1:
+        curve = _aacs1_curve();
+        key_len = 20;
+        break;
+    default:
+        BD_ASSERT_UNREACHABLE ("invalid signature size");
+        return 0;
+    }
 
     GCRY_VERIFY("_aacs_sexp_key",
-                _aacs_sexp_key(&sexp_key, q_x, q_y, NULL));
+                _aacs_sexp_key(&sexp_key, q_x, q_y, NULL, curve, key_len));
 
-    GCRY_VERIFY("_aacs_sexp_sha1",
-                _aacs_sexp_sha1(&sexp_data, data, len));
+    GCRY_VERIFY("_aacs_sexp_hash",
+                _aacs_sexp_hash(&sexp_data, data, len, hash_type));
 
     GCRY_VERIFY("_aacs_sexp_signature",
-                _aacs_sexp_signature(&sexp_sig, signature));
+                _aacs_sexp_signature(&sexp_sig, signature, key_len));
 
     GCRY_VERIFY("gcry_pk_verify",
                 gcry_pk_verify(sexp_sig, sexp_data, sexp_key));
@@ -532,7 +567,7 @@ static int _aacs_verify(const uint8_t *signature,
 
 int crypto_aacs_verify(const uint8_t *cert, const uint8_t *signature, const uint8_t *data, uint32_t len)
 {
-    return !_aacs_verify(signature, cert + 12, cert + 32, data, len);
+    return !_aacs_verify(signature, GCRY_MD_SHA1, cert + 12, cert + 32, data, len);
 }
 
 int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, uint32_t len)
@@ -542,7 +577,7 @@ int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, ui
     static const uint8_t aacs_la_pubkey_y[] = {0x13, 0x7E, 0xC6, 0x38, 0x81, 0x8F, 0xD9, 0x8F, 0xA4, 0xC3,
                                                0x0B, 0x99, 0x67, 0x28, 0xBF, 0x4B, 0x91, 0x7F, 0x6A, 0x27 };
 
-    return !_aacs_verify(signature, aacs_la_pubkey_x, aacs_la_pubkey_y, data, len);
+    return !_aacs_verify(signature, GCRY_MD_SHA1, aacs_la_pubkey_x, aacs_la_pubkey_y, data, len);
 }
 
 int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, uint32_t len)
@@ -552,7 +587,7 @@ int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, ui
     static const uint8_t aacs_cc_pubkey_y[] = { 0x00, 0x1D, 0xF3, 0x6B, 0x8F, 0x2E, 0xCF, 0x83, 0xCD, 0xEE,
                                                 0x43, 0x8F, 0x7F, 0xD1, 0xF4, 0x80, 0x6F, 0xD2, 0x0D, 0xE7 };
 
-    return !_aacs_verify(signature, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
+    return !_aacs_verify(signature, GCRY_MD_SHA1, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
 }
 
 static int crypto_aacs_verify_cert(const uint8_t *cert)
