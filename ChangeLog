@@ -1,4 +1,8 @@
-- Add aacs_set_key_caching()
+- Add support for AACS2 content certificate.
+- Add aacs_set_key_caching().
+- Issue a warning when using AACS2 capable drive.
+- Fix data corruption when structs are not packed.
+
 2017-05-04: Version 0.9.0
 - Add aacs_decrypt_bus().
 - Add aacs_get_bdj_root_cert_hash().
