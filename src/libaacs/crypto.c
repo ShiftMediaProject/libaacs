@@ -262,6 +262,11 @@ static const char *_aacs1_curve(void)
     "(n #00"AACS_EC_n"#)";
 }
 
+static const char *_aacs2_curve(void)
+{
+  return "(curve \"NIST P-256\")";
+}
+
 static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
                                    const uint8_t *q_x, const uint8_t *q_y,
                                    const uint8_t *priv_key,
@@ -269,11 +274,11 @@ static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
                                    size_t key_len)
 {
     gcry_mpi_t    mpi_d = NULL;
-    unsigned char Q[41];
+    unsigned char Q[65];
     char          str_Q[sizeof(Q) * 2 + 1];
     gcry_error_t  err;
 
-    BD_ASSERT (key_len == 20);
+    BD_ASSERT (key_len == 20 || key_len == 32);
 
     /* Assign MPI values for ECDSA parameters Q and d.
      * Values are:
@@ -364,13 +369,16 @@ static gcry_error_t _aacs_sexp_hash(gcry_sexp_t *p_sexp_data,
                                     enum gcry_md_algos hash_type)
 {
     gcry_mpi_t   mpi_md = NULL;
-    uint8_t      md[20];
+    uint8_t      md[32];
     gcry_error_t err;
     size_t hash_size;
 
     switch (hash_type) {
     case GCRY_MD_SHA1:
         hash_size = 20;
+        break;
+    case GCRY_MD_SHA256:
+        hash_size = 32;
         break;
     default:
         BD_ASSERT_UNREACHABLE ("unsupported hash algorithm");
@@ -540,6 +548,10 @@ static int _aacs_verify(const uint8_t *signature, enum gcry_md_algos hash_type,
         curve = _aacs1_curve();
         key_len = 20;
         break;
+    case GCRY_MD_SHA256:
+        curve = _aacs2_curve();
+        key_len = 32;
+        break;
     default:
         BD_ASSERT_UNREACHABLE ("invalid signature size");
         return 0;
@@ -586,8 +598,21 @@ int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, ui
                                                 0xA4, 0x9F, 0x78, 0x00, 0xC7, 0x7D, 0xE9, 0x0C, 0xB3, 0x4C };
     static const uint8_t aacs_cc_pubkey_y[] = { 0x00, 0x1D, 0xF3, 0x6B, 0x8F, 0x2E, 0xCF, 0x83, 0xCD, 0xEE,
                                                 0x43, 0x8F, 0x7F, 0xD1, 0xF4, 0x80, 0x6F, 0xD2, 0x0D, 0xE7 };
+    static const uint8_t aacs2_cc_pubkey_x[] = { 0xE7, 0x0D, 0x49, 0xD2, 0x6F, 0x45, 0xEA, 0xA7, 0x36, 0x93, 0x9D, 0x72, 0x88, 0x2E, 0xD8, 0xFB,
+                                                 0xA1, 0x60, 0x70, 0x26, 0x96, 0x39, 0x49, 0x97, 0x04, 0x96, 0xC9, 0x10, 0xEA, 0x5C, 0x9D, 0xC2 };
+    static const uint8_t aacs2_cc_pubkey_y[] = { 0xD1, 0xF5, 0x89, 0x7C, 0xEC, 0xB8, 0x44, 0x01, 0x4E, 0x0F, 0xB0, 0x8C, 0xC7, 0x6E, 0x20, 0xE8,
+                                                 0x54, 0x5E, 0xCC, 0x27, 0x1E, 0xE4, 0x6C, 0x4A, 0xEF, 0x81, 0xD9, 0x16, 0x9B, 0xF8, 0x41, 0x72 };
+    switch (data[0]) {
+    case 0x00: /* AACS 1 */
+        return !_aacs_verify(signature, GCRY_MD_SHA1, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
+    case 0x10: /* AACS 2 */
+        return !_aacs_verify(signature, GCRY_MD_SHA256, aacs2_cc_pubkey_x, aacs2_cc_pubkey_y, data, len);
+    default:
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unknown content certificate type 0x%02x\n", data[0]);
+        break;
+    }
 
-    return !_aacs_verify(signature, GCRY_MD_SHA1, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
+    return 0;
 }
 
 static int crypto_aacs_verify_cert(const uint8_t *cert)
