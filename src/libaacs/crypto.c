@@ -568,8 +568,15 @@ static int crypto_aacs_verify_cert(const uint8_t *cert)
 
 int crypto_aacs_verify_host_cert(const uint8_t *cert)
 {
-    if (cert[0] != 0x02) {
-        BD_DEBUG(DBG_AACS, "Host certificate type is invalid (0x%02x), expected 0x01\n", cert[0]);
+    switch (cert[0]) {
+    case 0x02:
+        break;
+    case 0x12:
+        // XXX checking the signature would cause buffer overread (certificate is truncated in config file)
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "AACS 2.0 host certificate not supported\n");
+        return 0;
+    default:
+        BD_DEBUG(DBG_AACS, "Host certificate type is invalid (0x%02x)\n", cert[0]);
         return 0;
     }
 
@@ -583,8 +590,15 @@ int crypto_aacs_verify_host_cert(const uint8_t *cert)
 
 int crypto_aacs_verify_drive_cert(const uint8_t *cert)
 {
-    if (cert[0] != 0x01) {
-        BD_DEBUG(DBG_AACS, "Drive certificate type is invalid (0x%02x), expected 0x01\n", cert[0]);
+    switch (cert[0]) {
+    case 0x01:
+        break;
+    case 0x11:
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "WARNING: Drive is using AACS 2.0 certificate\n");
+        // XXX checking the signature would cause buffer overread (certificate is truncated at MMC layer)
+        return 0;
+    default:
+        BD_DEBUG(DBG_AACS, "Drive certificate type is invalid (0x%02x)\n", cert[0]);
         return 0;
     }
 
