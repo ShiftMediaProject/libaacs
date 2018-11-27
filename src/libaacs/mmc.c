@@ -449,11 +449,13 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     // send host cert + nonce
     if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, host_cert)) {
 
+        str_print_hex(str, host_cert + 4, 6);
         if ((mmc->drive_cert[1] & 0x01) && !(host_cert[1] & 0x01)) {
             BD_DEBUG(DBG_MMC | DBG_CRIT, "Certificate (id 0x%s) can not be used with bus encryption capable drive\n",
-                  str_print_hex(str, host_cert + 4, 6));
+                     str);
         } else {
-            BD_DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate has been revoked by your drive ?\n");
+            BD_DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate (id 0x%s) has been revoked by your drive ?\n",
+                     str);
         }
         return MMC_ERROR_CERT_REVOKED;
     }
