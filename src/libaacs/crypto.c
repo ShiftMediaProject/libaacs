@@ -517,8 +517,17 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     /* Finally concatenate 'r' and 's' to get the ECDSA signature */
     mpi_r = gcry_sexp_nth_mpi (sexp_r, 1, GCRYMPI_FMT_USG);
     mpi_s = gcry_sexp_nth_mpi (sexp_s, 1, GCRYMPI_FMT_USG);
-    gcry_mpi_print (GCRYMPI_FMT_USG, signature,      20, NULL, mpi_r);
-    gcry_mpi_print (GCRYMPI_FMT_USG, signature + 20, 20, NULL, mpi_s);
+    size_t n;
+    gcry_mpi_print (GCRYMPI_FMT_USG, signature,      20, &n, mpi_r);
+    if (n < 20) {
+        memmove (signature + 20 - n, signature, n);
+        memset (signature, 0, 20 - n);
+    }
+    gcry_mpi_print (GCRYMPI_FMT_USG, signature + 20, 20, &n, mpi_s);
+    if (n < 20) {
+        memmove (signature + 40 - n, signature + 20, n);
+        memset (signature + 20, 0, 20 - n);
+    }
 
  error:
 
@@ -766,8 +775,17 @@ void crypto_create_host_key_pair(uint8_t *host_key, uint8_t *host_key_point)
     gcry_mpi_t q_y = mpi_new(0);
     _gcry_mpi_ec_get_affine (q_x, q_y, &Q, ctx);
 
-    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point,      20, NULL, q_x);
-    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point + 20, 20, NULL, q_y);
+    size_t n;
+    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point,      20, &n, q_x);
+    if (n < 20) {
+        memmove (host_key_point + 20 - n, host_key_point, n);
+        memset (host_key_point, 0, 20 - n);
+    }
+    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point + 20, 20, &n, q_y);
+    if (n < 20) {
+        memmove (host_key_point + 40 - n, host_key_point + 20, n);
+        memset (host_key_point + 20, 0, 20 - n);
+    }
 
     /* cleanup */
 
