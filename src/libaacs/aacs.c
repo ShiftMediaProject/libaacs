@@ -1337,7 +1337,9 @@ const uint8_t *aacs_get_content_cert_id(AACS *aacs)
 const uint8_t *aacs_get_bdj_root_cert_hash(AACS *aacs)
 {
     if (aacs && aacs->cc) {
+        if (!aacs->cc->aacs2) {
         return aacs->cc->bdj_root_cert_hash;
+        }
     }
     return NULL;
 }
