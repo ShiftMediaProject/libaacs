@@ -1121,6 +1121,26 @@ void aacs_get_version(int *major, int *minor, int *micro)
     *micro = AACS_VERSION_MICRO;
 }
 
+const char *aacs_error_str(int err)
+{
+    static const char * const str[] = {
+       [-AACS_SUCCESS]                = "Success",
+       [-AACS_ERROR_CORRUPTED_DISC]   = "Corrupt disc",
+       [-AACS_ERROR_NO_CONFIG]        = "Missing configuration file",
+       [-AACS_ERROR_NO_PK]            = "No matching processing key",
+       [-AACS_ERROR_NO_CERT]          = "No valid certificate",
+       [-AACS_ERROR_CERT_REVOKED]     = "Revoked certificate",
+       [-AACS_ERROR_MMC_OPEN]         = "Failed opening MMC device",
+       [-AACS_ERROR_MMC_FAILURE]      = "MMC failure",
+       [-AACS_ERROR_NO_DK]            = "No matching device key",
+    };
+    err = -err;
+    if (err < 0 || (size_t)err >= sizeof(str) / sizeof(str[0]) || !str[err]) {
+        return "Unknown error code";
+    }
+    return str[err];
+}
+
 /* aacs_open2() wrapper for backwards compability */
 AACS *aacs_open(const char *path, const char *configfile_path)
 {

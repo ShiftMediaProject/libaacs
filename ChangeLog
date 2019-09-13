@@ -1,5 +1,6 @@
 - Add support for AACS2 content certificate.
 - Add aacs_set_key_caching().
+- Add aacs_error_str().
 - Issue a warning when using AACS2 capable drive.
 - Fix parsing title entries from multiple KEYDB.cfg files.
 - Fix memory leak with multiple KEYDB.cfg files.

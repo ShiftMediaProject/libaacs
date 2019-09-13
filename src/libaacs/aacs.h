@@ -40,6 +40,8 @@
 #define AACS_ERROR_MMC_FAILURE    -7 /* MMC failed */
 #define AACS_ERROR_NO_DK          -8 /* no matching device key */
 
+AACS_PUBLIC const char *aacs_error_str(int error);
+
 /**
  * Opaque type for AACS object
  */
