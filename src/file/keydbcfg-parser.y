@@ -286,6 +286,7 @@ disc_info
       if (!cf->list) {
         celist = cf->list = new_title_entry_list();
       } else {
+        for (; celist->next; celist = celist->next) ;
         celist->next = new_title_entry_list();
         celist = celist->next;
       }

@@ -1,6 +1,8 @@
 - Add support for AACS2 content certificate.
 - Add aacs_set_key_caching().
 - Issue a warning when using AACS2 capable drive.
+- Fix parsing title entries from multiple KEYDB.cfg files.
+- Fix memory leak with multiple KEYDB.cfg files.
 - Fix data corruption when structs are not packed.
 
 2017-05-04: Version 0.9.0
