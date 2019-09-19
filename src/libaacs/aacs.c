@@ -829,9 +829,10 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
 }
 
 /* Function that collects keys from keydb config entry */
-static void _find_config_entry(AACS *aacs, title_entry_list *ce,
+static void _find_config_entry(AACS *aacs, config_file *cf,
                                uint8_t *mk, uint8_t *vuk)
 {
+    title_entry_list *ce = cf->list;
     char str[48];
     char str2[48];
 
@@ -881,14 +882,23 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
             ukcursor = ukcursor->next;
         }
 
-        /* check against Unit_Key_RO.inf */
+        /* check against Unit_Key_RO.inf, only discard incorrect amount of UKs if VUK or MK+VID is available */
         if (num_uks != aacs->uk->num_uk) {
-            BD_DEBUG(DBG_CRIT | DBG_AACS, "Ignoring unit keys from config file (expected %u keys, found %u)\n",
+            if (_calc_vuk(aacs, mk, vuk, cf) == AACS_SUCCESS) {
+                BD_DEBUG(DBG_CRIT | DBG_AACS, "Ignoring unit keys from config file (expected %u keys, found %u)\n",
+                         aacs->uk->num_uk, num_uks);
+                return;
+            }
+            BD_DEBUG(DBG_CRIT | DBG_AACS, "Incomplete unit keys in config file (expected %u keys, found %u)\n",
                      aacs->uk->num_uk, num_uks);
-            return;
         }
 
         /* get keys */
+
+        if (num_uks > aacs->uk->num_uk) {
+            /* config file has more unit keys than the disc has */
+            aacs->uk->num_uk = num_uks;
+        }
 
         aacs->uk->uk = calloc(aacs->uk->num_uk, sizeof(aacs->uk->uk[0]));
         if (!aacs->uk->uk) {
@@ -994,7 +1004,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
         if (cf) {
             BD_DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
-            _find_config_entry(aacs, cf->list, mk, vuk);
+            _find_config_entry(aacs, cf, mk, vuk);
 
             /* Skip if retrieved from config file */
             if (aacs->uk->uk) {
