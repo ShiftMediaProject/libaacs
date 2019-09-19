@@ -764,6 +764,7 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
 
     if (ce->entry.mek) {
         hexstring_to_hex_array(mk, 16, ce->entry.mek);
+        memcpy(aacs->mk, mk, 16);
 
         BD_DEBUG(DBG_AACS, "Found media key for %s: %s\n",
                  str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, mk, 16));
