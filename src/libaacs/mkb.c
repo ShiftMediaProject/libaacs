@@ -77,6 +77,7 @@ MKB *mkb_init(uint8_t *data, size_t len)
     mkb->buf  = data;
 
     BD_DEBUG(DBG_MKB, "MKB size: %u\n", (unsigned)mkb->size);
+    BD_DEBUG(DBG_MKB, "MKB type: 0x%x\n", mkb_type(mkb));
     BD_DEBUG(DBG_MKB, "MKB version: %d\n", mkb_version(mkb));
 
     return mkb;
@@ -207,12 +208,29 @@ const uint8_t *mkb_cvalues(MKB *mkb, size_t *len)
 
 const uint8_t *mkb_mk_dv(MKB *mkb)
 {
+    const uint8_t *rec;
+    uint8_t dv_record;
     size_t len;
-    const uint8_t *rec = _record(mkb, 0x81, &len);
+
+    switch (mkb_type(mkb)) {
+        case MKB_20_CATEGORY_C:
+        case MKB_21_CATEGORY_C:
+            dv_record = 0x86;
+            break;
+        case MKB_TYPE_3:
+        case MKB_TYPE_4:
+        case MKB_TYPE_10_CLASS_II:
+        default:
+            dv_record = 0x81;
+            break;
+    }
+
+    rec = _record(mkb, dv_record, &len);
 
     if (len < 20) {
         return NULL;
     }
+
     if (rec) {
         rec += 4;
     }
