@@ -81,6 +81,7 @@ struct aacs {
     int       bee;        /* bus encryption enabled flag in content certificate */
     int       bec;        /* bus encryption capable flag in drive certificate */
     uint8_t   read_data_key[16];
+    uint8_t   drive_cert_hash[20];
 
     /* content certificate */
     CONTENT_CERT *cc;
@@ -668,10 +669,33 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
 
 static int _read_read_data_key(AACS *aacs, cert_list *hcl)
 {
-    int error_code = _mmc_read_auth(aacs, hcl, MMC_READ_DATA_KEYS, aacs->read_data_key, NULL);
+    int error_code;
+    char *cache_path = NULL;
+    char str[41];
+
+    cache_path = str_printf("rdk" DIR_SEP "%s", str_print_hex(str, aacs->drive_cert_hash, 20));
+
+    error_code =_mmc_read_auth(aacs, hcl, MMC_READ_DATA_KEYS, aacs->read_data_key, NULL);
+    if (error_code == AACS_SUCCESS) {
+        /* cache read data key */
+        if (!aacs->no_cache) {
+            keycache_save(cache_path, aacs->disc_id, aacs->read_data_key, 16);
+        }
+
+    } else {
+        /* get cached read data key */
+        if (!aacs->no_cache && keycache_find(cache_path, aacs->disc_id, aacs->read_data_key, 16)) {
+            BD_DEBUG(DBG_AACS, "Using cached READ DATA KEY\n");
+            error_code = AACS_SUCCESS;
+        }
+    }
+
+    X_FREE(cache_path);
+
     if (error_code != AACS_SUCCESS) {
         BD_DEBUG(DBG_AACS, "Error reading data keys!\n");
     }
+
     return error_code;
 }
 
@@ -1023,7 +1047,7 @@ static int _get_bus_encryption_enabled(AACS *aacs)
     return 0;
 }
 
-static int _get_bus_encryption_capable(const char *path)
+static int _get_bus_encryption_capable(AACS *aacs, const char *path)
 {
     MMC* mmc = NULL;
     uint8_t drive_cert[92];
@@ -1034,9 +1058,11 @@ static int _get_bus_encryption_capable(const char *path)
     }
 
     if (mmc_read_drive_cert(mmc, drive_cert) == MMC_SUCCESS) {
+        crypto_aacs_title_hash(drive_cert, 92, aacs->drive_cert_hash);
         bec = drive_cert[1] & 1;
         BD_DEBUG(DBG_AACS, "Bus Encryption Capable flag in drive certificate: %d\n", bec);
     } else {
+        memset(aacs->drive_cert_hash, 0, sizeof(aacs->drive_cert_hash));
         BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to read drive certificate\n");
     }
 
@@ -1223,7 +1249,7 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
     aacs->cc = _read_cc_any(aacs);
 
     aacs->bee = _get_bus_encryption_enabled(aacs);
-    aacs->bec = _get_bus_encryption_capable(path);
+    aacs->bec = _get_bus_encryption_capable(aacs, path);
 
     if (error_code == AACS_SUCCESS && aacs->bee && aacs->bec) {
 
