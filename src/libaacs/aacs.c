@@ -562,6 +562,12 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
         return AACS_SUCCESS;
     }
 
+    /* get cached mk */
+    if (!aacs->no_cache && keycache_find("mk", aacs->disc_id, mk, 16)) {
+        BD_DEBUG(DBG_AACS, "Using cached MK\n");
+        return AACS_SUCCESS;
+    }
+
     BD_DEBUG(DBG_AACS, "Calculate media key...\n");
 
     mkb = _mkb_open(aacs);
@@ -586,6 +592,12 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 
     if (result == AACS_SUCCESS) {
         memcpy(aacs->mk, mk, sizeof(aacs->mk));
+        /* cache mk */
+        if (!aacs->no_cache) {
+            if (memcmp(aacs->disc_id, empty_key, sizeof(aacs->disc_id))) {
+                keycache_save("mk", aacs->disc_id, mk, 16);
+            }
+        }
     }
 
     mkb_close(mkb);
