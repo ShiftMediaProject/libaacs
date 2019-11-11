@@ -114,7 +114,10 @@ int device_send_cmd(MMCDEV *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, si
             direction = kSCSIDataTransfer_NoDataTransfer;
         }
 
-        rc = (*task)->SetCommandDescriptorBlock (task, cmd, 16);
+        SCSICommandDescriptorBlock cdb = {0};
+        memcpy(cdb, cmd, sizeof(cdb));
+
+        rc = (*task)->SetCommandDescriptorBlock (task, cdb, kSCSICDBSize_16Byte);
         if (kIOReturnSuccess != rc) {
             BD_DEBUG(DBG_MMC, "Error setting SCSI command\n");
             break;
