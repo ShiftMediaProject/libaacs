@@ -227,8 +227,6 @@ static int iokit_unmount (MMCDEV *mmc) {
 
     DADiskUnmount (mmc->disk, kDADiskUnmountOptionForce, iokit_unmount_complete, mmc);
 
-    CFRunLoopRunInMode (kCFRunLoopDefaultMode, 10, true);
-
     return mmc->is_mounted ? -1 : 0;
 }
 
@@ -236,8 +234,6 @@ static int iokit_mount (MMCDEV *mmc) {
     if (0 == mmc->is_mounted) {
         if (mmc->disk && mmc->session) {
             DADiskMount (mmc->disk, NULL, kDADiskMountOptionDefault, iokit_mount_complete, mmc);
-
-            CFRunLoopRunInMode (kCFRunLoopDefaultMode, 10, true);
         }
     }
 
@@ -340,15 +336,14 @@ static int iokit_da_init(MMCDEV *mmc) {
         return -1;
     }
 
-    DAApprovalSessionScheduleWithRunLoop (mmc->session, CFRunLoopGetCurrent (),
-                                          kCFRunLoopDefaultMode);
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    DASessionSetDispatchQueue(mmc->session, queue);
 
     return 0;
 }
 
 static void iokit_da_destroy(MMCDEV *mmc) {
-    DAApprovalSessionUnscheduleFromRunLoop (mmc->session, CFRunLoopGetCurrent (),
-                                            kCFRunLoopDefaultMode);
+    DASessionSetDispatchQueue(mmc->session, NULL);
 
     if (mmc->disk) {
         CFRelease (mmc->disk);
