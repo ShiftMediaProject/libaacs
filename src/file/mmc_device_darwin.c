@@ -279,7 +279,7 @@ static int iokit_find_service_matching (MMCDEV *mmc, io_service_t *servp) {
 
     assert (NULL != servp);
 
-    *servp = 0;
+    *servp = IO_OBJECT_NULL;
 
     if (!matchingDict) {
         BD_DEBUG(DBG_MMC, "Could not create a matching dictionary for IOBDServices\n");
@@ -315,7 +315,7 @@ static int iokit_find_service_matching (MMCDEV *mmc, io_service_t *servp) {
 
     *servp = service;
 
-    return (service) ? 0 : -1;
+    return (service != IO_OBJECT_NULL) ? 0 : -1;
 }
 
 static int iokit_find_interfaces (MMCDEV *mmc, io_service_t service) {
