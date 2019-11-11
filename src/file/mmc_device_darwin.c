@@ -198,8 +198,20 @@ static void iokit_mount_complete (DADiskRef disk, DADissenterRef dissenter,
     (void) disk; /* suppress warning */
     (void) dissenter; /* suppress warning */
 
-    /* the disc mounts despite whether there is a dessenter */
-    BD_DEBUG(DBG_MMC, "Disc mounted\n");
+    if (dissenter) {
+        BD_DEBUG(DBG_MMC, "Could not mount the disc\n");
+    } else {
+        BD_DEBUG(DBG_MMC, "Disc mounted\n");
+    }
+
+    /* FIXME: The disc does not actually mount whether there is
+     * a dissenter or not, the OS mounts the disc automatically
+     * kind of racing against us mounting the disc.
+     * It is pure luck if the disc is mounted or not, sometimes
+     * we are lucky enough, especially because the runloop is
+     * running for 10 seconds, which most of the time is long
+     * enough for the OS to mount the disc again.
+     */
     ((MMCDEV *)context)->is_mounted = 1;
 }
 
