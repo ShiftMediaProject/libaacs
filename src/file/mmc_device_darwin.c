@@ -75,7 +75,7 @@ struct mmcdev {
     SCSITaskDeviceInterface **taskInterface;
 
     /* device short name (ie disk1) */
-    char bsd_name[128];
+    char bsd_name[MNAMELEN];
 
     /* for mounting/unmounting the disc */
     DADiskRef disk;
@@ -295,7 +295,7 @@ static int iokit_find_service_matching (MMCDEV *mmc, io_service_t *servp) {
 
     while (0 != (service = IOIteratorNext (deviceIterator))) {
         CFStringRef data;
-        char name[128] = "";
+        char name[MNAMELEN] = "";
 
         data = IORegistryEntrySearchCFProperty (service, kIOServicePlane, CFSTR("BSD Name"),
                                                 kCFAllocatorDefault, kIORegistryIterateRecursively);
