@@ -225,23 +225,6 @@ static int iokit_unmount (MMCDEV *mmc) {
 
     BD_DEBUG(DBG_MMC, "Unmounting disk\n");
 
-    mmc->session = DASessionCreate (kCFAllocatorDefault);
-    if (NULL == mmc->session) {
-        BD_DEBUG(DBG_MMC, "Could not create a disc arbitration session\n");
-        return -1;
-    }
-
-    mmc->disk = DADiskCreateFromBSDName (kCFAllocatorDefault, mmc->session, mmc->bsd_name);
-    if (NULL == mmc->disk) {
-        BD_DEBUG(DBG_MMC, "Could not create a disc arbitration disc for the device\n");
-        CFRelease (mmc->session);
-        mmc->session = NULL;
-        return -1;
-    }
-
-    DAApprovalSessionScheduleWithRunLoop (mmc->session, CFRunLoopGetCurrent (),
-                                          kCFRunLoopDefaultMode);
-
     DADiskUnmount (mmc->disk, kDADiskUnmountOptionForce, iokit_unmount_complete, mmc);
 
     CFRunLoopRunInMode (kCFRunLoopDefaultMode, 10, true);
@@ -255,19 +238,6 @@ static int iokit_mount (MMCDEV *mmc) {
             DADiskMount (mmc->disk, NULL, kDADiskMountOptionDefault, iokit_mount_complete, mmc);
 
             CFRunLoopRunInMode (kCFRunLoopDefaultMode, 10, true);
-
-            DAApprovalSessionUnscheduleFromRunLoop (mmc->session, CFRunLoopGetCurrent (),
-                                                    kCFRunLoopDefaultMode);
-        }
-
-        if (mmc->disk) {
-            CFRelease (mmc->disk);
-            mmc->disk = NULL;
-        }
-
-        if (mmc->session) {
-            CFRelease (mmc->session);
-            mmc->session = NULL;
         }
     }
 
@@ -355,6 +325,42 @@ static int iokit_find_interfaces (MMCDEV *mmc, io_service_t service) {
     return 0;
 }
 
+static int iokit_da_init(MMCDEV *mmc) {
+    mmc->session = DASessionCreate (kCFAllocatorDefault);
+    if (NULL == mmc->session) {
+        BD_DEBUG(DBG_MMC, "Could not create a disc arbitration session\n");
+        return -1;
+    }
+
+    mmc->disk = DADiskCreateFromBSDName (kCFAllocatorDefault, mmc->session, mmc->bsd_name);
+    if (NULL == mmc->disk) {
+        BD_DEBUG(DBG_MMC, "Could not create a disc arbitration disc for the device\n");
+        CFRelease (mmc->session);
+        mmc->session = NULL;
+        return -1;
+    }
+
+    DAApprovalSessionScheduleWithRunLoop (mmc->session, CFRunLoopGetCurrent (),
+                                          kCFRunLoopDefaultMode);
+
+    return 0;
+}
+
+static void iokit_da_destroy(MMCDEV *mmc) {
+    DAApprovalSessionUnscheduleFromRunLoop (mmc->session, CFRunLoopGetCurrent (),
+                                            kCFRunLoopDefaultMode);
+
+    if (mmc->disk) {
+        CFRelease (mmc->disk);
+        mmc->disk = NULL;
+    }
+
+    if (mmc->session) {
+        CFRelease (mmc->session);
+        mmc->session = NULL;
+    }
+}
+
 static int mmc_open_iokit (const char *path, MMCDEV *mmc) {
     io_service_t service;
     int rc;
@@ -386,6 +392,8 @@ static int mmc_open_iokit (const char *path, MMCDEV *mmc) {
     /* done with the ioservice. release it */
     (void) IOObjectRelease (service);
 
+    /* Init DiskArbitration */
+    rc = iokit_da_init(mmc);
     if (0 != rc) {
         return rc;
     }
@@ -450,6 +458,8 @@ void device_close(MMCDEV **pp)
         }
 
         (void) iokit_mount (mmc);
+
+        iokit_da_destroy(mmc);
 
         X_FREE(*pp);
     }
