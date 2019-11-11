@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include <IOKit/IOKitLib.h>
+#include <IOKit/IOBSD.h>
 #include <IOKit/IOCFPlugIn.h>
 
 #include <DiskArbitration/DiskArbitration.h>
@@ -297,7 +298,7 @@ static int iokit_find_service_matching (MMCDEV *mmc, io_service_t *servp) {
         CFStringRef data;
         char name[MNAMELEN] = "";
 
-        data = IORegistryEntrySearchCFProperty (service, kIOServicePlane, CFSTR("BSD Name"),
+        data = IORegistryEntrySearchCFProperty (service, kIOServicePlane, CFSTR(kIOBSDNameKey),
                                                 kCFAllocatorDefault, kIORegistryIterateRecursively);
 
         if (NULL != data) {
