@@ -419,7 +419,7 @@ MMCDEV *device_open(const char *path)
 
     rc = mmc_open_iokit (path, dev);
     if (0 != rc) {
-        device_close (dev);
+        device_close (&dev);
         return NULL;
     }
 
