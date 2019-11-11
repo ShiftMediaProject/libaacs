@@ -72,6 +72,8 @@
  */
 
 struct mmcdev {
+    /* Interfaces required for low-level device communication */
+    IOCFPlugInInterface **plugInInterface;
     MMCDeviceInterface **mmcInterface;
     SCSITaskDeviceInterface **taskInterface;
 
@@ -320,24 +322,23 @@ static int iokit_find_service_matching (MMCDEV *mmc, io_service_t *servp) {
 }
 
 static int iokit_find_interfaces (MMCDEV *mmc, io_service_t service) {
-    IOCFPlugInInterface **plugInInterface = NULL;
     SInt32 score;
     int rc;
 
     rc = IOCreatePlugInInterfaceForService (service, kIOMMCDeviceUserClientTypeID,
-                                            kIOCFPlugInInterfaceID, &plugInInterface,
+                                            kIOCFPlugInInterfaceID, &mmc->plugInInterface,
                                             &score);
-    if (kIOReturnSuccess != rc || NULL == plugInInterface) {
+    if (kIOReturnSuccess != rc || NULL == mmc->plugInInterface) {
         return -1;
     }
 
     BD_DEBUG(DBG_MMC, "Getting MMC interface\n");
+    IOCFPlugInInterface **plugInInterface = mmc->plugInInterface;
 
     rc = (*plugInInterface)->QueryInterface(plugInInterface,
                                             CFUUIDGetUUIDBytes(kIOMMCDeviceInterfaceID),
                                             (LPVOID)&mmc->mmcInterface);
-    /* call release instead of IODestroyPlugInInterface to avoid stopping IOBDServices */
-    (*plugInInterface)->Release(plugInInterface);
+
     if (kIOReturnSuccess != rc || NULL == mmc->mmcInterface) {
         BD_DEBUG(DBG_MMC, "Could not get multimedia commands (MMC) interface\n");
         return -1;
@@ -358,6 +359,7 @@ static int mmc_open_iokit (const char *path, MMCDEV *mmc) {
     io_service_t service;
     int rc;
 
+    mmc->plugInInterface = NULL;
     mmc->mmcInterface = NULL;
     mmc->taskInterface = NULL;
     mmc->disk = NULL;
@@ -441,6 +443,10 @@ void device_close(MMCDEV **pp)
         if (mmc->mmcInterface) {
             (*mmc->mmcInterface)->Release (mmc->mmcInterface);
             mmc->mmcInterface = NULL;
+        }
+
+        if (mmc->plugInInterface) {
+            IODestroyPlugInInterface(mmc->plugInInterface);
         }
 
         (void) iokit_mount (mmc);
