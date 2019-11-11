@@ -408,22 +408,22 @@ static int mmc_open_iokit (const char *path, MMCDEV *mmc) {
 
 MMCDEV *device_open(const char *path)
 {
-    MMCDEV *dev;
+    MMCDEV *mmc;
     int     rc;
 
-    dev = calloc(1, sizeof(MMCDEV));
-    if (!dev) {
+    mmc = calloc(1, sizeof(MMCDEV));
+    if (!mmc) {
         BD_DEBUG(DBG_MKB | DBG_CRIT, "out of memory\n");
         return NULL;
     }
 
-    rc = mmc_open_iokit (path, dev);
+    rc = mmc_open_iokit (path, mmc);
     if (0 != rc) {
-        device_close (&dev);
+        device_close (&mmc);
         return NULL;
     }
 
-    return dev;
+    return mmc;
 }
 
 void device_close(MMCDEV **pp)
