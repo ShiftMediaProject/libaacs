@@ -397,6 +397,7 @@ static int mmc_open_iokit (const char *path, MMCDEV *mmc) {
        to use the scsi task interface) */
     rc = iokit_unmount (mmc);
     if (0 != rc) {
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Failed to unmount the disc at %s\n", path);
         return rc;
     }
 
