@@ -32,8 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <Carbon/Carbon.h>
-
 #include <IOKit/IOKitLib.h>
 #include <IOKit/IOCFPlugIn.h>
 
