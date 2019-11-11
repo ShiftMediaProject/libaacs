@@ -84,6 +84,7 @@ struct mmcdev {
     DADiskRef disk;
     DASessionRef session;
     bool is_mounted;
+    dispatch_semaphore_t sync_sem;
 };
 
 int device_send_cmd(MMCDEV *mmc, const uint8_t *cmd, uint8_t *buf, size_t tx, size_t rx)
@@ -194,6 +195,7 @@ static void iokit_unmount_complete (DADiskRef disk, DADissenterRef dissenter,
         BD_DEBUG(DBG_MMC, "Disc unmounted\n");
         ((MMCDEV *)context)->is_mounted = 0;
     }
+    dispatch_semaphore_signal(((MMCDEV *)context)->sync_sem);
 }
 
 static void iokit_mount_complete (DADiskRef disk, DADissenterRef dissenter,
@@ -216,6 +218,7 @@ static void iokit_mount_complete (DADiskRef disk, DADissenterRef dissenter,
      * enough for the OS to mount the disc again.
      */
     ((MMCDEV *)context)->is_mounted = 1;
+    dispatch_semaphore_signal(((MMCDEV *)context)->sync_sem);
 }
 
 static int iokit_unmount (MMCDEV *mmc) {
@@ -226,6 +229,7 @@ static int iokit_unmount (MMCDEV *mmc) {
     BD_DEBUG(DBG_MMC, "Unmounting disk\n");
 
     DADiskUnmount (mmc->disk, kDADiskUnmountOptionForce, iokit_unmount_complete, mmc);
+    dispatch_semaphore_wait (mmc->sync_sem, DISPATCH_TIME_FOREVER);
 
     return mmc->is_mounted ? -1 : 0;
 }
@@ -234,6 +238,7 @@ static int iokit_mount (MMCDEV *mmc) {
     if (0 == mmc->is_mounted) {
         if (mmc->disk && mmc->session) {
             DADiskMount (mmc->disk, NULL, kDADiskMountOptionDefault, iokit_mount_complete, mmc);
+            dispatch_semaphore_wait(mmc->sync_sem, DISPATCH_TIME_FOREVER);
         }
     }
 
@@ -339,6 +344,8 @@ static int iokit_da_init(MMCDEV *mmc) {
     dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     DASessionSetDispatchQueue(mmc->session, queue);
 
+    mmc->sync_sem = dispatch_semaphore_create(0);
+
     return 0;
 }
 
@@ -354,6 +361,8 @@ static void iokit_da_destroy(MMCDEV *mmc) {
         CFRelease (mmc->session);
         mmc->session = NULL;
     }
+
+    dispatch_release(mmc->sync_sem);
 }
 
 static int mmc_open_iokit (const char *path, MMCDEV *mmc) {
