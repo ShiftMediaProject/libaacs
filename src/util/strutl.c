@@ -249,10 +249,13 @@ char *str_get_hex_string(const char *p, int n)
 
 char *str_print_hex(char *out, const uint8_t *buf, int count)
 {
+    static const char nibble[16] = "0123456789abcdef";
     int zz;
     for (zz = 0; zz < count; zz++) {
-        sprintf(out + (zz * 2), "%02x", buf[zz]);
+        out[zz*2    ] = nibble[buf[zz] >> 4];
+        out[zz*2 + 1] = nibble[buf[zz] & 0x0f];
     }
+    out[zz*2] = 0;
 
     return out;
 }
