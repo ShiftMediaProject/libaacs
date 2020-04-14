@@ -34,6 +34,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(WINAPI_FAMILY_PARTITION) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+static HANDLE winRTCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+{
+    WCHAR wlpFileName[MAX_PATH];
+    if (MultiByteToWideChar(CP_UTF8, 0, lpFileName, -1, wlpFileName, MAX_PATH) == 0) {
+        return NULL;
+    }
+    return CreateFileFromAppW(wlpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+}
+
+#define CreateFileA winRTCreateFileA
+#endif
 
 /*
  * from ntddscsi.h, Windows DDK
@@ -139,17 +151,17 @@ MMCDEV *device_open(const char *path)
 
     BD_DEBUG(DBG_MMC, "Opening Windows MMC drive %s...\n", drive);
 
-    type = GetDriveType(drive);
+    type = GetDriveTypeA(drive);
     if (type != DRIVE_CDROM) {
         BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive %s is not CD/DVD drive\n", drive);
         return NULL;
     }
 
-    fd = CreateFile(volume, GENERIC_READ | GENERIC_WRITE,
+    fd = CreateFileA(volume, GENERIC_READ | GENERIC_WRITE,
                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (fd == INVALID_HANDLE_VALUE) {
-        fd = CreateFile(volume, GENERIC_READ,
+        fd = CreateFileA(volume, GENERIC_READ,
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (fd == INVALID_HANDLE_VALUE) {
