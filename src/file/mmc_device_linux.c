@@ -109,12 +109,32 @@ int device_send_cmd(MMCDEV *dev, const uint8_t *cmd, uint8_t *buf, size_t tx, si
     return 0;
 }
 
+static int _open_block_device(const char *path)
+{
+    struct stat st;
+    int         fd;
+
+    fd = open(path, O_RDONLY | O_NONBLOCK);
+    if (fd < 0) {
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Error opening %s\n", path);
+        return -1;
+    }
+
+    if (!fstat(fd, &st) && S_ISBLK(st.st_mode)) {
+        BD_DEBUG(DBG_MMC, "Opened block device %s\n", path);
+        return fd;
+    }
+
+    BD_DEBUG(DBG_MMC, "%s is not a block device\n", path);
+    close(fd);
+    return -1;
+}
+
 MMCDEV *device_open(const char *path)
 {
     char        resolved_path[AACS_PATH_MAX];
     size_t      path_len;
-    struct stat st;
-    int         fd = -1;
+    int         fd;
 
     /* resolve path */
     if (!aacs_resolve_path(path, resolved_path)) {
@@ -128,27 +148,9 @@ MMCDEV *device_open(const char *path)
         resolved_path[path_len] = '\0';
     }
 
-    if (stat(resolved_path, &st)) {
-        BD_DEBUG(DBG_MMC | DBG_CRIT, "stat(%s) failed\n", resolved_path);
-        return NULL;
-    }
-
-    if (S_ISBLK(st.st_mode)) {
-        /* opening device */
-        BD_DEBUG(DBG_MMC, "Opening block device %s\n", resolved_path);
-        fd = open(resolved_path, O_RDONLY | O_NONBLOCK);
-        if (fd < 0) {
-            BD_DEBUG(DBG_MMC | DBG_CRIT, "Error opening block device %s\n", resolved_path);
-        }
-    } else {
-#if !defined(HAVE_MNTENT_H)
-        BD_DEBUG(DBG_MMC | DBG_CRIT, "Only block devices supported\n");
-        return NULL;
-#endif
-    }
-
-#if defined(HAVE_MNTENT_H)
+    fd = _open_block_device(resolved_path);
     if (fd < 0) {
+#if defined(HAVE_MNTENT_H)
         /* resolve mount point to block device */
         FILE *proc_mounts;
         if ((proc_mounts = setmntent("/proc/mounts", "r"))) {
@@ -178,8 +180,11 @@ MMCDEV *device_open(const char *path)
         } else {
             BD_DEBUG(DBG_MMC | DBG_CRIT, "Error opening /proc/mounts\n");
         }
-    }
+#else
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Only block devices supported\n");
+        return NULL;
 #endif
+    }
 
     if (fd >= 0) {
         MMCDEV *dev = calloc(1, sizeof(MMCDEV));

@@ -32,4 +32,14 @@
 
 #define BD_MAX_SSIZE ((int64_t)(((size_t)-1)>>1))
 
+# define BD_ASSERT(p)                                     \
+  do {                                                    \
+    if (!(p)) {                                           \
+      BD_DEBUG(DBG_CRIT, "assertion failed: '%s'\n", #p); \
+    }                                                     \
+  } while (0)
+# define BD_ASSERT_UNREACHABLE(m)                         \
+  BD_DEBUG(DBG_CRIT, "assertion failed: '%s'\n", m)
+
+
 #endif /* MACRO_H_ */

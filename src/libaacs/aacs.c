@@ -570,7 +570,10 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
     }
 
     aacs->mkb_version = mkb_version(mkb);
-    _update_rl(mkb);
+
+    if (!aacs->no_cache) {
+        _update_rl(mkb);
+    }
 
     /* try device keys first */
     if (dkl) {
@@ -654,8 +657,10 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
         BD_DEBUG(DBG_AACS, "Error reading VID!\n");
     } else {
         /* cache vid */
-        if (memcmp(aacs->disc_id, empty_key, sizeof(aacs->disc_id))) {
-            keycache_save("vid", aacs->disc_id, aacs->vid, 16);
+        if (!aacs->no_cache) {
+            if (memcmp(aacs->disc_id, empty_key, sizeof(aacs->disc_id))) {
+                keycache_save("vid", aacs->disc_id, aacs->vid, 16);
+            }
         }
     }
     return error_code;
@@ -728,8 +733,10 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
     BD_DEBUG(DBG_AACS, "Volume unique key: %s\n", str_print_hex(str, vuk, 16));
 
     /* cache vuk */
-    if (memcmp(aacs->disc_id, empty_key, sizeof(aacs->disc_id))) {
-        keycache_save("vuk", aacs->disc_id, vuk, 16);
+    if (!aacs->no_cache) {
+        if (memcmp(aacs->disc_id, empty_key, sizeof(aacs->disc_id))) {
+            keycache_save("vuk", aacs->disc_id, vuk, 16);
+        }
     }
 
     return AACS_SUCCESS;
@@ -1114,6 +1121,26 @@ void aacs_get_version(int *major, int *minor, int *micro)
     *micro = AACS_VERSION_MICRO;
 }
 
+const char *aacs_error_str(int err)
+{
+    static const char * const str[] = {
+       [-AACS_SUCCESS]                = "Success",
+       [-AACS_ERROR_CORRUPTED_DISC]   = "Corrupt disc",
+       [-AACS_ERROR_NO_CONFIG]        = "Missing configuration file",
+       [-AACS_ERROR_NO_PK]            = "No matching processing key",
+       [-AACS_ERROR_NO_CERT]          = "No valid certificate",
+       [-AACS_ERROR_CERT_REVOKED]     = "Revoked certificate",
+       [-AACS_ERROR_MMC_OPEN]         = "Failed opening MMC device",
+       [-AACS_ERROR_MMC_FAILURE]      = "MMC failure",
+       [-AACS_ERROR_NO_DK]            = "No matching device key",
+    };
+    err = -err;
+    if (err < 0 || (size_t)err >= sizeof(str) / sizeof(str[0]) || !str[err]) {
+        return "Unknown error code";
+    }
+    return str[err];
+}
+
 /* aacs_open2() wrapper for backwards compability */
 AACS *aacs_open(const char *path, const char *configfile_path)
 {
@@ -1156,6 +1183,12 @@ AACS *aacs_init()
         aacs->no_cache = !!getenv("AACS_NO_CACHE");
     }
     return aacs;
+}
+void aacs_set_key_caching(AACS *aacs, int enable)
+{
+    if (aacs) {
+        aacs->no_cache = !enable;
+    }
 }
 
 void aacs_set_fopen(AACS *aacs, void *handle, AACS_FILE_OPEN2 p)
@@ -1324,7 +1357,9 @@ const uint8_t *aacs_get_content_cert_id(AACS *aacs)
 const uint8_t *aacs_get_bdj_root_cert_hash(AACS *aacs)
 {
     if (aacs && aacs->cc) {
+        if (!aacs->cc->aacs2) {
         return aacs->cc->bdj_root_cert_hash;
+        }
     }
     return NULL;
 }
@@ -1436,13 +1471,26 @@ static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkbv)
             if (_rl_verify_signature(data, len)) {
                 *mkbv = version;
                 *num_records = MKINT_BE32((uint8_t*)data + 20);
-                memmove(data, (uint8_t*)data + 24, len - 24);
+                uint8_t *p = (uint8_t *)data + 24;
+                len -= 24;
 
-                int ii;
-                AACS_RL_ENTRY *rl = data;
-                for (ii = 0; ii < *num_records; ii++) {
-                    rl[ii].range = MKINT_BE16((uint8_t*)&rl[ii].range);
+                if ((int)(len/8) < *num_records) {
+                    *num_records = len/8;
                 }
+
+                AACS_RL_ENTRY *rl = calloc(*num_records, sizeof(*rl));
+
+                if (rl) {
+                    int ii;
+                    for (ii = 0; ii < *num_records; ii++) {
+                        rl[ii].range = MKINT_BE16(p);
+                        p += 2;
+                        memcpy(rl[ii].id, p, 6);
+                        p += 6;
+                    }
+                }
+
+                X_FREE(data);
 
                 return rl;
             }
@@ -1453,7 +1501,7 @@ static AACS_RL_ENTRY *_get_rl(const char *type, int *num_records, int *mkbv)
         X_FREE(data);
     }
 
-    return data;
+    return NULL;
 }
 
 AACS_RL_ENTRY *aacs_get_hrl(int *num_records, int *mkbv)

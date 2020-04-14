@@ -21,10 +21,11 @@ configure
 libtool
 .deps
 .libs
+.dirstamp
 src/libaacs/aacs-version.h
-src/parser_test
-src/aacs_info
-src/keydbcfg-lexer.c
-src/keydbcfg-parser.c
-src/keydbcfg-parser.h
+parser_test
+aacs_info
+src/file/keydbcfg-lexer.c
+src/file/keydbcfg-parser.c
+src/file/keydbcfg-parser.h
 stamp-h1

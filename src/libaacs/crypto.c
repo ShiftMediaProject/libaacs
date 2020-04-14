@@ -249,14 +249,36 @@ void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key,
  * build S-expressions
  */
 
+static const char *_aacs1_curve(void)
+{
+  return
+    "(p #00"AACS_EC_p"#)"
+    "(a #00"AACS_EC_a"#)"
+    "(b #00"AACS_EC_b"#)"
+    "(g #04"
+        AACS_EC_G_x
+        AACS_EC_G_y
+    "#)"
+    "(n #00"AACS_EC_n"#)";
+}
+
+static const char *_aacs2_curve(void)
+{
+  return "(curve \"NIST P-256\")";
+}
+
 static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
                                    const uint8_t *q_x, const uint8_t *q_y,
-                                   const uint8_t *priv_key)
+                                   const uint8_t *priv_key,
+                                   const char *curve,
+                                   size_t key_len)
 {
     gcry_mpi_t    mpi_d = NULL;
-    unsigned char Q[41];
+    unsigned char Q[65];
     char          str_Q[sizeof(Q) * 2 + 1];
     gcry_error_t  err;
+
+    BD_ASSERT (key_len == 20 || key_len == 32);
 
     /* Assign MPI values for ECDSA parameters Q and d.
      * Values are:
@@ -267,17 +289,17 @@ static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
      * Note: The MPI values for Q are in the form "<format>||Q.x||Q.y".
      */
     memcpy(&Q[0],  "\x04", 1); // format
-    memcpy(&Q[1],  q_x, 20);   // Q.x
-    memcpy(&Q[21], q_y, 20);   // Q.y
+    memcpy(&Q[1],  q_x, key_len);   // Q.x
+    memcpy(&Q[1 + key_len], q_y, key_len);   // Q.y
     if (priv_key) {
-        gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, priv_key, 20, NULL);
+        gcry_mpi_scan(&mpi_d, GCRYMPI_FMT_USG, priv_key, key_len, NULL);
     }
 
     /* Show the values of the MPIs Q.x, Q.y, and d when debugging */
     if (GCRYPT_DEBUG) {
         gcry_mpi_t mpi_Q_x, mpi_Q_y;
-        gcry_mpi_scan(&mpi_Q_x, GCRYMPI_FMT_USG, q_x, 20, NULL);
-        gcry_mpi_scan(&mpi_Q_y, GCRYMPI_FMT_USG, q_y, 20, NULL);
+        gcry_mpi_scan(&mpi_Q_x, GCRYMPI_FMT_USG, q_x, key_len, NULL);
+        gcry_mpi_scan(&mpi_Q_y, GCRYMPI_FMT_USG, q_y, key_len, NULL);
         gcry_mpi_dump(mpi_Q_x);
         printf("\n");
         gcry_mpi_dump(mpi_Q_y);
@@ -303,22 +325,16 @@ static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
     /* Points are currently only supported in standard format, so get a
      * hexstring out of Q.
      */
-    hex_array_to_hexstring(str_Q, Q, sizeof(Q));
+    hex_array_to_hexstring(str_Q, Q, 1 + 2*key_len);
 
     char *strfmt = str_printf(
       "(%s"
       "(ecdsa"
-      "(p #00"AACS_EC_p"#)"
-      "(a #00"AACS_EC_a"#)"
-      "(b #00"AACS_EC_b"#)"
-      "(g #04"
-          AACS_EC_G_x
-          AACS_EC_G_y
-          "#)"
-      "(n #00"AACS_EC_n"#)"
+      "%s"
       "(q #%s#)"
       "%s))",
       mpi_d ? "private-key" : "public-key",
+      curve,
       str_Q,
       mpi_d ? "(d %m)" : ""
       );
@@ -348,15 +364,29 @@ error:
     return err;
 }
 
-static gcry_error_t _aacs_sexp_sha1(gcry_sexp_t *p_sexp_data,
-                                    const uint8_t *block, uint32_t len)
+static gcry_error_t _aacs_sexp_hash(gcry_sexp_t *p_sexp_data,
+                                    const uint8_t *block, uint32_t len,
+                                    enum gcry_md_algos hash_type)
 {
     gcry_mpi_t   mpi_md = NULL;
-    uint8_t      md[20];
+    uint8_t      md[32];
     gcry_error_t err;
+    size_t hash_size;
 
-    gcry_md_hash_buffer(GCRY_MD_SHA1, md, block, len);
-    gcry_mpi_scan(&mpi_md, GCRYMPI_FMT_USG, md, sizeof(md), NULL);
+    switch (hash_type) {
+    case GCRY_MD_SHA1:
+        hash_size = 20;
+        break;
+    case GCRY_MD_SHA256:
+        hash_size = 32;
+        break;
+    default:
+        BD_ASSERT_UNREACHABLE ("unsupported hash algorithm");
+        return GPG_ERR_UNKNOWN_ALGORITHM;
+    }
+
+    gcry_md_hash_buffer(hash_type, md, block, len);
+    gcry_mpi_scan(&mpi_md, GCRYMPI_FMT_USG, md, hash_size, NULL);
 
     /* Dump information about the md MPI when debugging */
     if (GCRYPT_DEBUG) {
@@ -400,14 +430,15 @@ static gcry_error_t _aacs_sexp_sha1(gcry_sexp_t *p_sexp_data,
 }
 
 static gcry_error_t _aacs_sexp_signature(gcry_sexp_t *p_sexp_sign,
-                                         const uint8_t *signature)
+                                         const uint8_t *signature,
+                                         size_t key_len)
 {
     gcry_mpi_t   mpi_r = NULL;
     gcry_mpi_t   mpi_s = NULL;
     gcry_error_t err;
 
-    gcry_mpi_scan(&mpi_r, GCRYMPI_FMT_USG, signature,      20, NULL);
-    gcry_mpi_scan(&mpi_s, GCRYMPI_FMT_USG, signature + 20, 20, NULL);
+    gcry_mpi_scan(&mpi_r, GCRYMPI_FMT_USG, signature,           key_len, NULL);
+    gcry_mpi_scan(&mpi_s, GCRYMPI_FMT_USG, signature + key_len, key_len, NULL);
 
     /* Dump information about the md MPI when debugging */
     if (GCRYPT_DEBUG) {
@@ -451,7 +482,7 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     gcry_error_t err;
 
     GCRY_VERIFY("_aacs_sexp_key",
-                _aacs_sexp_key(&sexp_key, cert + 12, cert + 32, priv_key));
+                _aacs_sexp_key(&sexp_key, cert + 12, cert + 32, priv_key, _aacs1_curve(), 20));
 
     /* Calculate the sha1 hash from the nonce and host key point and covert
      * the hash into an MPI.
@@ -459,8 +490,8 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     memcpy(&block[0], nonce, 20);
     memcpy(&block[20], point, 40);
 
-    GCRY_VERIFY("_aacs_sexp_sha1",
-                _aacs_sexp_sha1(&sexp_data, block, sizeof(block)));
+    GCRY_VERIFY("_aacs_sexp_hash",
+                _aacs_sexp_hash(&sexp_data, block, sizeof(block), GCRY_MD_SHA1));
 
     /* Sign the hash with the ECDSA key. The resulting s-expression should be
      * in the form:
@@ -490,8 +521,17 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     /* Finally concatenate 'r' and 's' to get the ECDSA signature */
     mpi_r = gcry_sexp_nth_mpi (sexp_r, 1, GCRYMPI_FMT_USG);
     mpi_s = gcry_sexp_nth_mpi (sexp_s, 1, GCRYMPI_FMT_USG);
-    gcry_mpi_print (GCRYMPI_FMT_USG, signature,      20, NULL, mpi_r);
-    gcry_mpi_print (GCRYMPI_FMT_USG, signature + 20, 20, NULL, mpi_s);
+    size_t n;
+    gcry_mpi_print (GCRYMPI_FMT_USG, signature,      20, &n, mpi_r);
+    if (n < 20) {
+        memmove (signature + 20 - n, signature, n);
+        memset (signature, 0, 20 - n);
+    }
+    gcry_mpi_print (GCRYMPI_FMT_USG, signature + 20, 20, &n, mpi_s);
+    if (n < 20) {
+        memmove (signature + 40 - n, signature + 20, n);
+        memset (signature + 20, 0, 20 - n);
+    }
 
  error:
 
@@ -505,7 +545,7 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     gcry_mpi_release(mpi_s);
 }
 
-static int _aacs_verify(const uint8_t *signature,
+static int _aacs_verify(const uint8_t *signature, enum gcry_md_algos hash_type,
                         const uint8_t *q_x, const uint8_t *q_y,
                         const uint8_t *data, uint32_t len)
 {
@@ -513,15 +553,31 @@ static int _aacs_verify(const uint8_t *signature,
     gcry_sexp_t  sexp_sig  = NULL;
     gcry_sexp_t  sexp_data = NULL;
     gcry_error_t err;
+    const char *curve;
+    size_t key_len;
+
+    switch (hash_type) {
+    case GCRY_MD_SHA1:
+        curve = _aacs1_curve();
+        key_len = 20;
+        break;
+    case GCRY_MD_SHA256:
+        curve = _aacs2_curve();
+        key_len = 32;
+        break;
+    default:
+        BD_ASSERT_UNREACHABLE ("invalid signature size");
+        return 0;
+    }
 
     GCRY_VERIFY("_aacs_sexp_key",
-                _aacs_sexp_key(&sexp_key, q_x, q_y, NULL));
+                _aacs_sexp_key(&sexp_key, q_x, q_y, NULL, curve, key_len));
 
-    GCRY_VERIFY("_aacs_sexp_sha1",
-                _aacs_sexp_sha1(&sexp_data, data, len));
+    GCRY_VERIFY("_aacs_sexp_hash",
+                _aacs_sexp_hash(&sexp_data, data, len, hash_type));
 
     GCRY_VERIFY("_aacs_sexp_signature",
-                _aacs_sexp_signature(&sexp_sig, signature));
+                _aacs_sexp_signature(&sexp_sig, signature, key_len));
 
     GCRY_VERIFY("gcry_pk_verify",
                 gcry_pk_verify(sexp_sig, sexp_data, sexp_key));
@@ -536,7 +592,7 @@ static int _aacs_verify(const uint8_t *signature,
 
 int crypto_aacs_verify(const uint8_t *cert, const uint8_t *signature, const uint8_t *data, uint32_t len)
 {
-    return !_aacs_verify(signature, cert + 12, cert + 32, data, len);
+    return !_aacs_verify(signature, GCRY_MD_SHA1, cert + 12, cert + 32, data, len);
 }
 
 int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, uint32_t len)
@@ -546,7 +602,7 @@ int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, ui
     static const uint8_t aacs_la_pubkey_y[] = {0x13, 0x7E, 0xC6, 0x38, 0x81, 0x8F, 0xD9, 0x8F, 0xA4, 0xC3,
                                                0x0B, 0x99, 0x67, 0x28, 0xBF, 0x4B, 0x91, 0x7F, 0x6A, 0x27 };
 
-    return !_aacs_verify(signature, aacs_la_pubkey_x, aacs_la_pubkey_y, data, len);
+    return !_aacs_verify(signature, GCRY_MD_SHA1, aacs_la_pubkey_x, aacs_la_pubkey_y, data, len);
 }
 
 int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, uint32_t len)
@@ -555,11 +611,24 @@ int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, ui
                                                 0xA4, 0x9F, 0x78, 0x00, 0xC7, 0x7D, 0xE9, 0x0C, 0xB3, 0x4C };
     static const uint8_t aacs_cc_pubkey_y[] = { 0x00, 0x1D, 0xF3, 0x6B, 0x8F, 0x2E, 0xCF, 0x83, 0xCD, 0xEE,
                                                 0x43, 0x8F, 0x7F, 0xD1, 0xF4, 0x80, 0x6F, 0xD2, 0x0D, 0xE7 };
+    static const uint8_t aacs2_cc_pubkey_x[] = { 0xE7, 0x0D, 0x49, 0xD2, 0x6F, 0x45, 0xEA, 0xA7, 0x36, 0x93, 0x9D, 0x72, 0x88, 0x2E, 0xD8, 0xFB,
+                                                 0xA1, 0x60, 0x70, 0x26, 0x96, 0x39, 0x49, 0x97, 0x04, 0x96, 0xC9, 0x10, 0xEA, 0x5C, 0x9D, 0xC2 };
+    static const uint8_t aacs2_cc_pubkey_y[] = { 0xD1, 0xF5, 0x89, 0x7C, 0xEC, 0xB8, 0x44, 0x01, 0x4E, 0x0F, 0xB0, 0x8C, 0xC7, 0x6E, 0x20, 0xE8,
+                                                 0x54, 0x5E, 0xCC, 0x27, 0x1E, 0xE4, 0x6C, 0x4A, 0xEF, 0x81, 0xD9, 0x16, 0x9B, 0xF8, 0x41, 0x72 };
+    switch (data[0]) {
+    case 0x00: /* AACS 1 */
+        return !_aacs_verify(signature, GCRY_MD_SHA1, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
+    case 0x10: /* AACS 2 */
+        return !_aacs_verify(signature, GCRY_MD_SHA256, aacs2_cc_pubkey_x, aacs2_cc_pubkey_y, data, len);
+    default:
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unknown content certificate type 0x%02x\n", data[0]);
+        break;
+    }
 
-    return !_aacs_verify(signature, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
+    return 0;
 }
 
-int crypto_aacs_verify_cert(const uint8_t *cert)
+static int crypto_aacs_verify_cert(const uint8_t *cert)
 {
     if (MKINT_BE16(cert+2) != 0x5c) {
         BD_DEBUG(DBG_AACS, "Certificate length is invalid (0x%04x), expected 0x005c\n",
@@ -572,8 +641,15 @@ int crypto_aacs_verify_cert(const uint8_t *cert)
 
 int crypto_aacs_verify_host_cert(const uint8_t *cert)
 {
-    if (cert[0] != 0x02) {
-        BD_DEBUG(DBG_AACS, "Host certificate type is invalid (0x%02x), expected 0x01\n", cert[0]);
+    switch (cert[0]) {
+    case 0x02:
+        break;
+    case 0x12:
+        // XXX checking the signature would cause buffer overread (certificate is truncated in config file)
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "AACS 2.0 host certificate not supported\n");
+        return 0;
+    default:
+        BD_DEBUG(DBG_AACS, "Host certificate type is invalid (0x%02x)\n", cert[0]);
         return 0;
     }
 
@@ -587,8 +663,15 @@ int crypto_aacs_verify_host_cert(const uint8_t *cert)
 
 int crypto_aacs_verify_drive_cert(const uint8_t *cert)
 {
-    if (cert[0] != 0x01) {
-        BD_DEBUG(DBG_AACS, "Drive certificate type is invalid (0x%02x), expected 0x01\n", cert[0]);
+    switch (cert[0]) {
+    case 0x01:
+        break;
+    case 0x11:
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "WARNING: Drive is using AACS 2.0 certificate\n");
+        // XXX checking the signature would cause buffer overread (certificate is truncated at MMC layer)
+        return 0;
+    default:
+        BD_DEBUG(DBG_AACS, "Drive certificate type is invalid (0x%02x)\n", cert[0]);
         return 0;
     }
 
@@ -696,8 +779,17 @@ void crypto_create_host_key_pair(uint8_t *host_key, uint8_t *host_key_point)
     gcry_mpi_t q_y = mpi_new(0);
     _gcry_mpi_ec_get_affine (q_x, q_y, &Q, ctx);
 
-    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point,      20, NULL, q_x);
-    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point + 20, 20, NULL, q_y);
+    size_t n;
+    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point,      20, &n, q_x);
+    if (n < 20) {
+        memmove (host_key_point + 20 - n, host_key_point, n);
+        memset (host_key_point, 0, 20 - n);
+    }
+    gcry_mpi_print (GCRYMPI_FMT_USG, host_key_point + 20, 20, &n, q_y);
+    if (n < 20) {
+        memmove (host_key_point + 40 - n, host_key_point + 20, n);
+        memset (host_key_point + 20, 0, 20 - n);
+    }
 
     /* cleanup */
 

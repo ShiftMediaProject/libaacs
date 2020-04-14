@@ -56,7 +56,7 @@ struct aacs_cci {
 };
 
 
-static void _bitcpy(void *dst, const const void *src, size_t num_bits)
+static void _bitcpy(void *dst, const void *src, size_t num_bits)
 {
     size_t bytes = num_bits >> 3;
     size_t bits  = num_bits & 3;

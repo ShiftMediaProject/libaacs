@@ -48,6 +48,7 @@ struct mmc {
     uint8_t drive_cert[92];
 
     uint8_t read_drive_cert;
+    uint8_t aacs_version;
 };
 
 /*
@@ -225,16 +226,16 @@ static int _mmc_check_aacs(MMC *mmc)
     if (_mmc_get_configuration(mmc, 0x010d, buf, 16)) {
         uint16_t feature = MKINT_BE16(buf+8);
         if (feature == 0x010d) {
+            mmc->read_drive_cert = !!(buf[4+8] & 0x10);
+            mmc->aacs_version = buf[7+8];
             BD_DEBUG(DBG_MMC, "AACS feature descriptor:\n");
-            BD_DEBUG(DBG_MMC, "  AACS version: %d\n", buf[7+8]);
+            BD_DEBUG(DBG_MMC, "  AACS version: %d\n", mmc->aacs_version);
             BD_DEBUG(DBG_MMC, "  AACS active: %d\n", buf[2+8] & 1);
             BD_DEBUG(DBG_MMC, "  Binding Nonce generation support: %d\n", buf[4+8] & 1);
             BD_DEBUG(DBG_MMC, "  Binding Nonce block count: %d\n", buf[5+8]);
             BD_DEBUG(DBG_MMC, "  Bus encryption support: %d\n", !!(buf[4+8] & 2));
-            BD_DEBUG(DBG_MMC, "  Read drive certificate: %d\n", !!(buf[4+8] & 0x10));
+            BD_DEBUG(DBG_MMC, "  Read drive certificate: %d\n", mmc->read_drive_cert);
             BD_DEBUG(DBG_MMC, "  AGID count: %d\n", buf[6+8] & 0xf);
-
-            mmc->read_drive_cert = !!(buf[4+8] & 0x10);
 
             return buf[2+8] & 1;
         }
@@ -389,6 +390,14 @@ MMC *mmc_open(const char *path)
 #endif
     }
 
+    if (mmc->aacs_version > 1) {
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "WARNING: unsupported AACS2 drive detected.\n");
+#if 0
+        mmc_close (mmc);
+        return NULL;
+#endif
+    }
+
     if (mmc->read_drive_cert) {
         mmc_read_drive_cert(mmc, mmc->drive_cert);
     }
@@ -440,11 +449,13 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     // send host cert + nonce
     if (!_mmc_send_host_cert(mmc, agid, mmc->host_nonce, host_cert)) {
 
+        str_print_hex(str, host_cert + 4, 6);
         if ((mmc->drive_cert[1] & 0x01) && !(host_cert[1] & 0x01)) {
             BD_DEBUG(DBG_MMC | DBG_CRIT, "Certificate (id 0x%s) can not be used with bus encryption capable drive\n",
-                  str_print_hex(str, host_cert + 4, 6));
+                     str);
         } else {
-            BD_DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate has been revoked by your drive ?\n");
+            BD_DEBUG(DBG_MMC | DBG_CRIT, "Host key / Certificate (id 0x%s) has been revoked by your drive ?\n",
+                     str);
         }
         return MMC_ERROR_CERT_REVOKED;
     }

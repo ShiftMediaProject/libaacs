@@ -40,6 +40,8 @@
 #define AACS_ERROR_MMC_FAILURE    -7 /* MMC failed */
 #define AACS_ERROR_NO_DK          -8 /* no matching device key */
 
+AACS_PUBLIC const char *aacs_error_str(int error);
+
 /**
  * Opaque type for AACS object
  */
@@ -68,13 +70,23 @@ AACS_PUBLIC void aacs_get_version(int *major, int *minor, int *micro);
 AACS_PUBLIC AACS *aacs_init(void);
 
 /**
+ * Disable / enable key caching.
+ *
+ * Controls if keys and revocation lists are cached locally.
+ * Disabling caching disables updating the cache and using data from cache.
+ * Enabled by default.
+ */
+AACS_PUBLIC void aacs_set_key_caching(AACS *, int enable);
+
+/**
  * Open AACS disc / device.
  *
  * If device is not accessible (reading from .iso file or network stream),
  * path can be NULL.
  *
  * If files stored in AACS/ are not accessible from the file system (ex. unmounted disc),
- * application should provide file system access for libaacs (see aacs_set_fopen()).
+ * application should provide file system access for libaacs
+ * (see filesystem.h:aacs_set_fopen()).
  *
  * @param  aacs  AACS object
  * @param  path  path to device or disc root or NULL
