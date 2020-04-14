@@ -27,10 +27,10 @@ index c98762f..cd81223 100644
  /* customize this function to "hide" the keys in the binary */
  
 diff --git a/src/libaacs/crypto.c b/src/libaacs/crypto.c
-index 4db7641..fbcc147 100644
+index 0dfabdd..417cc8c 100644
 --- a/src/libaacs/crypto.c
 +++ b/src/libaacs/crypto.c
-@@ -366,22 +366,26 @@ static gcry_error_t _aacs_sexp_sha1(gcry_sexp_t *p_sexp_data,
+@@ -396,22 +396,26 @@ static gcry_error_t _aacs_sexp_hash(gcry_sexp_t *p_sexp_data,
      }
  
      /* Build an s-expression for the hash */
