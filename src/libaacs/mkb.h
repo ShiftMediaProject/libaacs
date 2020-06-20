@@ -36,7 +36,7 @@ BD_PRIVATE const uint8_t *mkb_data(MKB *mkb);
 BD_PRIVATE size_t mkb_data_size(MKB *mkb);
 
 // returns type
-BD_PRIVATE uint8_t mkb_type(MKB *mkb);
+BD_PRIVATE uint32_t mkb_type(MKB *mkb);
 // returns version
 BD_PRIVATE uint32_t mkb_version(MKB *mkb);
 // returns type and version record (required to verify signatures)

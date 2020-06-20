@@ -110,7 +110,7 @@ size_t mkb_data_size(MKB *mkb)
 }
 
 
-uint8_t mkb_type(MKB *mkb)
+uint32_t mkb_type(MKB *mkb)
 {
     const uint8_t *rec = mkb_type_and_version_record(mkb);
 
