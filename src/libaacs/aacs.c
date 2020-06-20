@@ -982,10 +982,11 @@ static int _calc_title_hash(AACS *aacs)
     size_t   size;
     char     str[48];
     int      result = AACS_SUCCESS;
+    int      aacs2 = aacs->cc ? aacs->cc->aacs2 : 0;
 
     size = _read_file(aacs, "AACS" DIR_SEP "Unit_Key_RO.inf", &data);
     if (size > 2048) {
-        aacs->uk = uk_parse(data, size);
+        aacs->uk = uk_parse(data, size, aacs2);
     }
 
     /* failed, try backup */
@@ -993,7 +994,7 @@ static int _calc_title_hash(AACS *aacs)
         X_FREE(data);
         size = _read_file(aacs, "AACS" DIR_SEP "DUPLICATE" DIR_SEP "Unit_Key_RO.inf", &data);
         if (size > 2048) {
-            aacs->uk = uk_parse(data, size);
+            aacs->uk = uk_parse(data, size, aacs2);
         }
     }
 
@@ -1233,6 +1234,8 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
 
     aacs->path = path ? str_dup(path) : NULL;
 
+    aacs->cc = _read_cc_any(aacs);
+
     error_code = _calc_title_hash(aacs);
     if (error_code != AACS_SUCCESS) {
         return error_code;
@@ -1245,8 +1248,6 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
     if (error_code != AACS_SUCCESS) {
         BD_DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
     }
-
-    aacs->cc = _read_cc_any(aacs);
 
     aacs->bee = _get_bus_encryption_enabled(aacs);
     aacs->bec = _get_bus_encryption_capable(aacs, path);
