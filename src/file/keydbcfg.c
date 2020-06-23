@@ -646,6 +646,25 @@ static int _parse_embedded(config_file *cf)
     return result;
 }
 
+static void _config_summary(config_file *cf)
+{
+    int n;
+    dk_list *dkl = cf->dkl;
+    pk_list *pkl = cf->pkl;
+    cert_list *hcl = cf->host_cert_list;
+    title_entry_list *tel = cf->list;
+
+    BD_DEBUG(DBG_AACS, "Config summary:\n");
+    for (n = 0; dkl; dkl = dkl->next, n++) ;
+    BD_DEBUG(DBG_AACS, "  %d Device keys\n", n);
+    for (n = 0; pkl; pkl = pkl->next, n++) ;
+    BD_DEBUG(DBG_AACS, "  %d Processing keys\n", n);
+    for (n = 0; hcl; hcl = hcl->next, n++) ;
+    BD_DEBUG(DBG_AACS, "  %d Host certificates\n", n);
+    for (n = 0; tel; tel = tel->next, n++) ;
+    BD_DEBUG(DBG_AACS, "  %d Disc entries\n", n);
+}
+
 config_file *keydbcfg_config_load(const char *configfile_path)
 {
     int config_ok = 0;
@@ -681,6 +700,8 @@ config_file *keydbcfg_config_load(const char *configfile_path)
         keydbcfg_config_file_close(cf);
         return NULL;
     }
+
+    _config_summary(cf);
 
     return cf;
 }
