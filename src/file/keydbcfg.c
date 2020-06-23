@@ -588,9 +588,9 @@ static int _parse_embedded(config_file *cf)
             break;
 
         decrypt_key(e->key, internal_dk_list[jj], 16);
-        e->node = internal_device_number;
-        e->uv   = MKINT_BE32(internal_dk_list[jj] + 16);
-        e->u_mask_shift = internal_dk_list[jj][20];
+        e->node = MKINT_BE16(internal_dk_list[jj] + 16);
+        e->uv   = MKINT_BE32(internal_dk_list[jj] + 16 + 2);
+        e->u_mask_shift = internal_dk_list[jj][20 + 2];
 
         if (!e->uv || _is_duplicate_dk(cf->dkl, e)) {
             X_FREE(e);
