@@ -93,7 +93,7 @@ dist-hook:
 # programs
 #
 
-noinst_PROGRAMS = parser_test
+noinst_PROGRAMS = parser_test uk_dump mkb_dump
 bin_PROGRAMS = aacs_info
 
 parser_test_SOURCES = \
@@ -103,6 +103,21 @@ parser_test_SOURCES = \
 	src/util/strutl.c \
 	src/util/logging.c
 parser_test_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES)
+
+uk_dump_SOURCES = \
+	src/devtools/uk_dump.c \
+	src/libaacs/unit_key.h \
+	src/libaacs/unit_key.c \
+	src/util/logging.c
+uk_dump_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES)
+
+mkb_dump_SOURCES = \
+	src/devtools/mkb_dump.c \
+	src/libaacs/mkb.h \
+	src/libaacs/mkb.c \
+	src/util/strutl.c \
+	src/util/logging.c
+mkb_dump_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES)
 
 aacs_info_SOURCES = src/examples/aacs_info.c
 aacs_info_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES)
