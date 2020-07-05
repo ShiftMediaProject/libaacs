@@ -97,7 +97,7 @@ noinst_PROGRAMS = parser_test
 bin_PROGRAMS = aacs_info
 
 parser_test_SOURCES = \
-	src/examples/parser_test.c \
+	src/devtools/parser_test.c \
 	src/file/keydbcfg-parser.y \
 	src/file/keydbcfg-lexer.l \
 	src/util/strutl.c \
