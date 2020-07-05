@@ -5,7 +5,8 @@ EXTRA_DIST=bootstrap COPYING KEYDB.cfg README.txt ChangeLog
 SET_FEATURES = @SET_FEATURES@
 SET_INCLUDES = -I$(top_srcdir)/src -I$(top_builddir)/src/libaacs
 
-AM_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES) $(LIBGCRYPT_CFLAGS) $(GPG_ERROR_CFLAGS)
+AM_CFLAGS = -std=c99 $(LIBGCRYPT_CFLAGS) $(GPG_ERROR_CFLAGS)
+AM_CPPFLAGS = $(SET_FEATURES) $(SET_INCLUDES)
 AM_YFLAGS = -d -p libaacs_yy
 
 lib_LTLIBRARIES = libaacs.la
