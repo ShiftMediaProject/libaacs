@@ -533,6 +533,12 @@ void device_close(MMCDEV **pp)
             IODestroyPlugInInterface(mmc->plugInInterface);
         }
 
+        if (!mmc->sync_sem) {
+            /* open failed before iokit_da_init() */
+            X_FREE(*pp);
+            return;
+        }
+
         /* Wait for disc to re-appear for 20 seconds.
          * This timeout was figured out by experimentation with
          * a USB BD drive which sometimes can take really long to
