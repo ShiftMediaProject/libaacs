@@ -446,6 +446,10 @@ static int mmc_open_iokit(const char *path, MMCDEV *mmc) {
     /* done with the ioservice. release it */
     (void) IOObjectRelease(service);
 
+    if (0 != rc) {
+        return rc;
+    }
+
     /* Init DiskArbitration */
     rc = iokit_da_init(mmc);
     if (0 != rc) {
