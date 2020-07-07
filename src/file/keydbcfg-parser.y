@@ -547,7 +547,6 @@ int keydbcfg_config_file_close(config_file *cfgfile)
   {
     title_entry_list *next = cfgfile->list->next;
     /*X_FREE(cfgfile->list->entry.title);*/
-    X_FREE(cfgfile->list->entry.vid);
     /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.bn);*/
     /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.pak);*/
     /*DIGIT_KEY_PAIR_LIST_FREE(cfgfile->list->entry.tk);*/
@@ -734,8 +733,8 @@ static int add_entry(title_entry_list *list, int type, char *entry)
 
     case ENTRY_TYPE_VID:
       CHECK_KEY_LENGTH("vid", 32)
-      X_FREE(list->entry.vid);
-      list->entry.vid = entry;
+      hexstring_to_hex_array(list->entry.vid, 16, entry);
+      X_FREE(entry);
       break;
 
     case ENTRY_TYPE_VUK:

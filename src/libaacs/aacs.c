@@ -806,9 +806,8 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
                  str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, mk, 16));
     }
 
-    if (ce->entry.vid) {
-        hexstring_to_hex_array(aacs->vid, sizeof(aacs->vid),
-                               ce->entry.vid);
+    if (memcmp(ce->entry.vid, empty_key, 16)) {
+        memcpy(aacs->vid, ce->entry.vid, 16);
 
         BD_DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
                  str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, aacs->vid, 16));

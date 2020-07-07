@@ -73,8 +73,8 @@ static int print_title_entries(title_entry_list *list)
 #endif
     if (memcmp(cursor->entry.mk, empty_key, 16))
       printf("  MEK: %s\n", str_print_hex(tmp, cursor->entry.mk, 16));
-    if (cursor->entry.vid)
-      printf("  VID: %s\n", cursor->entry.vid);
+    if (memcmp(cursor->entry.vid, empty_key, 16))
+      printf("  VID: %s\n", str_print_hex(tmp, cursor->entry.vid, 16));
 #if 0
     if (cursor->entry.bn)
     {
