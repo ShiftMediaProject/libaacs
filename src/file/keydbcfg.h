@@ -89,7 +89,7 @@ struct title_entry_t
   uint8_t discid[20];
   //char *title;
   //date_entry date;
-  char *mek;
+  uint8_t mk[16];
   char *vid;
   //digit_key_pair_list *bn;
   uint8_t vuk[16];

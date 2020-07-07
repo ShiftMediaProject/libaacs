@@ -71,8 +71,8 @@ static int print_title_entries(title_entry_list *list)
     printf("  Date: %u-%u-%u\n", cursor->entry.date.year,
       cursor->entry.date.month, cursor->entry.date.day);
 #endif
-    if (cursor->entry.mek)
-      printf("  MEK: %s\n", cursor->entry.mek);
+    if (memcmp(cursor->entry.mk, empty_key, 16))
+      printf("  MEK: %s\n", str_print_hex(tmp, cursor->entry.mk, 16));
     if (cursor->entry.vid)
       printf("  VID: %s\n", cursor->entry.vid);
 #if 0
