@@ -27,9 +27,13 @@
 static int print_digit_key_pair_enties(digit_key_pair_list *list);
 static int print_title_entries(title_entry_list *list);
 
+static const uint8_t empty_key[16] = {0};
+
 /* Function to print the entres in a digit key pair list */
 static int print_digit_key_pair_enties(digit_key_pair_list *list)
 {
+  char tmp[256];
+
   if (!list)
   {
     printf("Error: No digit key pair list passed as parameter.\n");
@@ -39,10 +43,10 @@ static int print_digit_key_pair_enties(digit_key_pair_list *list)
   digit_key_pair_list *cursor = list;
   while (cursor)
   {
-    if (!cursor->key_pair.key)
+    if (!memcmp(cursor->key_pair.key, empty_key, 16))
       break;
 
-    printf("    %u - %s\n", cursor->key_pair.digit, cursor->key_pair.key);
+    printf("    %u - %s\n", cursor->key_pair.digit, str_print_hex(tmp, cursor->key_pair.key, 16));
 
     cursor = cursor->next;
   }
@@ -53,7 +57,6 @@ static int print_digit_key_pair_enties(digit_key_pair_list *list)
 /* Function that prints all entries parsed from a config file */
 static int print_title_entries(title_entry_list *list)
 {
-  static const uint8_t empty_key[16] = {0};
   char tmp[256];
 
   if (!list)

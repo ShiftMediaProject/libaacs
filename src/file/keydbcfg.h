@@ -30,7 +30,7 @@ typedef struct digit_key_pair_t digit_key_pair;
 struct digit_key_pair_t
 {
   unsigned int digit;
-  char *key;
+  uint8_t key[16];
 };
 
 /* list of digit_key_pair struct used in title entry */

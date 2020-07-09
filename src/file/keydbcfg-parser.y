@@ -48,7 +48,6 @@
   while (X)                              \
   {                                      \
     digit_key_pair_list *pnext = X->next;\
-    X_FREE(X->key_pair.key);             \
     X_FREE(X);                           \
     X = pnext;                           \
   }                                      \
@@ -772,8 +771,15 @@ static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
     return NULL;
   }
 
+  if (!key || strlen(key) != 32) {
+    fprintf(stderr, "Ignoring bad UK entry %s\n", key ? key : "<null>");
+    X_FREE(key);
+    return list;
+  }
+
   list->key_pair.digit = digit;
-  list->key_pair.key = key;
+  hexstring_to_hex_array(list->key_pair.key, 16, key);
+  X_FREE(key);
 
   list->next = new_digit_key_pair_list();
 
