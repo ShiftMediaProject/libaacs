@@ -933,6 +933,11 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
     uint8_t mk[16] = {0}, vuk[16] = {0};
 
+    if (aacs->uk->num_uk < 1) {
+        /* no keys ... */
+        return AACS_SUCCESS;
+    }
+
     if (cf) {
         BD_DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
         _find_config_entry(aacs, cf->list, mk, vuk);
@@ -941,11 +946,6 @@ static int _calc_uks(AACS *aacs, config_file *cf)
         if (aacs->uk->uk) {
             return AACS_SUCCESS;
         }
-    }
-
-    if (aacs->uk->num_uk < 1) {
-        /* no keys ... */
-        return AACS_SUCCESS;
     }
 
     /* Try to calculate VUK */
