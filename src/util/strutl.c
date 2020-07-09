@@ -145,7 +145,7 @@ int hexstring_to_hex_array(uint8_t *hex_array, uint32_t size,
  * str must be allocated by caller
  * size is the size of the hex_array
  */
-int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size)
+void hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size)
 {
   unsigned int i;
 
@@ -153,8 +153,6 @@ int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size)
   {
     sprintf(str + (i*2), "%02x", hex_array[i]);
   }
-
-  return 1;
 }
 
 char *str_dup(const char *str)
