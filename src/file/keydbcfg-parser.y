@@ -475,8 +475,15 @@ uk_data
       if (ps->celist) {
       if (!ps->dkplist)
       {
-        ps->dkplist = new_digit_key_pair_entry(ENTRY_TYPE_UK, $1, $3);
-        ps->celist->entry.uk = ps->dkplist;
+        if (ps->celist->entry.uk) {
+          /* duplicate entry */
+          char disc_id[41];
+          fprintf(stderr, "Ignoring duplicate unit key entry for %s\n",
+                  str_print_hex(disc_id, ps->celist->entry.discid, 20));
+        } else {
+          ps->dkplist = new_digit_key_pair_entry(ENTRY_TYPE_UK, $1, $3);
+          ps->celist->entry.uk = ps->dkplist;
+        }
       } else {
         ps->dkplist->next = new_digit_key_pair_entry(ENTRY_TYPE_UK, $1, $3);
         if (ps->dkplist->next)
