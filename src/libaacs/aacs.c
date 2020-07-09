@@ -473,17 +473,67 @@ static size_t _read_file(AACS *aacs, const char *file, void **data)
     return *data ? size : 0;
 }
 
+static size_t _read_mkb_file(AACS *aacs, const char *file, void **pdata)
+{
+    AACS_FILE_H *fp;
+    size_t       size = 0;
+    size_t       data_size = 65536; /* initial alloc */
+    uint32_t     chunk_size = 4; /* initial read */
+    uint8_t     *data;
+
+    *pdata = NULL;
+
+    fp = _file_open(aacs, file);
+    if (!fp) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to open %s\n", file);
+        return 0;
+    }
+
+    data = malloc(data_size);
+    if (!data) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Out of memory\n");
+        file_close(fp);
+        return 0;
+    }
+
+    do {
+        int64_t read_size = chunk_size;
+        if (file_read(fp, data + size, read_size) != read_size) {
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed reading %s\n", file);
+            X_FREE(data);
+            break;
+        }
+        size += read_size;
+        chunk_size = MKINT_BE24(data + size - 4 + 1);
+        if (data_size < size + chunk_size) {
+            for ( ; data_size < size + chunk_size; data_size *= 2) ;
+            void *tmp = realloc(data, data_size);
+            if (!tmp) {
+                X_FREE(data);
+                break;
+            }
+            data = tmp;
+        }
+    } while (chunk_size >= 4);
+
+    file_close(fp);
+
+    *pdata = data;
+
+    return data ? size : 0;
+}
+
 static MKB *_mkb_open(AACS *aacs)
 {
     size_t  size;
     void   *data;
     MKB    *mkb;
 
-    size = _read_file(aacs, "AACS" DIR_SEP "MKB_RO.inf", &data);
+    size = _read_mkb_file(aacs, "AACS" DIR_SEP "MKB_RO.inf", &data);
     if (size < 4) {
         /* retry with backup file */
         X_FREE(data);
-        size = _read_file(aacs, "AACS" DIR_SEP "DUPLICATE" DIR_SEP "MKB_RO.inf", &data);
+        size = _read_mkb_file(aacs, "AACS" DIR_SEP "DUPLICATE" DIR_SEP "MKB_RO.inf", &data);
     }
     if (size < 4) {
         X_FREE(data);
