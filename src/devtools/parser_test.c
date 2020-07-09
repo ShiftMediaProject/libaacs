@@ -43,9 +43,6 @@ static int print_digit_key_pair_enties(digit_key_pair_list *list)
   digit_key_pair_list *cursor = list;
   while (cursor)
   {
-    if (!memcmp(cursor->key_pair.key, empty_key, 16))
-      break;
-
     printf("    %u - %s\n", cursor->key_pair.digit, str_print_hex(tmp, cursor->key_pair.key, 16));
 
     cursor = cursor->next;

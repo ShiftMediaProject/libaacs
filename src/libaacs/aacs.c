@@ -876,7 +876,7 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
         /* count keys */
         unsigned num_uks = 0;
         digit_key_pair_list *ukcursor = ce->entry.uk;
-        while (ukcursor && memcmp(ukcursor->key_pair.key, empty_key, 16)) {
+        while (ukcursor) {
             num_uks++;
             ukcursor = ukcursor->next;
         }
@@ -897,7 +897,7 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
 
         num_uks = 0;
         ukcursor = ce->entry.uk;
-        while (ukcursor && memcmp(ukcursor->key_pair.key, empty_key, 16)) {
+        while (ukcursor) {
             memcpy(aacs->uk->uk[num_uks].key, ukcursor->key_pair.key, 16);
 
             BD_DEBUG(DBG_AACS, "Unit key %u from keydb entry: %s\n",

@@ -78,9 +78,7 @@ static void add_cert_entry(config_file *cf, char *host_priv_key, char *host_cert
 
 static title_entry_list *new_title_entry_list(void);
 static int add_entry(title_entry_list *list, int type, char *entry);
-static digit_key_pair_list *new_digit_key_pair_list(void);
-static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
-                              int type, unsigned int digit, char *key);
+static digit_key_pair_list *new_digit_key_pair_entry(int type, unsigned int digit, char *key);
 /*
 static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
@@ -443,10 +441,14 @@ uk_data
     {
       if (!dkplist)
       {
-        dkplist = new_digit_key_pair_list();
+        dkplist = new_digit_key_pair_entry(ENTRY_TYPE_UK, $1, $3);
         celist->entry.uk = dkplist;
+      } else {
+        dkplist->next = new_digit_key_pair_entry(ENTRY_TYPE_UK, $1, $3);
+        if (dkplist->next)
+          dkplist = dkplist->next;
       }
-      dkplist = add_digit_key_pair_entry(dkplist, ENTRY_TYPE_UK, $1, $3);
+      X_FREE($3);
     }
   ;
 
@@ -751,39 +753,25 @@ static int add_entry(title_entry_list *list, int type, char *entry)
   return 1;
 }
 
-/* Function that returns pointer to new digit key pair list */
-static digit_key_pair_list *new_digit_key_pair_list(void)
-{
-  digit_key_pair_list *list = (digit_key_pair_list *)calloc(1, sizeof(*list));
-  if (!list) {
-    fprintf(stderr, "Error allocating memory for new digit key pair entry list!\n");
-  }
-  return list;
-}
-
 /* Function used to add a digit/key pair to a list of digit key pair entries */
-static digit_key_pair_list *add_digit_key_pair_entry(digit_key_pair_list *list,
-                              int type, unsigned int digit, char *key)
+static digit_key_pair_list *new_digit_key_pair_entry(int type, unsigned int digit, char *key)
 {
-  if (!list)
-  {
-    fprintf(stderr, "Error: No digit key pair list passed as parameter.\n");
-    return NULL;
-  }
+  digit_key_pair_list *list;
 
   if (!key || strlen(key) != 32) {
     fprintf(stderr, "Ignoring bad UK entry %s\n", key ? key : "<null>");
-    X_FREE(key);
-    return list;
+    return NULL;
+  }
+
+  list = (digit_key_pair_list *)calloc(1, sizeof(*list));
+  if (!list) {
+    fprintf(stderr, "Error allocating memory for new digit key pair entry list!\n");
+    return NULL;
   }
 
   list->key_pair.digit = digit;
   hexstring_to_hex_array(list->key_pair.key, 16, key);
-  X_FREE(key);
-
-  list->next = new_digit_key_pair_list();
-
-  return list->next;
+  return list;
 }
 
 /* Function to add a date entry */
