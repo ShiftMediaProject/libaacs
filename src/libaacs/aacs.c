@@ -1306,7 +1306,7 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
         return error_code;
     }
 
-    cf = keydbcfg_config_load(configfile_path);
+    cf = keydbcfg_config_load(configfile_path, aacs->disc_id);
 
     BD_DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
     error_code = _calc_uks(aacs, cf);
@@ -1460,7 +1460,7 @@ const uint8_t *aacs_get_bdj_root_cert_hash(AACS *aacs)
 const uint8_t *aacs_get_mk(AACS *aacs)
 {
     if (!memcmp(aacs->mk, empty_key, sizeof(aacs->mk))) {
-        config_file *cf = keydbcfg_config_load(NULL);
+        config_file *cf = keydbcfg_config_load(NULL, NULL);
         if (cf) {
             uint8_t mk[16] = {0};
             if (_calc_mk(aacs, mk, cf->pkl, cf->dkl) == AACS_SUCCESS) {
@@ -1488,7 +1488,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
             return aacs->vid;
         }
 
-        config_file *cf = keydbcfg_config_load(NULL);
+        config_file *cf = keydbcfg_config_load(NULL, NULL);
         if (cf) {
             _read_vid(aacs, cf->host_cert_list);
 
@@ -1507,7 +1507,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
 const uint8_t *aacs_get_pmsn(AACS *aacs)
 {
     if (!memcmp(aacs->pmsn, empty_key, sizeof(aacs->pmsn))) {
-        config_file *cf = keydbcfg_config_load(NULL);
+        config_file *cf = keydbcfg_config_load(NULL, NULL);
         if (cf) {
             _read_pmsn(aacs, cf->host_cert_list);
 

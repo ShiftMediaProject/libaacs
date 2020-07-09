@@ -4,10 +4,17 @@
 #define MAX_KEY_SIZE 128
 
 typedef struct {
-  title_entry_list    *celist;  /* list tail, for adding new entries */
+  title_entry_list    *celist;  /* current disc entry or NULL */
   digit_key_pair_list *dkplist; /* current list */
 
-  char hexkey[MAX_KEY_SIZE];
+  const uint64_t  *want_disc_id; /* parse only this disc (none if NULL) */
+  int              all_discs;    /* parse entries for all discs */
+
+  size_t hexkey_size;
+  union { /* make sure we're properly aligned */
+    char     b[MAX_KEY_SIZE];
+    uint64_t u64[5];
+  } hexkey;
 } parser_state;
 
 }
@@ -33,6 +40,7 @@ typedef struct {
  */
 
 #include "util/macro.h"
+#include "util/strutl.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,6 +103,20 @@ static int add_date_entry(title_entry_list *list, unsigned int year,
 */
 void yyerror (void *scanner, config_file *cf, parser_state *ps, const char *msg);
 extern int libaacs_yyget_lineno  (void *scanner);
+
+static inline int _discid_cmp(const uint64_t *want_disc_id, const uint64_t *disc_id)
+{
+  unsigned i;
+
+  /* We know input strings are valid hex strings, len 40:
+   * want_disc_id was created from binary data, disc_id was checked by lexer and parser.
+   * -> we just need to make sure all letters are lower case (= bit 0x20 set)
+   */
+  for (i = 0; i < 40/sizeof(uint64_t); i++)
+    if (want_disc_id[i] != (disc_id[i] | UINT64_C(0x2020202020202020)))
+      return 0;
+  return 1;
+}
 
 /* uncomment the line below for debugging */
 // int yydebug = 1;
@@ -287,16 +309,19 @@ newline_list
 disc_info
   : discid PUNCT_EQUALS_SIGN disc_title
     {
-      if (!cf->list) {
-        ps->celist = cf->list = new_title_entry_list();
+      if (ps->hexkey_size != 40) {
+        fprintf(stderr, "Ignoring invalid disc id: %s (len = %zu)\n", $1, ps->hexkey_size);
+        ps->celist = NULL;
+      } else if (!ps->all_discs && (!ps->want_disc_id || !_discid_cmp(ps->want_disc_id, ps->hexkey.u64))) {
+        ps->celist = NULL; /* ignore this disc */
       } else {
-        for (; ps->celist->next; ps->celist = ps->celist->next) ;
-        ps->celist->next = new_title_entry_list();
-        if (ps->celist->next)
-          ps->celist = ps->celist->next;
+        ps->celist = new_title_entry_list();
+        if (ps->celist) {
+          ps->celist->next = cf->list;
+          cf->list = ps->celist;
+          hexstring_to_hex_array(ps->celist->entry.discid, 20, ps->hexkey.b);
+        }
       }
-      add_entry(ps->celist, ENTRY_TYPE_DISCID, $1);
-      /*add_entry(celist, ENTRY_TYPE_TITLE, $3);*/
     }
   ;
 
@@ -447,6 +472,7 @@ uk_data_list
 uk_data
   : DIGIT PUNCT_HYPHEN hexkey
     {
+      if (ps->celist) {
       if (!ps->dkplist)
       {
         ps->dkplist = new_digit_key_pair_entry(ENTRY_TYPE_UK, $1, $3);
@@ -456,29 +482,34 @@ uk_data
         if (ps->dkplist->next)
           ps->dkplist = ps->dkplist->next;
       }
+      }
     }
   ;
 
 hexkey
   : hexkey HEXSTRING
     {
-      size_t len = strlen(ps->hexkey) + strlen($1) + 1;
-      if (len > sizeof(ps->hexkey)) {
-        fprintf(stderr, "too long key: %s %s\n", ps->hexkey, $1);
+      size_t len = strlen($2);
+      if (ps->hexkey_size + len >= sizeof(ps->hexkey.b)) {
+        fprintf(stderr, "too long key: %s %s\n", ps->hexkey.b, $2);
       } else {
-        strcat(ps->hexkey, $2);
+        memcpy(ps->hexkey.b + ps->hexkey_size, $2, len + 1);
+        ps->hexkey_size += len;
       }
-      $$ = ps->hexkey;
+      $$ = ps->hexkey.b;
     }
   | HEXSTRING
     {
-      size_t len = strlen($1) + 1;
-      if (len > sizeof(ps->hexkey)) {
+      size_t len = strlen($1);
+      if (len >= sizeof(ps->hexkey.b)) {
         fprintf(stderr, "too long key: %s\n", $1);
+        ps->hexkey.b[0] = 0;
+        ps->hexkey_size = 0;
       } else {
-        memcpy(ps->hexkey, $1, len);
+        memcpy(ps->hexkey.b, $1, len + 1);
+        ps->hexkey_size = len;
       }
-      $$ = ps->hexkey;
+      $$ = ps->hexkey.b;
     }
 hexstring_list
   : hexstring_list HEXSTRING
@@ -502,8 +533,22 @@ hexstring_list
   ;
 %%
 /* Function to parse a config file */
-int keydbcfg_parse_config(config_file *cfgfile, const char *path)
+int keydbcfg_parse_config(config_file *cfgfile, const char *path, const uint8_t *disc_id, int all_discs)
 {
+  union { /* make sure we're properly aligned */
+    uint64_t u64[5];
+    char     b[41];
+  } want_disc_id;
+
+  parser_state ps = {
+    .celist       = NULL,
+    .dkplist      = NULL,
+    .want_disc_id = NULL,
+    .all_discs    = all_discs,
+    .hexkey_size  = 0,
+    .hexkey.b     = "",
+  };
+
   if (!cfgfile || !path)
     return 0;
 
@@ -519,7 +564,10 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   if (!fp)
     return 0;
 
-  parser_state ps = { cfgfile->list, NULL, "" };
+  if (disc_id) {
+    hex_array_to_hexstring(want_disc_id.b, disc_id, 20);
+    ps.want_disc_id = want_disc_id.u64;
+  }
   void *scanner;
   libaacs_yylex_init(&scanner);
   libaacs_yyset_in(fp, scanner);
@@ -735,7 +783,6 @@ static int add_entry(title_entry_list *list, int type, const char *entry)
 {
   if (!list)
   {
-    fprintf(stderr, "Error: No title list passed as parameter.\n");
     return 0;
   }
 

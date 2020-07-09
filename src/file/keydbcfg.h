@@ -116,14 +116,13 @@ struct config_file_t
   title_entry_list *list;
 };
 
-/* Functions used throughout the parser */
-BD_PRIVATE int keydbcfg_parse_config(config_file *cfgfile, const char *path);
+BD_PRIVATE int keydbcfg_parse_config(config_file *cfgfile, const char *path, const uint8_t *disc_id, int all_discs);
 BD_PRIVATE config_file *keydbcfg_new_config_file(void);
 BD_PRIVATE int keydbcfg_config_file_close(config_file *cfgfile);
 
 /* */
 
-BD_PRIVATE config_file *keydbcfg_config_load(const char *configfile_path);
+BD_PRIVATE config_file *keydbcfg_config_load(const char *configfile_path, const uint8_t *disc_id);
 
 BD_PRIVATE int   keycache_save(const char *type, const uint8_t *disc_id,
                                  const uint8_t *key, unsigned int len);

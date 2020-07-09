@@ -547,7 +547,7 @@ int config_get(const char *name, uint32_t *len, void *buf)
 }
 
 
-static int _load_config_file(config_file *cf, int system)
+static int _load_config_file(config_file *cf, int system, const uint8_t *disc_id)
 {
     static const char cfg_file_name[] = CFG_FILE_NAME;
 
@@ -565,7 +565,7 @@ static int _load_config_file(config_file *cf, int system)
         BD_DEBUG(DBG_FILE, "found config file: %s\n", cfg_file);
         file_close(fp);
 
-        result = keydbcfg_parse_config(cf, cfg_file);
+        result = keydbcfg_parse_config(cf, cfg_file, disc_id, 0);
     }
 
     X_FREE(cfg_file);
@@ -665,7 +665,7 @@ static void _config_summary(config_file *cf)
     BD_DEBUG(DBG_AACS, "  %d Disc entries\n", n);
 }
 
-config_file *keydbcfg_config_load(const char *configfile_path)
+config_file *keydbcfg_config_load(const char *configfile_path, const uint8_t *disc_id)
 {
     int config_ok = 0;
 
@@ -677,14 +677,14 @@ config_file *keydbcfg_config_load(const char *configfile_path)
     /* try to load KEYDB.cfg */
 
     if (configfile_path) {
-        config_ok = keydbcfg_parse_config(cf, configfile_path);
+        config_ok = keydbcfg_parse_config(cf, configfile_path, disc_id, 0);
 
     } else {
         /* If no configfile path given, check for config files in user's home and
          * under /etc.
          */
-        config_ok = _load_config_file(cf, 0);
-        config_ok = _load_config_file(cf, 1) || config_ok;
+        config_ok = _load_config_file(cf, 0, disc_id);
+        config_ok = _load_config_file(cf, 1, disc_id) || config_ok;
     }
 
     /* Try to load simple (aacskeys) config files */

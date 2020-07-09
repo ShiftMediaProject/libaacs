@@ -166,15 +166,35 @@ static int print_config_file(config_file *cfgfile)
 /* main */
 int main (int argc, char **argv)
 {
-  if (argc != 2) {
-    fprintf(stderr, "usage: parser_test [config_file]\n");
+  config_file *cfgfile;
+  uint8_t disc_id[20] = {0};
+  const uint8_t *want_disc_id = NULL;
+  int retval = 0;
+
+  if (argc < 2 || argc > 3) {
+    fprintf(stderr, "usage: parser_test [config_file [disc_id]]\n");
     return EXIT_FAILURE;
   }
 
-  config_file *cfgfile = keydbcfg_new_config_file();
-  int retval = keydbcfg_parse_config(cfgfile, argv[1]);
-  retval &= print_config_file(cfgfile);
-  keydbcfg_config_file_close(cfgfile);
+  if (argc > 2) {
+    if (strlen(argv[2]) != 40) {
+      fprintf(stderr, "disc id must be 40 chars long\n");
+      return EXIT_FAILURE;
+    }
+    if (!hexstring_to_hex_array(disc_id, 20, argv[2])) {
+      fprintf(stderr, "invalid disc id %s\n", argv[2]);
+      return EXIT_FAILURE;
+    }
+    want_disc_id = disc_id;
+  }
+
+
+  cfgfile = keydbcfg_new_config_file();
+  if (cfgfile) {
+    retval = keydbcfg_parse_config(cfgfile, argv[1], want_disc_id, want_disc_id == NULL);
+    retval &= print_config_file(cfgfile);
+    keydbcfg_config_file_close(cfgfile);
+  }
 
   if (!retval)
     return EXIT_FAILURE;
