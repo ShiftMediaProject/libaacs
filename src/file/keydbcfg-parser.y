@@ -1,5 +1,15 @@
 %code requires {
 #include "file/keydbcfg.h"
+
+#define MAX_KEY_SIZE 128
+
+typedef struct {
+  title_entry_list    *celist;  /* list tail, for adding new entries */
+  digit_key_pair_list *dkplist; /* current list */
+
+  char hexkey[MAX_KEY_SIZE];
+} parser_state;
+
 }
 
 %code {
@@ -83,9 +93,7 @@ static digit_key_pair_list *new_digit_key_pair_entry(int type, unsigned int digi
 static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
 */
-void yyerror (void *scanner, config_file *cf,
-              title_entry_list *celist, digit_key_pair_list *dkplist,
-              const char *msg);
+void yyerror (void *scanner, config_file *cf, parser_state *ps, const char *msg);
 extern int libaacs_yyget_lineno  (void *scanner);
 
 /* uncomment the line below for debugging */
@@ -102,8 +110,7 @@ extern int libaacs_yyget_lineno  (void *scanner);
 %lex-param{void *scanner}
 %parse-param{void *scanner}
 %parse-param{config_file *cf}
-%parse-param{title_entry_list *celist}
-%parse-param{digit_key_pair_list *dkplist}
+%parse-param{parser_state *ps}
 
 %union
 {
@@ -144,7 +151,7 @@ extern int libaacs_yyget_lineno  (void *scanner);
 %token BAD_ENTRY
 
 %type <string> discid disc_title
-%type <string> host_priv_key host_cert host_nonce host_key_point hexstring_list
+%type <string> host_priv_key host_cert host_nonce host_key_point hexstring_list hexkey
 %type <string> device_key device_node key_uv key_u_mask_shift
 %%
 config_file
@@ -281,20 +288,20 @@ disc_info
   : discid PUNCT_EQUALS_SIGN disc_title
     {
       if (!cf->list) {
-        celist = cf->list = new_title_entry_list();
+        ps->celist = cf->list = new_title_entry_list();
       } else {
-        for (; celist->next; celist = celist->next) ;
-        celist->next = new_title_entry_list();
-        celist = celist->next;
+        for (; ps->celist->next; ps->celist = ps->celist->next) ;
+        ps->celist->next = new_title_entry_list();
+        if (ps->celist->next)
+          ps->celist = ps->celist->next;
       }
-      add_entry(celist, ENTRY_TYPE_DISCID, $1);
-      X_FREE($1);
+      add_entry(ps->celist, ENTRY_TYPE_DISCID, $1);
       /*add_entry(celist, ENTRY_TYPE_TITLE, $3);*/
     }
   ;
 
 discid
-  : hexstring_list
+  : hexkey
   ;
 
 disc_title
@@ -327,25 +334,23 @@ date_entry
   ;
 
 mek_entry
-  : ENTRY_ID_MEK hexstring_list
+  : ENTRY_ID_MEK hexkey
     {
-      add_entry(celist, ENTRY_TYPE_MEK, $2);
-      X_FREE($2);
+      add_entry(ps->celist, ENTRY_TYPE_MEK, $2);
     }
   ;
 
 vid_entry
-  : ENTRY_ID_VID hexstring_list
+  : ENTRY_ID_VID hexkey
     {
-      add_entry(celist, ENTRY_TYPE_VID, $2);
-      X_FREE($2);
+      add_entry(ps->celist, ENTRY_TYPE_VID, $2);
     }
   ;
 
 bn_entry
   : ENTRY_ID_BN bn_data_list
     {
-      dkplist = NULL;
+      ps->dkplist = NULL;
     }
   ;
 
@@ -369,17 +374,16 @@ bn_data
   ;
 
 vuk_entry
-  : ENTRY_ID_VUK hexstring_list
+  : ENTRY_ID_VUK hexkey
     {
-      add_entry(celist, ENTRY_TYPE_VUK, $2);
-      X_FREE($2);
+      add_entry(ps->celist, ENTRY_TYPE_VUK, $2);
     }
   ;
 
 pak_entry
   : ENTRY_ID_PAK pak_data_list
     {
-      dkplist = NULL;
+      ps->dkplist = NULL;
     }
   ;
 
@@ -405,7 +409,7 @@ pak_data
 tk_entry
   : ENTRY_ID_TK tk_data_list
     {
-      dkplist = NULL;
+      ps->dkplist = NULL;
     }
   ;
 
@@ -431,7 +435,7 @@ tk_data
 uk_entry
   : ENTRY_ID_UK uk_data_list
     {
-      dkplist = NULL;
+      ps->dkplist = NULL;
     }
   ;
 
@@ -441,21 +445,41 @@ uk_data_list
   ;
 
 uk_data
-  : DIGIT PUNCT_HYPHEN hexstring_list
+  : DIGIT PUNCT_HYPHEN hexkey
     {
-      if (!dkplist)
+      if (!ps->dkplist)
       {
-        dkplist = new_digit_key_pair_entry(ENTRY_TYPE_UK, $1, $3);
-        celist->entry.uk = dkplist;
+        ps->dkplist = new_digit_key_pair_entry(ENTRY_TYPE_UK, $1, $3);
+        ps->celist->entry.uk = ps->dkplist;
       } else {
-        dkplist->next = new_digit_key_pair_entry(ENTRY_TYPE_UK, $1, $3);
-        if (dkplist->next)
-          dkplist = dkplist->next;
+        ps->dkplist->next = new_digit_key_pair_entry(ENTRY_TYPE_UK, $1, $3);
+        if (ps->dkplist->next)
+          ps->dkplist = ps->dkplist->next;
       }
-      X_FREE($3);
     }
   ;
 
+hexkey
+  : hexkey HEXSTRING
+    {
+      size_t len = strlen(ps->hexkey) + strlen($1) + 1;
+      if (len > sizeof(ps->hexkey)) {
+        fprintf(stderr, "too long key: %s %s\n", ps->hexkey, $1);
+      } else {
+        strcat(ps->hexkey, $2);
+      }
+      $$ = ps->hexkey;
+    }
+  | HEXSTRING
+    {
+      size_t len = strlen($1) + 1;
+      if (len > sizeof(ps->hexkey)) {
+        fprintf(stderr, "too long key: %s\n", $1);
+      } else {
+        memcpy(ps->hexkey, $1, len);
+      }
+      $$ = ps->hexkey;
+    }
 hexstring_list
   : hexstring_list HEXSTRING
     {
@@ -495,10 +519,11 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path)
   if (!fp)
     return 0;
 
+  parser_state ps = { cfgfile->list, NULL, "" };
   void *scanner;
   libaacs_yylex_init(&scanner);
   libaacs_yyset_in(fp, scanner);
-  int retval = yyparse(scanner, cfgfile, cfgfile->list, NULL);
+  int retval = yyparse(scanner, cfgfile, &ps);
   libaacs_yylex_destroy(scanner);
 
   fclose(fp);
@@ -792,9 +817,7 @@ static int add_date_entry(title_entry_list *list, unsigned int year,
 #endif
 
 /* Our definition of yyerror */
-void yyerror (void *scanner, config_file *cf,
-              title_entry_list *celist, digit_key_pair_list *dkplist,
-              const char *msg)
+void yyerror (void *scanner, config_file *cf, parser_state *ps, const char *msg)
 {
   fprintf(stderr, "%s: line %d\n", msg, libaacs_yyget_lineno(scanner));
 }
