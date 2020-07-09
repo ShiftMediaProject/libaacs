@@ -988,6 +988,10 @@ static int _calc_uks(AACS *aacs, config_file *cf)
         return AACS_SUCCESS;
     }
 
+    /* first try cached vuk */
+    vuk_error_code = _calc_vuk(aacs, mk, vuk, NULL);
+    if (vuk_error_code != AACS_SUCCESS) {
+
     if (cf) {
         BD_DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
         _find_config_entry(aacs, cf->list, mk, vuk);
@@ -1001,6 +1005,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
     /* Try to calculate VUK */
 
     vuk_error_code = _calc_vuk(aacs, mk, vuk, cf);
+    }
 
     BD_DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
