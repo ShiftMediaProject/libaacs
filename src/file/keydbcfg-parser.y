@@ -77,8 +77,8 @@ static void add_pk_entry(config_file *cf, char *key);
 static void add_cert_entry(config_file *cf, char *host_priv_key, char *host_cert);
 
 static title_entry_list *new_title_entry_list(void);
-static int add_entry(title_entry_list *list, int type, char *entry);
-static digit_key_pair_list *new_digit_key_pair_entry(int type, unsigned int digit, char *key);
+static int add_entry(title_entry_list *list, int type, const char *entry);
+static digit_key_pair_list *new_digit_key_pair_entry(int type, unsigned int digit, const char *key);
 /*
 static int add_date_entry(title_entry_list *list, unsigned int year,
                           unsigned int month, unsigned int day);
@@ -288,6 +288,7 @@ disc_info
         celist = celist->next;
       }
       add_entry(celist, ENTRY_TYPE_DISCID, $1);
+      X_FREE($1);
       /*add_entry(celist, ENTRY_TYPE_TITLE, $3);*/
     }
   ;
@@ -329,6 +330,7 @@ mek_entry
   : ENTRY_ID_MEK hexstring_list
     {
       add_entry(celist, ENTRY_TYPE_MEK, $2);
+      X_FREE($2);
     }
   ;
 
@@ -336,6 +338,7 @@ vid_entry
   : ENTRY_ID_VID hexstring_list
     {
       add_entry(celist, ENTRY_TYPE_VID, $2);
+      X_FREE($2);
     }
   ;
 
@@ -369,6 +372,7 @@ vuk_entry
   : ENTRY_ID_VUK hexstring_list
     {
       add_entry(celist, ENTRY_TYPE_VUK, $2);
+      X_FREE($2);
     }
   ;
 
@@ -698,12 +702,11 @@ title_entry_list *new_title_entry_list(void)
 #define CHECK_KEY_LENGTH(name, len)                               \
   if (!entry || strlen(entry) != len) {                           \
     fprintf(stderr, "Ignoring bad "name" entry %s\n", entry);     \
-    X_FREE(entry);                                                \
     break;                                                        \
   }
 
 /* Function to add standard string entries to a config entry */
-static int add_entry(title_entry_list *list, int type, char *entry)
+static int add_entry(title_entry_list *list, int type, const char *entry)
 {
   if (!list)
   {
@@ -716,7 +719,6 @@ static int add_entry(title_entry_list *list, int type, char *entry)
     case ENTRY_TYPE_DISCID:
       CHECK_KEY_LENGTH("discid", 40)
       hexstring_to_hex_array(list->entry.discid, 20, entry);
-      X_FREE(entry);
       break;
 
 #if 0
@@ -729,23 +731,19 @@ static int add_entry(title_entry_list *list, int type, char *entry)
     case ENTRY_TYPE_MEK:
       CHECK_KEY_LENGTH("mek", 32)
       hexstring_to_hex_array(list->entry.mk, 16, entry);
-      X_FREE(entry);
       break;
 
     case ENTRY_TYPE_VID:
       CHECK_KEY_LENGTH("vid", 32)
       hexstring_to_hex_array(list->entry.vid, 16, entry);
-      X_FREE(entry);
       break;
 
     case ENTRY_TYPE_VUK:
       CHECK_KEY_LENGTH("vuk", 32)
       hexstring_to_hex_array(list->entry.vuk, 16, entry);
-      X_FREE(entry);
       break;
 
     default:
-      X_FREE(entry);
       fprintf(stderr, "WARNING: entry type passed in unknown\n");
       return 0;
   }
@@ -754,7 +752,7 @@ static int add_entry(title_entry_list *list, int type, char *entry)
 }
 
 /* Function used to add a digit/key pair to a list of digit key pair entries */
-static digit_key_pair_list *new_digit_key_pair_entry(int type, unsigned int digit, char *key)
+static digit_key_pair_list *new_digit_key_pair_entry(int type, unsigned int digit, const char *key)
 {
   digit_key_pair_list *list;
 
