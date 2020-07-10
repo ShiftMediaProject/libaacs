@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS=-I m4
 
-EXTRA_DIST=bootstrap COPYING KEYDB.cfg README.txt ChangeLog
+EXTRA_DIST=bootstrap COPYING KEYDB.cfg README.md ChangeLog
 
 SET_FEATURES = @SET_FEATURES@
 SET_INCLUDES = -I$(top_srcdir)/src -I$(top_builddir)/src/libaacs
@@ -106,6 +106,7 @@ parser_test_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES)
 
 uk_dump_SOURCES = \
 	src/devtools/uk_dump.c \
+	src/devtools/read_file.h \
 	src/libaacs/unit_key.h \
 	src/libaacs/unit_key.c \
 	src/util/logging.c
@@ -113,6 +114,7 @@ uk_dump_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES)
 
 mkb_dump_SOURCES = \
 	src/devtools/mkb_dump.c \
+	src/devtools/read_file.h \
 	src/libaacs/mkb.h \
 	src/libaacs/mkb.c \
 	src/util/strutl.c \
