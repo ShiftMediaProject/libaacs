@@ -992,19 +992,18 @@ static int _calc_uks(AACS *aacs, config_file *cf)
     vuk_error_code = _calc_vuk(aacs, mk, vuk, NULL);
     if (vuk_error_code != AACS_SUCCESS) {
 
-    if (cf) {
-        BD_DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
-        _find_config_entry(aacs, cf->list, mk, vuk);
+        if (cf) {
+            BD_DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
+            _find_config_entry(aacs, cf->list, mk, vuk);
 
-        /* Skip if retrieved from config file */
-        if (aacs->uk->uk) {
-            return AACS_SUCCESS;
+            /* Skip if retrieved from config file */
+            if (aacs->uk->uk) {
+                return AACS_SUCCESS;
+            }
         }
-    }
 
-    /* Try to calculate VUK */
-
-    vuk_error_code = _calc_vuk(aacs, mk, vuk, cf);
+        /* Try to calculate VUK */
+        vuk_error_code = _calc_vuk(aacs, mk, vuk, cf);
     }
 
     BD_DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
