@@ -141,20 +141,6 @@ int hexstring_to_hex_array(uint8_t *hex_array, uint32_t size,
   return 1;
 }
 
-/* Function to convert a hex array into a hex string.
- * str must be allocated by caller
- * size is the size of the hex_array
- */
-void hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size)
-{
-  unsigned int i;
-
-  for (i = 0; i < size; i++)
-  {
-    sprintf(str + (i*2), "%02x", hex_array[i]);
-  }
-}
-
 char *str_dup(const char *str)
 {
     char *dup = NULL;

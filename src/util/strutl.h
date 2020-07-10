@@ -26,7 +26,6 @@
 
 BD_PRIVATE int hexstring_to_hex_array(uint8_t *hex_array, uint32_t size,
                                         const char *hexstring);
-BD_PRIVATE void hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size);
 
 BD_PRIVATE char * str_dup(const char *str) BD_ATTR_MALLOC;
 BD_PRIVATE char * str_printf(const char *fmt, ...) BD_ATTR_FORMAT_PRINTF(1,2) BD_ATTR_MALLOC;

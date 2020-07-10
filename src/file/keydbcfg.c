@@ -313,7 +313,7 @@ static char *_keycache_file(const char *type, const uint8_t *disc_id)
         return NULL;
     }
 
-    hex_array_to_hexstring(disc_id_str, disc_id, 20);
+    str_print_hex(disc_id_str, disc_id, 20);
 
     result = str_printf("%s"DIR_SEP"%s"DIR_SEP"%s"DIR_SEP"%s", cache_dir, CFG_DIR, type, disc_id_str);
     X_FREE(cache_dir);
@@ -331,7 +331,7 @@ int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, 
             AACS_FILE_H *fp = file_open(file, "w");
 
             if (fp) {
-                hex_array_to_hexstring(key_str, key, len);
+                str_print_hex(key_str, key, len);
 
                 if (file_write(fp, key_str, len*2) == len*2) {
                     BD_DEBUG(DBG_FILE, "Wrote %s to %s\n", type, file);

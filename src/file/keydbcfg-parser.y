@@ -572,7 +572,7 @@ int keydbcfg_parse_config(config_file *cfgfile, const char *path, const uint8_t 
     return 0;
 
   if (disc_id) {
-    hex_array_to_hexstring(want_disc_id.b, disc_id, 20);
+    str_print_hex(want_disc_id.b, disc_id, 20);
     ps.want_disc_id = want_disc_id.u64;
   }
   void *scanner;

@@ -325,7 +325,7 @@ static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
     /* Points are currently only supported in standard format, so get a
      * hexstring out of Q.
      */
-    hex_array_to_hexstring(str_Q, Q, 1 + 2*key_len);
+    str_print_hex(str_Q, Q, 1 + 2*key_len);
 
     char *strfmt = str_printf(
       "(%s"
