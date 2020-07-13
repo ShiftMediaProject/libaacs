@@ -62,10 +62,6 @@ esac
 AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
 AM_CONDITIONAL(HAVE_DARWIN,  test "${SYS}" = "darwin")
 
-dnl messages
-library_not_found="Could not find required library!"
-function_not_found="Could not find required function!"
-
 dnl configure options
 AC_ARG_ENABLE([werror],
   [AS_HELP_STRING([--enable-werror], [set warnings as errors via -Werror @<:@default=disabled@:>@])])
@@ -100,9 +96,6 @@ AC_CHECK_HEADERS([sys/mount.h])
 
 dnl required system services
 AC_SYS_LARGEFILE
-
-dnl required functions
-AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
 dnl required libraries
 
