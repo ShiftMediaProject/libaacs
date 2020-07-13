@@ -93,13 +93,10 @@ dnl required types
 AC_TYPE_SIGNAL
 
 dnl required headers
-AC_CHECK_HEADERS([stdarg.h sys/types.h dirent.h errno.h libgen.h malloc.h])
+AC_CHECK_HEADERS([stdarg.h sys/types.h errno.h libgen.h malloc.h])
 AC_CHECK_HEADERS([stdlib.h mntent.h linux/cdrom.h inttypes.h])
-AC_CHECK_HEADERS([sys/time.h time.h sys/select.h limits.h sys/param.h])
+AC_CHECK_HEADERS([sys/select.h limits.h sys/param.h])
 AC_CHECK_HEADERS([sys/mount.h])
-
-dnl required structures
-AC_STRUCT_DIRENT_D_TYPE
 
 dnl required system services
 AC_SYS_LARGEFILE
