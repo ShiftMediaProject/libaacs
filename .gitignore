@@ -25,6 +25,8 @@ libtool
 src/libaacs/aacs-version.h
 parser_test
 aacs_info
+mkb_dump
+uk_dump
 src/file/keydbcfg-lexer.c
 src/file/keydbcfg-parser.c
 src/file/keydbcfg-parser.h
