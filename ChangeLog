@@ -1,3 +1,15 @@
+2020-07-??: Version 0.11.0
+- Add more AACS2 support (still not complete).
+- Add support for partial unit keys in KEYDB.CFG.
+- Improve opening of UHD discs (~ 10 seconds faster).
+- Improve large KEYDB.CFG parsing (~ 4 times faster).
+- Improve error resilience.
+- Reduce memory usage (does not depend on config file size anymore).
+- Fix segfault on macOS when MMC opening fails.
+- Fix memory leak with multiple UK entries in KEYDB.cfg file.
+- Fix AACS2 with multiple unit keys.
+- Fix include flags order (do not include wrong headers outside of source tree).
+
 2020-03-22: Version 0.10.0
 - Add support for AACS2 content certificate.
 - Add aacs_set_key_caching().
