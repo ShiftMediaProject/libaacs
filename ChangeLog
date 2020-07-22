@@ -1,4 +1,4 @@
-2020-07-??: Version 0.11.0
+2020-07-22: Version 0.11.0
 - Add more AACS2 support (still not complete).
 - Add support for partial unit keys in KEYDB.CFG.
 - Improve opening of UHD discs (~ 10 seconds faster).
