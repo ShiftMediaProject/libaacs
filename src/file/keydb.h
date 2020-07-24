@@ -1,7 +1,7 @@
 
 /* encrypted keys */
 
-static const uint8_t internal_dk_list[][21] = {
+static const uint8_t internal_dk_list[][23] = {
   {
   },
 };
