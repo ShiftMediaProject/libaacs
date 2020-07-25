@@ -106,6 +106,11 @@ static int _assign_titles(AACS_UK *uk, const uint8_t *p, size_t size)
     top_menu   = MKINT_BE16(p + 22);
     num_titles = MKINT_BE16(p + 24);
 
+    if (num_titles > 0xffff - 2) {
+        BD_DEBUG(DBG_UK | DBG_CRIT, "Invalid title count %u\n", num_titles);
+        return -1;
+    }
+
     BD_DEBUG(DBG_UK, "Title FP : CPS unit %d\n", first_play);
     BD_DEBUG(DBG_UK, "Title TM : CPS unit %d\n", top_menu);
 
@@ -167,6 +172,9 @@ static int _parse_uks(AACS_UK *uk, const uint8_t *p, size_t size, int aacs2)
     if (uk->num_uk < 1) {
         BD_DEBUG(DBG_UK | DBG_CRIT, "No unit keys\n");
         return 0;
+    }
+    if (uk->num_uk > 0xffff) {
+        return -1;
     }
 
     if (size < uk_pos + 48 * uk->num_uk + 16) {

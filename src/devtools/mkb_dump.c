@@ -145,10 +145,10 @@ static void _dump_record(MKB *mkb, int record)
         len  = MKINT_BE24(data + pos + 1);
         if (type == record) {
             switch (record) {
-                case 0x02: _dump_signature(data + pos + 4, len - 4); break;
-                case 0x10: _dump_type_and_version(data + pos + 4, len - 4); break;
+                case 0x02: if (len > 4 && len <= 64) _dump_signature(data + pos + 4, len - 4); break;
+                case 0x10: if (len > 4)              _dump_type_and_version(data + pos + 4, len - 4); break;
                 case 0x20:
-                case 0x21: _dump_aacs1_rl(data + pos + 4, len - 4); break;
+                case 0x21: if (len > 4)              _dump_aacs1_rl(data + pos + 4, len - 4); break;
             }
             printf("  Raw data (%zu bytes):\n", len - 4);
             const uint8_t *p = data + pos + 4;

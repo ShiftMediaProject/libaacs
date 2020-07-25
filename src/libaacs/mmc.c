@@ -259,6 +259,11 @@ static uint8_t *_mmc_read_mkb(MMC *mmc, uint8_t agid, int address, int *size)
 
         BD_DEBUG(DBG_MMC, "got mkb: pack 0/%d %d bytes\n", num_packs, len);
 
+        if (len <= 0 || len > 32768) {
+              BD_DEBUG(DBG_MMC | DBG_CRIT, "invalid pack\n");
+              return NULL;
+        }
+
         mkb = malloc(32768 * num_packs);
         if (!mkb) {
               BD_DEBUG(DBG_MMC | DBG_CRIT, "out of memory\n");
@@ -272,7 +277,10 @@ static uint8_t *_mmc_read_mkb(MMC *mmc, uint8_t agid, int address, int *size)
             if (_mmc_report_disc_structure(mmc, agid, 0x83, layer, pack, buf, sizeof(buf))) {
                 len = MKINT_BE16(buf) - 2;
                 BD_DEBUG(DBG_MMC, "got mkb: pack %d/%d %d bytes\n", pack, num_packs, len);
-
+                if (len <= 0 || len > 32768) {
+                    BD_DEBUG(DBG_MMC | DBG_CRIT, "invalid pack\n");
+                    break;
+                }
                 memcpy(mkb + *size, buf + 4, len);
                 *size += len;
             } else {

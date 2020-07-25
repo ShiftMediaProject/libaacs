@@ -120,17 +120,25 @@ AACS_CCI *cci_parse(const void *data, size_t size)
     AACS_CCI *cci;
     const uint8_t *p = data;
     unsigned int ii;
+    unsigned num_entry;
 
     if (size < 16) {
         return NULL;
     }
+
+    num_entry = MKINT_BE16(p);
+    if (num_entry < 1 || num_entry > (2048-16)/6) {
+        BD_DEBUG(DBG_CCI | DBG_CRIT, "Invalid CCI header: %u entries\n", num_entry);
+        return NULL;
+    }
+
 
     cci = calloc(1, sizeof(*cci));
     if (!cci) {
         return NULL;
     }
 
-    cci->num_entry = MKINT_BE16(p);
+    cci->num_entry = num_entry;
     p += 16;
     size -= 16;
 
