@@ -506,7 +506,7 @@ static size_t _read_mkb_file(AACS *aacs, const char *file, void **pdata)
         size += read_size;
         chunk_size = MKINT_BE24(data + size - 4 + 1);
         if (data_size < size + chunk_size) {
-            for ( ; data_size < size + chunk_size; data_size *= 2) ;
+            data_size = 2*size + chunk_size;
             void *tmp = realloc(data, data_size);
             if (!tmp) {
                 X_FREE(data);
