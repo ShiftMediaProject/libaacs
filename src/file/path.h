@@ -22,10 +22,6 @@
 
 #include "util/attributes.h"
 
-#ifndef AACS_PATH_MAX
-#define AACS_PATH_MAX 1024
-#endif
-
-BD_PRIVATE char *aacs_resolve_path(const char *path, char *resolved_path);
+BD_PRIVATE char *aacs_resolve_path(const char *path);
 
 #endif /* AACS_PATH_H */
