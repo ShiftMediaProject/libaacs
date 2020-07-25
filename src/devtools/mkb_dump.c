@@ -194,7 +194,7 @@ static void _list_records(MKB *mkb, uint8_t *seen_map)
         uint8_t type = data[pos];
         len  = MKINT_BE24(data + pos + 1);
         printf("    record 0x%02x: %10zu bytes  %s\n", type, len, rec_name(type));
-        seen_map[type] = 1;
+        seen_map[type & 0xff] = 1;
         if (len == 0) {
             printf("    UNKNOWN:     %10zu bytes\n", size - pos);
             break;
