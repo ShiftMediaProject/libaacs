@@ -29,6 +29,12 @@ typedef struct mkb MKB;
 
 struct aacs_file_s;
 
+#define MKB_TYPE_3           0x00031003
+#define MKB_TYPE_4           0x00041003
+#define MKB_TYPE_10_CLASS_II 0x000A1003
+#define MKB_20_CATEGORY_C    0x48141003
+#define MKB_21_CATEGORY_C    0x48151003
+
 BD_PRIVATE MKB *mkb_init(uint8_t *data, size_t len); // init MKB from data
 BD_PRIVATE void mkb_close(MKB *mkb);           // free MKB
 
@@ -36,7 +42,7 @@ BD_PRIVATE const uint8_t *mkb_data(MKB *mkb);
 BD_PRIVATE size_t mkb_data_size(MKB *mkb);
 
 // returns type
-BD_PRIVATE uint8_t mkb_type(MKB *mkb);
+BD_PRIVATE uint32_t mkb_type(MKB *mkb);
 // returns version
 BD_PRIVATE uint32_t mkb_version(MKB *mkb);
 // returns type and version record (required to verify signatures)

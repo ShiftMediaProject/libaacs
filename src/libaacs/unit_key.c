@@ -143,8 +143,9 @@ static int _assign_titles(AACS_UK *uk, const uint8_t *p, size_t size)
     return 0;
 }
 
-static int _parse_uks(AACS_UK *uk, const uint8_t *p, size_t size)
+static int _parse_uks(AACS_UK *uk, const uint8_t *p, size_t size, int aacs2)
 {
+    const uint8_t empty_key[16] = {0};
     uint32_t uk_pos;
     unsigned int i;
 
@@ -173,6 +174,17 @@ static int _parse_uks(AACS_UK *uk, const uint8_t *p, size_t size)
         return -1;
     }
 
+    if (aacs2 && uk->num_uk > 1) {
+        /* do some sanity checks ... */
+        if (!memcmp(empty_key, p + 48 + 48 + 16, 16)) {
+            BD_DEBUG(DBG_UK | DBG_CRIT, "AACS2 unit key not found from expected location ?\n");
+            aacs2 = 0;
+        } else if (size < uk_pos + 64 * uk->num_uk + 16) {
+            BD_DEBUG(DBG_UK | DBG_CRIT, "Unexpected EOF (AACS2 unit key data truncated)\n");
+            return -1;
+        }
+    }
+
     /* alloc storage for keys */
 
     uk->enc_uk = calloc(uk->num_uk, sizeof(AACS_UK));
@@ -181,19 +193,29 @@ static int _parse_uks(AACS_UK *uk, const uint8_t *p, size_t size)
         return -1;
     }
 
-    BD_DEBUG(DBG_UK, "%d CPS unit keys\n", uk->num_uk);
+    BD_DEBUG(DBG_UK, "%d CPS unit keys (AACS%d)\n", uk->num_uk, aacs2 ? 2 : 1);
 
     /* get encrypted keys */
 
     for (i = 0; i < uk->num_uk; i++) {
         uk_pos += 48;
         memcpy(uk->enc_uk[i].key, p + uk_pos, 16);
+
+        if (!memcmp(empty_key, uk->enc_uk[i].key, 16)) {
+            BD_DEBUG(DBG_UK | DBG_CRIT, "WARNING: Unit key %d is empty!\n", i+1);
+        }
+
+        /* XXX there seems to be nothing in this file that could be used to detect this ... */
+        if (aacs2) {
+            /* skip unknown */
+            uk_pos += 16;
+        }
     }
 
     return 0;
 }
 
-static int _parse(AACS_UK *uk, const uint8_t *data, size_t len)
+static int _parse(AACS_UK *uk, const uint8_t *data, size_t len, int aacs2)
 {
     int result;
 
@@ -201,7 +223,7 @@ static int _parse(AACS_UK *uk, const uint8_t *data, size_t len)
         return -1;
     }
 
-    result = _parse_uks(uk, data, len);
+    result = _parse_uks(uk, data, len, aacs2);
 
     /* not fatal, just speeds up things ... */
     _assign_titles(uk, data, len);
@@ -209,7 +231,7 @@ static int _parse(AACS_UK *uk, const uint8_t *data, size_t len)
     return result;
 }
 
-AACS_UK *uk_parse(const void *data, size_t len)
+AACS_UK *uk_parse(const void *data, size_t len, int aacs2)
 {
     AACS_UK *uk = calloc(1, sizeof(*uk));
 
@@ -217,7 +239,7 @@ AACS_UK *uk_parse(const void *data, size_t len)
         return NULL;
     }
 
-    if (_parse(uk, data, len) < 0) {
+    if (_parse(uk, data, len, aacs2) < 0) {
         BD_DEBUG(DBG_UK | DBG_CRIT, "Corrupt unit key file (AACS/Unit_Key_RO.inf)\n");
         X_FREE(uk);
     }

@@ -168,9 +168,10 @@ static int _parse_pk_file(config_file *cf, AACS_FILE_H *fp)
 
                 pk_list *e = calloc(1, sizeof(pk_list));
                 if (e) {
-                    hexstring_to_hex_array(e->key, 16, str);
-
-                    if (_is_duplicate_pk(cf->pkl, e->key)) {
+                    if (!hexstring_to_hex_array(e->key, 16, str)) {
+                        BD_DEBUG(DBG_FILE, "Skipping invalid processing key %s\n", str);
+                        X_FREE(e);
+                    } else if (_is_duplicate_pk(cf->pkl, e->key)) {
                         BD_DEBUG(DBG_FILE, "Skipping duplicate processing key %s\n", str);
                         X_FREE(e);
                     } else {
@@ -229,10 +230,11 @@ static int _parse_cert_file(config_file *cf, AACS_FILE_H *fp)
 
             cert_list  *e = calloc(1, sizeof(cert_list));
             if (e) {
-                hexstring_to_hex_array(e->host_priv_key, 20, host_priv_key);
-                hexstring_to_hex_array(e->host_cert, 92, host_cert);
-
-                if (_is_duplicate_cert(cf->host_cert_list, e)) {
+                if (!hexstring_to_hex_array(e->host_priv_key, 20, host_priv_key) ||
+                    !hexstring_to_hex_array(e->host_cert, 92, host_cert)) {
+                    BD_DEBUG(DBG_FILE, "Skipping invalid certificate entry %s %s\n", host_priv_key, host_cert);
+                    X_FREE(e);
+                } else if (_is_duplicate_cert(cf->host_cert_list, e)) {
                     BD_DEBUG(DBG_FILE, "Skipping duplicate certificate entry %s %s\n", host_priv_key, host_cert);
                     X_FREE(e);
                 } else {
@@ -313,7 +315,7 @@ static char *_keycache_file(const char *type, const uint8_t *disc_id)
         return NULL;
     }
 
-    hex_array_to_hexstring(disc_id_str, disc_id, 20);
+    str_print_hex(disc_id_str, disc_id, 20);
 
     result = str_printf("%s"DIR_SEP"%s"DIR_SEP"%s"DIR_SEP"%s", cache_dir, CFG_DIR, type, disc_id_str);
     X_FREE(cache_dir);
@@ -331,7 +333,7 @@ int keycache_save(const char *type, const uint8_t *disc_id, const uint8_t *key, 
             AACS_FILE_H *fp = file_open(file, "w");
 
             if (fp) {
-                hex_array_to_hexstring(key_str, key, len);
+                str_print_hex(key_str, key, len);
 
                 if (file_write(fp, key_str, len*2) == len*2) {
                     BD_DEBUG(DBG_FILE, "Wrote %s to %s\n", type, file);
@@ -547,7 +549,7 @@ int config_get(const char *name, uint32_t *len, void *buf)
 }
 
 
-static int _load_config_file(config_file *cf, int system)
+static int _load_config_file(config_file *cf, int system, const uint8_t *disc_id)
 {
     static const char cfg_file_name[] = CFG_FILE_NAME;
 
@@ -565,7 +567,7 @@ static int _load_config_file(config_file *cf, int system)
         BD_DEBUG(DBG_FILE, "found config file: %s\n", cfg_file);
         file_close(fp);
 
-        result = keydbcfg_parse_config(cf, cfg_file);
+        result = keydbcfg_parse_config(cf, cfg_file, disc_id, 0);
     }
 
     X_FREE(cfg_file);
@@ -588,9 +590,9 @@ static int _parse_embedded(config_file *cf)
             break;
 
         decrypt_key(e->key, internal_dk_list[jj], 16);
-        e->node = internal_device_number;
-        e->uv   = MKINT_BE32(internal_dk_list[jj] + 16);
-        e->u_mask_shift = internal_dk_list[jj][20];
+        e->node = MKINT_BE16(internal_dk_list[jj] + 16);
+        e->uv   = MKINT_BE32(internal_dk_list[jj] + 16 + 2);
+        e->u_mask_shift = internal_dk_list[jj][20 + 2];
 
         if (!e->uv || _is_duplicate_dk(cf->dkl, e)) {
             X_FREE(e);
@@ -646,7 +648,26 @@ static int _parse_embedded(config_file *cf)
     return result;
 }
 
-config_file *keydbcfg_config_load(const char *configfile_path)
+static void _config_summary(config_file *cf)
+{
+    int n;
+    dk_list *dkl = cf->dkl;
+    pk_list *pkl = cf->pkl;
+    cert_list *hcl = cf->host_cert_list;
+    title_entry_list *tel = cf->list;
+
+    BD_DEBUG(DBG_AACS, "Config summary:\n");
+    for (n = 0; dkl; dkl = dkl->next, n++) ;
+    BD_DEBUG(DBG_AACS, "  %d Device keys\n", n);
+    for (n = 0; pkl; pkl = pkl->next, n++) ;
+    BD_DEBUG(DBG_AACS, "  %d Processing keys\n", n);
+    for (n = 0; hcl; hcl = hcl->next, n++) ;
+    BD_DEBUG(DBG_AACS, "  %d Host certificates\n", n);
+    for (n = 0; tel; tel = tel->next, n++) ;
+    BD_DEBUG(DBG_AACS, "  %d Disc entries\n", n);
+}
+
+config_file *keydbcfg_config_load(const char *configfile_path, const uint8_t *disc_id)
 {
     int config_ok = 0;
 
@@ -658,14 +679,14 @@ config_file *keydbcfg_config_load(const char *configfile_path)
     /* try to load KEYDB.cfg */
 
     if (configfile_path) {
-        config_ok = keydbcfg_parse_config(cf, configfile_path);
+        config_ok = keydbcfg_parse_config(cf, configfile_path, disc_id, 0);
 
     } else {
         /* If no configfile path given, check for config files in user's home and
          * under /etc.
          */
-        config_ok = _load_config_file(cf, 0);
-        config_ok = _load_config_file(cf, 1) || config_ok;
+        config_ok = _load_config_file(cf, 0, disc_id);
+        config_ok = _load_config_file(cf, 1, disc_id) || config_ok;
     }
 
     /* Try to load simple (aacskeys) config files */
@@ -681,6 +702,8 @@ config_file *keydbcfg_config_load(const char *configfile_path)
         keydbcfg_config_file_close(cf);
         return NULL;
     }
+
+    _config_summary(cf);
 
     return cf;
 }

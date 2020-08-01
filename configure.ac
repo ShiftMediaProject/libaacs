@@ -1,6 +1,6 @@
 dnl library version number
 m4_define([aacs_major], 0)
-m4_define([aacs_minor], 10)
+m4_define([aacs_minor], 11)
 m4_define([aacs_micro], 0)
 m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 
@@ -16,7 +16,7 @@ dnl Library file name will be libaacs.(current-age).age.revision
 
 m4_define([lt_current],  7)
 m4_define([lt_age],      7)
-m4_define([lt_revision], 0)
+m4_define([lt_revision], 1)
 
 dnl initilization
 AC_INIT([libaacs], aacs_version, [http://www.videolan.org/developers/libaacs.html])
@@ -62,10 +62,6 @@ esac
 AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
 AM_CONDITIONAL(HAVE_DARWIN,  test "${SYS}" = "darwin")
 
-dnl messages
-library_not_found="Could not find required library!"
-function_not_found="Could not find required function!"
-
 dnl configure options
 AC_ARG_ENABLE([werror],
   [AS_HELP_STRING([--enable-werror], [set warnings as errors via -Werror @<:@default=disabled@:>@])])
@@ -93,19 +89,13 @@ dnl required types
 AC_TYPE_SIGNAL
 
 dnl required headers
-AC_CHECK_HEADERS([stdarg.h sys/types.h dirent.h errno.h libgen.h malloc.h])
+AC_CHECK_HEADERS([stdarg.h sys/types.h errno.h libgen.h malloc.h])
 AC_CHECK_HEADERS([stdlib.h mntent.h linux/cdrom.h inttypes.h])
-AC_CHECK_HEADERS([sys/time.h time.h sys/select.h limits.h sys/param.h])
+AC_CHECK_HEADERS([sys/select.h limits.h sys/param.h])
 AC_CHECK_HEADERS([sys/mount.h])
-
-dnl required structures
-AC_STRUCT_DIRENT_D_TYPE
 
 dnl required system services
 AC_SYS_LARGEFILE
-
-dnl required functions
-AC_CHECK_FUNC([snprintf],, [AC_MSG_ERROR($function_not_found)])
 
 dnl required libraries
 

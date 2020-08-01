@@ -20,7 +20,15 @@
 #ifndef AACS_FILESYSTEM_H_
 #define AACS_FILESYSTEM_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
+
+/*
+ * file access
+ */
 
 typedef struct aacs_file_s AACS_FILE_H;
 struct aacs_file_s
@@ -68,5 +76,8 @@ typedef AACS_FILE_H* (*AACS_FILE_OPEN2)(void *handle, const char* filename);
 struct aacs;
 AACS_PUBLIC void aacs_set_fopen(struct aacs *aacs, void *handle, AACS_FILE_OPEN2 p);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* AACS_FILESYSTEM_H_ */

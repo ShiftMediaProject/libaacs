@@ -38,15 +38,28 @@
  * file access
  */
 
-#define file_close(X)    X->close(X)
-#define file_seek(X,Y,Z) X->seek(X,Y,Z)
-#define file_tell(X)     X->tell(X)
+static inline void file_close(AACS_FILE_H *fp)
+{
+    fp->close(fp);
+}
 
-static inline int64_t file_read(AACS_FILE_H *fp, void *buf, int64_t size) {
+static inline int64_t file_tell(AACS_FILE_H *fp)
+{
+    return fp->tell(fp);
+}
+
+static inline BD_USED int64_t file_seek(AACS_FILE_H *fp, int64_t offset, int32_t origin)
+{
+    return fp->seek(fp, offset, origin);
+}
+
+static inline int64_t file_read(AACS_FILE_H *fp, void *buf, int64_t size)
+{
     return fp->read(fp, buf, size);
 }
 
-static inline int64_t file_write(AACS_FILE_H *fp, const void *buf, int64_t size) {
+static inline int64_t file_write(AACS_FILE_H *fp, const void *buf, int64_t size)
+{
     return fp->write ? fp->write(fp, buf, size) : 0;
 }
 

@@ -81,6 +81,7 @@ struct aacs {
     int       bee;        /* bus encryption enabled flag in content certificate */
     int       bec;        /* bus encryption capable flag in drive certificate */
     uint8_t   read_data_key[16];
+    uint8_t   drive_cert_hash[20];
 
     /* content certificate */
     CONTENT_CERT *cc;
@@ -472,17 +473,67 @@ static size_t _read_file(AACS *aacs, const char *file, void **data)
     return *data ? size : 0;
 }
 
+static size_t _read_mkb_file(AACS *aacs, const char *file, void **pdata)
+{
+    AACS_FILE_H *fp;
+    size_t       size = 0;
+    size_t       data_size = 65536; /* initial alloc */
+    uint32_t     chunk_size = 4; /* initial read */
+    uint8_t     *data;
+
+    *pdata = NULL;
+
+    fp = _file_open(aacs, file);
+    if (!fp) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to open %s\n", file);
+        return 0;
+    }
+
+    data = malloc(data_size);
+    if (!data) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Out of memory\n");
+        file_close(fp);
+        return 0;
+    }
+
+    do {
+        int64_t read_size = chunk_size;
+        if (file_read(fp, data + size, read_size) != read_size) {
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Failed reading %s\n", file);
+            X_FREE(data);
+            break;
+        }
+        size += read_size;
+        chunk_size = MKINT_BE24(data + size - 4 + 1);
+        if (data_size < size + chunk_size) {
+            for ( ; data_size < size + chunk_size; data_size *= 2) ;
+            void *tmp = realloc(data, data_size);
+            if (!tmp) {
+                X_FREE(data);
+                break;
+            }
+            data = tmp;
+        }
+    } while (chunk_size >= 4);
+
+    file_close(fp);
+
+    *pdata = data;
+
+    return data ? size : 0;
+}
+
 static MKB *_mkb_open(AACS *aacs)
 {
     size_t  size;
     void   *data;
     MKB    *mkb;
 
-    size = _read_file(aacs, "AACS" DIR_SEP "MKB_RO.inf", &data);
+    size = _read_mkb_file(aacs, "AACS" DIR_SEP "MKB_RO.inf", &data);
     if (size < 4) {
         /* retry with backup file */
         X_FREE(data);
-        size = _read_file(aacs, "AACS" DIR_SEP "DUPLICATE" DIR_SEP "MKB_RO.inf", &data);
+        size = _read_mkb_file(aacs, "AACS" DIR_SEP "DUPLICATE" DIR_SEP "MKB_RO.inf", &data);
     }
     if (size < 4) {
         X_FREE(data);
@@ -561,6 +612,12 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
         return AACS_SUCCESS;
     }
 
+    /* get cached mk */
+    if (!aacs->no_cache && keycache_find("mk", aacs->disc_id, mk, 16)) {
+        BD_DEBUG(DBG_AACS, "Using cached MK\n");
+        return AACS_SUCCESS;
+    }
+
     BD_DEBUG(DBG_AACS, "Calculate media key...\n");
 
     mkb = _mkb_open(aacs);
@@ -585,6 +642,12 @@ static int _calc_mk(AACS *aacs, uint8_t *mk, pk_list *pkl, dk_list *dkl)
 
     if (result == AACS_SUCCESS) {
         memcpy(aacs->mk, mk, sizeof(aacs->mk));
+        /* cache mk */
+        if (!aacs->no_cache) {
+            if (memcmp(aacs->disc_id, empty_key, sizeof(aacs->disc_id))) {
+                keycache_save("mk", aacs->disc_id, mk, 16);
+            }
+        }
     }
 
     mkb_close(mkb);
@@ -668,10 +731,33 @@ static int _read_vid(AACS *aacs, cert_list *hcl)
 
 static int _read_read_data_key(AACS *aacs, cert_list *hcl)
 {
-    int error_code = _mmc_read_auth(aacs, hcl, MMC_READ_DATA_KEYS, aacs->read_data_key, NULL);
+    int error_code;
+    char *cache_path = NULL;
+    char str[41];
+
+    cache_path = str_printf("rdk" DIR_SEP "%s", str_print_hex(str, aacs->drive_cert_hash, 20));
+
+    error_code =_mmc_read_auth(aacs, hcl, MMC_READ_DATA_KEYS, aacs->read_data_key, NULL);
+    if (error_code == AACS_SUCCESS) {
+        /* cache read data key */
+        if (!aacs->no_cache) {
+            keycache_save(cache_path, aacs->disc_id, aacs->read_data_key, 16);
+        }
+
+    } else {
+        /* get cached read data key */
+        if (!aacs->no_cache && keycache_find(cache_path, aacs->disc_id, aacs->read_data_key, 16)) {
+            BD_DEBUG(DBG_AACS, "Using cached READ DATA KEY\n");
+            error_code = AACS_SUCCESS;
+        }
+    }
+
+    X_FREE(cache_path);
+
     if (error_code != AACS_SUCCESS) {
         BD_DEBUG(DBG_AACS, "Error reading data keys!\n");
     }
+
     return error_code;
 }
 
@@ -743,9 +829,10 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
 }
 
 /* Function that collects keys from keydb config entry */
-static void _find_config_entry(AACS *aacs, title_entry_list *ce,
+static void _find_config_entry(AACS *aacs, config_file *cf,
                                uint8_t *mk, uint8_t *vuk)
 {
+    title_entry_list *ce = cf->list;
     char str[48];
     char str2[48];
 
@@ -762,16 +849,16 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
         return;
     }
 
-    if (ce->entry.mek) {
-        hexstring_to_hex_array(mk, 16, ce->entry.mek);
+    if (memcmp(ce->entry.mk, empty_key, 16)) {
+        memcpy(mk, ce->entry.mk, 16);
+        memcpy(aacs->mk, mk, 16);
 
         BD_DEBUG(DBG_AACS, "Found media key for %s: %s\n",
                  str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, mk, 16));
     }
 
-    if (ce->entry.vid) {
-        hexstring_to_hex_array(aacs->vid, sizeof(aacs->vid),
-                               ce->entry.vid);
+    if (memcmp(ce->entry.vid, empty_key, 16)) {
+        memcpy(aacs->vid, ce->entry.vid, 16);
 
         BD_DEBUG(DBG_AACS, "Found volume id for %s: %s\n",
                  str_print_hex(str2, ce->entry.discid, 20), str_print_hex(str, aacs->vid, 16));
@@ -790,19 +877,28 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
         /* count keys */
         unsigned num_uks = 0;
         digit_key_pair_list *ukcursor = ce->entry.uk;
-        while (ukcursor && ukcursor->key_pair.key) {
+        while (ukcursor) {
             num_uks++;
             ukcursor = ukcursor->next;
         }
 
-        /* check against Unit_Key_RO.inf */
+        /* check against Unit_Key_RO.inf, only discard incorrect amount of UKs if VUK or MK+VID is available */
         if (num_uks != aacs->uk->num_uk) {
-            BD_DEBUG(DBG_CRIT | DBG_AACS, "Ignoring unit keys from config file (expected %u keys, found %u)\n",
+            if (_calc_vuk(aacs, mk, vuk, cf) == AACS_SUCCESS) {
+                BD_DEBUG(DBG_CRIT | DBG_AACS, "Ignoring unit keys from config file (expected %u keys, found %u)\n",
+                         aacs->uk->num_uk, num_uks);
+                return;
+            }
+            BD_DEBUG(DBG_CRIT | DBG_AACS, "Incomplete unit keys in config file (expected %u keys, found %u)\n",
                      aacs->uk->num_uk, num_uks);
-            return;
         }
 
         /* get keys */
+
+        if (num_uks > aacs->uk->num_uk) {
+            /* config file has more unit keys than the disc has */
+            aacs->uk->num_uk = num_uks;
+        }
 
         aacs->uk->uk = calloc(aacs->uk->num_uk, sizeof(aacs->uk->uk[0]));
         if (!aacs->uk->uk) {
@@ -811,8 +907,8 @@ static void _find_config_entry(AACS *aacs, title_entry_list *ce,
 
         num_uks = 0;
         ukcursor = ce->entry.uk;
-        while (ukcursor && ukcursor->key_pair.key) {
-            hexstring_to_hex_array(aacs->uk->uk[num_uks].key, 16, ukcursor->key_pair.key);
+        while (ukcursor) {
+            memcpy(aacs->uk->uk[num_uks].key, ukcursor->key_pair.key, 16);
 
             BD_DEBUG(DBG_AACS, "Unit key %u from keydb entry: %s\n",
                      num_uks,
@@ -897,24 +993,28 @@ static int _calc_uks(AACS *aacs, config_file *cf)
 
     uint8_t mk[16] = {0}, vuk[16] = {0};
 
-    if (cf) {
-        BD_DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
-        _find_config_entry(aacs, cf->list, mk, vuk);
-
-        /* Skip if retrieved from config file */
-        if (aacs->uk->uk) {
-            return AACS_SUCCESS;
-        }
-    }
-
     if (aacs->uk->num_uk < 1) {
         /* no keys ... */
         return AACS_SUCCESS;
     }
 
-    /* Try to calculate VUK */
+    /* first try cached vuk */
+    vuk_error_code = _calc_vuk(aacs, mk, vuk, NULL);
+    if (vuk_error_code != AACS_SUCCESS) {
 
-    vuk_error_code = _calc_vuk(aacs, mk, vuk, cf);
+        if (cf) {
+            BD_DEBUG(DBG_AACS, "Searching for keydb config entry...\n");
+            _find_config_entry(aacs, cf, mk, vuk);
+
+            /* Skip if retrieved from config file */
+            if (aacs->uk->uk) {
+                return AACS_SUCCESS;
+            }
+        }
+
+        /* Try to calculate VUK */
+        vuk_error_code = _calc_vuk(aacs, mk, vuk, cf);
+    }
 
     BD_DEBUG(DBG_AACS, "Calculate CPS unit keys...\n");
 
@@ -957,10 +1057,11 @@ static int _calc_title_hash(AACS *aacs)
     size_t   size;
     char     str[48];
     int      result = AACS_SUCCESS;
+    int      aacs2 = aacs->cc ? aacs->cc->aacs2 : 0;
 
     size = _read_file(aacs, "AACS" DIR_SEP "Unit_Key_RO.inf", &data);
     if (size > 2048) {
-        aacs->uk = uk_parse(data, size);
+        aacs->uk = uk_parse(data, size, aacs2);
     }
 
     /* failed, try backup */
@@ -968,7 +1069,7 @@ static int _calc_title_hash(AACS *aacs)
         X_FREE(data);
         size = _read_file(aacs, "AACS" DIR_SEP "DUPLICATE" DIR_SEP "Unit_Key_RO.inf", &data);
         if (size > 2048) {
-            aacs->uk = uk_parse(data, size);
+            aacs->uk = uk_parse(data, size, aacs2);
         }
     }
 
@@ -1022,7 +1123,7 @@ static int _get_bus_encryption_enabled(AACS *aacs)
     return 0;
 }
 
-static int _get_bus_encryption_capable(const char *path)
+static int _get_bus_encryption_capable(AACS *aacs, const char *path)
 {
     MMC* mmc = NULL;
     uint8_t drive_cert[92];
@@ -1033,9 +1134,11 @@ static int _get_bus_encryption_capable(const char *path)
     }
 
     if (mmc_read_drive_cert(mmc, drive_cert) == MMC_SUCCESS) {
+        crypto_aacs_title_hash(drive_cert, 92, aacs->drive_cert_hash);
         bec = drive_cert[1] & 1;
         BD_DEBUG(DBG_AACS, "Bus Encryption Capable flag in drive certificate: %d\n", bec);
     } else {
+        memset(aacs->drive_cert_hash, 0, sizeof(aacs->drive_cert_hash));
         BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to read drive certificate\n");
     }
 
@@ -1206,12 +1309,14 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
 
     aacs->path = path ? str_dup(path) : NULL;
 
+    aacs->cc = _read_cc_any(aacs);
+
     error_code = _calc_title_hash(aacs);
     if (error_code != AACS_SUCCESS) {
         return error_code;
     }
 
-    cf = keydbcfg_config_load(configfile_path);
+    cf = keydbcfg_config_load(configfile_path, aacs->disc_id);
 
     BD_DEBUG(DBG_AACS, "Starting AACS waterfall...\n");
     error_code = _calc_uks(aacs, cf);
@@ -1219,10 +1324,8 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
         BD_DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
     }
 
-    aacs->cc = _read_cc_any(aacs);
-
     aacs->bee = _get_bus_encryption_enabled(aacs);
-    aacs->bec = _get_bus_encryption_capable(path);
+    aacs->bec = _get_bus_encryption_capable(aacs, path);
 
     if (error_code == AACS_SUCCESS && aacs->bee && aacs->bec) {
 
@@ -1367,7 +1470,7 @@ const uint8_t *aacs_get_bdj_root_cert_hash(AACS *aacs)
 const uint8_t *aacs_get_mk(AACS *aacs)
 {
     if (!memcmp(aacs->mk, empty_key, sizeof(aacs->mk))) {
-        config_file *cf = keydbcfg_config_load(NULL);
+        config_file *cf = keydbcfg_config_load(NULL, NULL);
         if (cf) {
             uint8_t mk[16] = {0};
             if (_calc_mk(aacs, mk, cf->pkl, cf->dkl) == AACS_SUCCESS) {
@@ -1395,7 +1498,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
             return aacs->vid;
         }
 
-        config_file *cf = keydbcfg_config_load(NULL);
+        config_file *cf = keydbcfg_config_load(NULL, NULL);
         if (cf) {
             _read_vid(aacs, cf->host_cert_list);
 
@@ -1414,7 +1517,7 @@ const uint8_t *aacs_get_vid(AACS *aacs)
 const uint8_t *aacs_get_pmsn(AACS *aacs)
 {
     if (!memcmp(aacs->pmsn, empty_key, sizeof(aacs->pmsn))) {
-        config_file *cf = keydbcfg_config_load(NULL);
+        config_file *cf = keydbcfg_config_load(NULL, NULL);
         if (cf) {
             _read_pmsn(aacs, cf->host_cert_list);
 

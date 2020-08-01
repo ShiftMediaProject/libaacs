@@ -50,7 +50,7 @@ struct aacs_uk {
     uint16_t  *title_cps_unit;  /* map title to CPS unit (key index) */
 };
 
-BD_PRIVATE AACS_UK *uk_parse(const void *data, size_t len);
+BD_PRIVATE AACS_UK *uk_parse(const void *data, size_t len, int aacs2);
 BD_PRIVATE void     uk_free(AACS_UK **);
 
 #endif /* AACS_UK_H_ */

@@ -1,9 +1,10 @@
 
 /* encrypted keys */
 
-static const uint32_t internal_device_number = 0;
-
-static const uint8_t internal_dk_list[][21] = {0};
+static const uint8_t internal_dk_list[][21] = {
+  {
+  },
+};
 
 static const uint8_t internal_pk_list[][16] = {0};
 

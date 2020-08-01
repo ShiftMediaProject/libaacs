@@ -141,22 +141,6 @@ int hexstring_to_hex_array(uint8_t *hex_array, uint32_t size,
   return 1;
 }
 
-/* Function to convert a hex array into a hex string.
- * str must be allocated by caller
- * size is the size of the hex_array
- */
-int hex_array_to_hexstring(char *str, const uint8_t *hex_array, uint32_t size)
-{
-  unsigned int i;
-
-  for (i = 0; i < size; i++)
-  {
-    sprintf(str + (i*2), "%02x", hex_array[i]);
-  }
-
-  return 1;
-}
-
 char *str_dup(const char *str)
 {
     char *dup = NULL;
@@ -265,10 +249,13 @@ char *str_get_hex_string(const char *p, int n)
 
 char *str_print_hex(char *out, const uint8_t *buf, int count)
 {
+    static const char nibble[16] = "0123456789abcdef";
     int zz;
     for (zz = 0; zz < count; zz++) {
-        sprintf(out + (zz * 2), "%02x", buf[zz]);
+        out[zz*2    ] = nibble[buf[zz] >> 4];
+        out[zz*2 + 1] = nibble[buf[zz] & 0x0f];
     }
+    out[zz*2] = 0;
 
     return out;
 }

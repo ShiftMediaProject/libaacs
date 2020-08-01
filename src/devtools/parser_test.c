@@ -27,9 +27,13 @@
 static int print_digit_key_pair_enties(digit_key_pair_list *list);
 static int print_title_entries(title_entry_list *list);
 
+static const uint8_t empty_key[16] = {0};
+
 /* Function to print the entres in a digit key pair list */
 static int print_digit_key_pair_enties(digit_key_pair_list *list)
 {
+  char tmp[256];
+
   if (!list)
   {
     printf("Error: No digit key pair list passed as parameter.\n");
@@ -39,10 +43,7 @@ static int print_digit_key_pair_enties(digit_key_pair_list *list)
   digit_key_pair_list *cursor = list;
   while (cursor)
   {
-    if (!cursor->key_pair.key)
-      break;
-
-    printf("    %u - %s\n", cursor->key_pair.digit, cursor->key_pair.key);
+    printf("    %u - %s\n", cursor->key_pair.digit, str_print_hex(tmp, cursor->key_pair.key, 16));
 
     cursor = cursor->next;
   }
@@ -53,7 +54,6 @@ static int print_digit_key_pair_enties(digit_key_pair_list *list)
 /* Function that prints all entries parsed from a config file */
 static int print_title_entries(title_entry_list *list)
 {
-  static const uint8_t empty_key[16] = {0};
   char tmp[256];
 
   if (!list)
@@ -71,10 +71,10 @@ static int print_title_entries(title_entry_list *list)
     printf("  Date: %u-%u-%u\n", cursor->entry.date.year,
       cursor->entry.date.month, cursor->entry.date.day);
 #endif
-    if (cursor->entry.mek)
-      printf("  MEK: %s\n", cursor->entry.mek);
-    if (cursor->entry.vid)
-      printf("  VID: %s\n", cursor->entry.vid);
+    if (memcmp(cursor->entry.mk, empty_key, 16))
+      printf("  MEK: %s\n", str_print_hex(tmp, cursor->entry.mk, 16));
+    if (memcmp(cursor->entry.vid, empty_key, 16))
+      printf("  VID: %s\n", str_print_hex(tmp, cursor->entry.vid, 16));
 #if 0
     if (cursor->entry.bn)
     {
@@ -166,13 +166,35 @@ static int print_config_file(config_file *cfgfile)
 /* main */
 int main (int argc, char **argv)
 {
-  /* suppress unused parameter warning */
-  if (argc) {}
+  config_file *cfgfile;
+  uint8_t disc_id[20] = {0};
+  const uint8_t *want_disc_id = NULL;
+  int retval = 0;
 
-  config_file *cfgfile = keydbcfg_new_config_file();
-  int retval = keydbcfg_parse_config(cfgfile, argv[1]);
-  retval &= print_config_file(cfgfile);
-  keydbcfg_config_file_close(cfgfile);
+  if (argc < 2 || argc > 3) {
+    fprintf(stderr, "usage: parser_test [config_file [disc_id]]\n");
+    return EXIT_FAILURE;
+  }
+
+  if (argc > 2) {
+    if (strlen(argv[2]) != 40) {
+      fprintf(stderr, "disc id must be 40 chars long\n");
+      return EXIT_FAILURE;
+    }
+    if (!hexstring_to_hex_array(disc_id, 20, argv[2])) {
+      fprintf(stderr, "invalid disc id %s\n", argv[2]);
+      return EXIT_FAILURE;
+    }
+    want_disc_id = disc_id;
+  }
+
+
+  cfgfile = keydbcfg_new_config_file();
+  if (cfgfile) {
+    retval = keydbcfg_parse_config(cfgfile, argv[1], want_disc_id, want_disc_id == NULL);
+    retval &= print_config_file(cfgfile);
+    keydbcfg_config_file_close(cfgfile);
+  }
 
   if (!retval)
     return EXIT_FAILURE;

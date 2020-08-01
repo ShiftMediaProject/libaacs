@@ -371,13 +371,13 @@ static DADissenterRef iokit_mount_approval_cb(DADiskRef disk, void *context)
 static int iokit_da_init(MMCDEV *mmc) {
     mmc->session = DASessionCreate(kCFAllocatorDefault);
     if (NULL == mmc->session) {
-        BD_DEBUG(DBG_MMC, "Could not create a disc arbitration session\n");
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Could not create a disc arbitration session\n");
         return -1;
     }
 
     mmc->disk = DADiskCreateFromBSDName(kCFAllocatorDefault, mmc->session, mmc->bsd_name);
     if (NULL == mmc->disk) {
-        BD_DEBUG(DBG_MMC, "Could not create a disc arbitration disc for the device\n");
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Could not create a disc arbitration disc for the device\n");
         CFRelease(mmc->session);
         mmc->session = NULL;
         return -1;
@@ -429,14 +429,14 @@ static int mmc_open_iokit(const char *path, MMCDEV *mmc) {
     /* get the bsd name associated with this mount */
     rc = get_mounted_device_from_path(mmc, path);
     if (0 != rc) {
-        BD_DEBUG(DBG_MMC, "Could not locate mounted device associated with %s\n", path);
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Could not locate mounted device associated with %s\n", path);
         return rc;
     }
 
     /* find a matching io service (IOBDServices) */
     rc = iokit_find_service_matching(mmc, &service);
     if (0 != rc) {
-        BD_DEBUG(DBG_MMC, "Could not find matching IOBDServices mounted @ %s\n", path);
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Could not find matching IOBDServices mounted @ %s\n", path);
         return rc;
     }
 
@@ -445,6 +445,10 @@ static int mmc_open_iokit(const char *path, MMCDEV *mmc) {
 
     /* done with the ioservice. release it */
     (void) IOObjectRelease(service);
+
+    if (0 != rc) {
+        return rc;
+    }
 
     /* Init DiskArbitration */
     rc = iokit_da_init(mmc);
@@ -463,7 +467,7 @@ static int mmc_open_iokit(const char *path, MMCDEV *mmc) {
     /* finally, obtain exclusive access */
     rc = (*mmc->taskInterface)->ObtainExclusiveAccess(mmc->taskInterface);
     if (kIOReturnSuccess != rc) {
-        BD_DEBUG(DBG_MMC, "Failed to obtain exclusive access. rc = %x\n", rc);
+        BD_DEBUG(DBG_MMC | DBG_CRIT, "Failed to obtain exclusive access. rc = %x\n", rc);
         return -1;
     }
 
@@ -531,6 +535,12 @@ void device_close(MMCDEV **pp)
 
         if (mmc->plugInInterface) {
             IODestroyPlugInInterface(mmc->plugInInterface);
+        }
+
+        if (!mmc->sync_sem) {
+            /* open failed before iokit_da_init() */
+            X_FREE(*pp);
+            return;
         }
 
         /* Wait for disc to re-appear for 20 seconds.

@@ -1,11 +1,12 @@
 ACLOCAL_AMFLAGS=-I m4
 
-EXTRA_DIST=bootstrap COPYING KEYDB.cfg README.txt ChangeLog
+EXTRA_DIST=bootstrap COPYING KEYDB.cfg README.md ChangeLog
 
 SET_FEATURES = @SET_FEATURES@
 SET_INCLUDES = -I$(top_srcdir)/src -I$(top_builddir)/src/libaacs
 
-AM_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES) $(LIBGCRYPT_CFLAGS) $(GPG_ERROR_CFLAGS)
+AM_CFLAGS = -std=c99 $(LIBGCRYPT_CFLAGS) $(GPG_ERROR_CFLAGS)
+AM_CPPFLAGS = $(SET_FEATURES) $(SET_INCLUDES)
 AM_YFLAGS = -d -p libaacs_yy
 
 lib_LTLIBRARIES = libaacs.la
@@ -92,17 +93,34 @@ dist-hook:
 # programs
 #
 
-noinst_PROGRAMS = parser_test
+noinst_PROGRAMS = parser_test uk_dump mkb_dump
 bin_PROGRAMS = aacs_info
 
 parser_test_SOURCES = \
-	src/examples/parser_test.c \
+	src/devtools/parser_test.c \
 	src/file/keydbcfg-parser.y \
 	src/file/keydbcfg-lexer.l \
 	src/util/strutl.c \
 	src/util/logging.c
-parser_test_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES)
+parser_test_CFLAGS = -std=c99
+
+uk_dump_SOURCES = \
+	src/devtools/uk_dump.c \
+	src/devtools/read_file.h \
+	src/libaacs/unit_key.h \
+	src/libaacs/unit_key.c \
+	src/util/logging.c
+uk_dump_CFLAGS = -std=c99
+
+mkb_dump_SOURCES = \
+	src/devtools/mkb_dump.c \
+	src/devtools/read_file.h \
+	src/libaacs/mkb.h \
+	src/libaacs/mkb.c \
+	src/util/strutl.c \
+	src/util/logging.c
+mkb_dump_CFLAGS = -std=c99
 
 aacs_info_SOURCES = src/examples/aacs_info.c
-aacs_info_CFLAGS = -std=c99 $(SET_FEATURES) $(SET_INCLUDES)
+aacs_info_CFLAGS = -std=c99
 aacs_info_LDADD = libaacs.la
