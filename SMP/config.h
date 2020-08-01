@@ -111,20 +111,3 @@
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
 /* #undef YYTEXT_POINTER */
-
-#include <winapifamily.h>
-#if !(defined(WINAPI_FAMILY_PARTITION) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP))
-#ifdef _M_IX86
-/* Define to '0x0501' for IE 5.01. */
-#define _WIN32_IE 0x0502
-
-/* Define to '0x0500' for Windows XP APIs. */
-#define _WIN32_WINNT 0x0502
-#else
-/* Define to '0x0600' for IE 6.0. */
-#define _WIN32_IE 0x0600
-
-/* Define to '0x0600' for Windows Vista APIs. */
-#define _WIN32_WINNT 0x0600
-#endif
-#endif

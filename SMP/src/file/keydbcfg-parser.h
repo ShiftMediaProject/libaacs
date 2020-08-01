@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.3.2.  */
+/* A Bison parser, made by GNU Bison 3.5.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -45,8 +45,23 @@ extern int libaacs_yydebug;
 #endif
 /* "%code requires" blocks.  */
 
-
 #include "file/keydbcfg.h"
+
+#define MAX_KEY_SIZE 128
+
+typedef struct {
+  title_entry_list    *celist;  /* current disc entry or NULL */
+  digit_key_pair_list *dkplist; /* current list */
+
+  const uint64_t  *want_disc_id; /* parse only this disc (none if NULL) */
+  int              all_discs;    /* parse entries for all discs */
+
+  size_t hexkey_size;
+  union { /* make sure we're properly aligned */
+    char     b[MAX_KEY_SIZE];
+    uint64_t u64[5];
+  } hexkey;
+} parser_state;
 
 
 
@@ -115,17 +130,14 @@ extern int libaacs_yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-
 
   char *string;
   unsigned int digit;
 
 
 };
-
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -133,6 +145,6 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-int libaacs_yyparse (void *scanner, config_file *cf, title_entry_list *celist, digit_key_pair_list *dkplist);
+int libaacs_yyparse (void *scanner, config_file *cf, parser_state *ps);
 
 #endif /* !YY_LIBAACS_YY_SMP_SRC_FILE_KEYDBCFG_PARSER_H_INCLUDED  */
