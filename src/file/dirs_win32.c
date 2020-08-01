@@ -21,6 +21,7 @@
 # include "config.h"
 #endif
 
+#include <winapifamily.h>
 #if defined(WINAPI_FAMILY_PARTITION) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 #define COBJMACROS
 #define INITGUID
