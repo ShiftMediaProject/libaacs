@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\src\file\dirs_win32.c" />
+    <ClCompile Include="..\src\file\file.c" />
+    <ClCompile Include="..\src\file\filesystem.c" />
+    <ClCompile Include="..\src\file\file_win32.c" />
+    <ClCompile Include="..\src\file\keydbcfg.c" />
+    <ClCompile Include="..\src\file\mmc_device_win32.c" />
+    <ClCompile Include="..\src\libaacs\aacs.c" />
+    <ClCompile Include="..\src\libaacs\cci.c" />
+    <ClCompile Include="..\src\libaacs\content_cert.c" />
+    <ClCompile Include="..\src\libaacs\crypto.c" />
+    <ClCompile Include="..\src\libaacs\mkb.c" />
+    <ClCompile Include="..\src\libaacs\mmc.c" />
+    <ClCompile Include="..\src\libaacs\unit_key.c" />
+    <ClCompile Include="..\src\util\logging.c" />
+    <ClCompile Include="..\src\util\strutl.c" />
+    <ClCompile Include="src\file\keydbcfg-lexer.c" />
+    <ClCompile Include="src\file\keydbcfg-parser.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\file\dirs.h" />
+    <ClInclude Include="..\src\file\file.h" />
+    <ClInclude Include="..\src\file\filesystem.h" />
+    <ClInclude Include="..\src\file\keydb.h" />
+    <ClInclude Include="..\src\file\keydbcfg.h" />
+    <ClInclude Include="..\src\file\mmc_device.h" />
+    <ClInclude Include="..\src\file\path.h" />
+    <ClInclude Include="..\src\libaacs\aacs.h" />
+    <ClInclude Include="..\src\libaacs\cci.h" />
+    <ClInclude Include="..\src\libaacs\cci_data.h" />
+    <ClInclude Include="..\src\libaacs\content_cert.h" />
+    <ClInclude Include="..\src\libaacs\crypto.h" />
+    <ClInclude Include="..\src\libaacs\mkb.h" />
+    <ClInclude Include="..\src\libaacs\mmc.h" />
+    <ClInclude Include="..\src\libaacs\unit_key.h" />
+    <ClInclude Include="..\src\util\attributes.h" />
+    <ClInclude Include="..\src\util\logging.h" />
+    <ClInclude Include="..\src\util\macro.h" />
+    <ClInclude Include="..\src\util\strutl.h" />
+    <ClInclude Include="config.h" />
+    <ClInclude Include="src\libaacs\aacs-version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+  </ItemGroup>
+</Project>

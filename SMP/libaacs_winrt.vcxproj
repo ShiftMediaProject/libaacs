@@ -1,21 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{5C430557-42AD-438B-A8AE-CB70183D2F85}</ProjectGuid>
+    <ProjectGuid>{AC430557-42AD-438B-A8AE-CB70183D2F85}</ProjectGuid>
     <RootNamespace>aacs</RootNamespace>
   </PropertyGroup>
   <ImportGroup Label="PropertySheets">
-    <Import Project="smp_deps.props" />
+    <Import Project="smp_winrt_deps.props" />
     <Import Project="libaacs_files.props" />
   </ImportGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugWinRT|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
-      <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libgcryptd_winrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/IGNORE:4197 %(AdditionalOptions)</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
@@ -71,14 +71,14 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <Outputs>force_clean</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugWinRT|x64'">
     <ClCompile>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
-      <AdditionalDependencies>libgcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libgcryptd_winrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/IGNORE:4197 %(AdditionalOptions)</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
@@ -134,14 +134,14 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <Outputs>force_clean</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLWinRT|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>gcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gcryptd_winrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/IGNORE:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
@@ -197,14 +197,14 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <Outputs>force_clean</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLWinRT|x64'">
     <ClCompile>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>gcryptd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gcryptd_winrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/IGNORE:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
@@ -260,14 +260,14 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <Outputs>force_clean</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWinRT|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
-      <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libgcrypt_winrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/IGNORE:4197 %(AdditionalOptions)</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
@@ -321,14 +321,14 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <Outputs>force_clean</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWinRT|x64'">
     <ClCompile>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
-      <AdditionalDependencies>libgcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libgcrypt_winrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/IGNORE:4197 %(AdditionalOptions)</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
@@ -382,14 +382,14 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <Outputs>force_clean</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLWinRT|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>gcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gcrypt_winrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/IGNORE:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
@@ -445,14 +445,14 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <Outputs>force_clean</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLStaticDeps|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLWinRTStaticDeps|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>gcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gcrypt_winrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/IGNORE:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
@@ -508,14 +508,14 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <Outputs>force_clean</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLWinRT|x64'">
     <ClCompile>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>gcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gcrypt_winrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/IGNORE:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
@@ -571,14 +571,14 @@ del /f /q $(OutDir)\licenses\libaacs.txt
       <Outputs>force_clean</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLStaticDeps|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLWinRTStaticDeps|x64'">
     <ClCompile>
       <PreprocessorDefinitions>HAVE_CONFIG_H;__PRETTY_FUNCTION__=__FUNCTION__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;.\src;.\src\libaacs;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>gcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gcrypt_winrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/IGNORE:4197 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
