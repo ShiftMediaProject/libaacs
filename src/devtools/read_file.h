@@ -21,11 +21,11 @@
 #include <stdlib.h>
 #include <errno.h>
 
-static size_t _read_file(const char *name, off_t min_size, off_t max_size, uint8_t **pdata)
+static size_t _read_file(const char *name, long min_size, long max_size, uint8_t **pdata)
 {
     FILE    *f;
     uint8_t *data = NULL;
-    off_t    file_size;
+    long     file_size;
     size_t   size;
 
     f = fopen(name, "rb");
