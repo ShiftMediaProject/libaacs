@@ -105,6 +105,7 @@ int device_send_cmd(MMCDEV *dev, const uint8_t *cmd, uint8_t *buf, size_t tx, si
     BD_DEBUG(DBG_MMC, "  Send failed! [%d] %s\n", result, strerror(errno));
 #else
 #warning no MMC drive support
+    (void)dev; (void)cmd; (void)buf; (void)tx; (void)rx;
     BD_DEBUG(DBG_MMC | DBG_CRIT, "No MMC drive support\n");
 #endif
 
