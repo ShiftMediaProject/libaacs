@@ -23,8 +23,8 @@ build-macos:
         - catalina
         - amd64
     script:
-        - curl -sS -O https://artifacts.videolan.org/vlc/macos/vlc-contrib-x86_64-apple-darwin19-45c21cd73727ddcd1af843a34dc4ca8648cc872c.tar.bz2
-        - tar xf vlc-contrib-x86_64-apple-darwin19-45c21cd73727ddcd1af843a34dc4ca8648cc872c.tar.bz2
+        - curl -sS -O https://artifacts.videolan.org/vlc/macos-x86_64/vlc-contrib-x86_64-apple-darwin19-58c8b6aba888c666612e91d1cbb012aea630c853.tar.bz2
+        - tar xf vlc-contrib-x86_64-apple-darwin19-58c8b6aba888c666612e91d1cbb012aea630c853.tar.bz2
         - cd x86_64-apple-darwin19
         - curl -sS -o ./change_prefix.sh 'https://git.videolan.org/?p=vlc.git;a=blob_plain;f=contrib/src/change_prefix.sh;hb=HEAD'
         - chmod +x ./change_prefix.sh
