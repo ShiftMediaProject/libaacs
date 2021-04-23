@@ -143,6 +143,16 @@ int crypto_init()
     return crypto_init_check;
 }
 
+void crypto_aes128e(const uint8_t *key, const uint8_t *data, uint8_t *dst)
+{
+    gcry_cipher_hd_t gcry_h;
+
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+    gcry_cipher_setkey(gcry_h, key, 16);
+    gcry_cipher_encrypt(gcry_h, dst, 16, data, 16);
+    gcry_cipher_close(gcry_h);
+}
+
 void crypto_aes128d(const uint8_t *key, const uint8_t *data, uint8_t *dst)
 {
     gcry_cipher_hd_t gcry_h;

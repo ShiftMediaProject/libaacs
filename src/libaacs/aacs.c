@@ -42,10 +42,6 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
-#include <gcrypt.h>
 
 
 #define SECTOR_LEN       2048  /* bus encryption block size */
@@ -1168,10 +1164,7 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
         memcpy(out_buf, in_buf, 16); /* first 16 bytes are plain */
     }
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, aacs->uk->uk[curr_uk].key, 16);
-    gcry_cipher_encrypt(gcry_h, key, 16, out_buf, 16); /* here out_buf is plain data fron in_buf */
-    gcry_cipher_close(gcry_h);
+    crypto_aes128e(aacs->uk->uk[curr_uk].key, out_buf, key);
 
     for (a = 0; a < 16; a++) {
         key[a] ^= out_buf[a]; /* here out_buf is plain data fron in_buf */
