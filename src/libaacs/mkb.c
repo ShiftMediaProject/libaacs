@@ -107,6 +107,11 @@ size_t mkb_data_size(MKB *mkb)
         pos += MKINT_BE24(mkb->buf + pos + 1);
     }
 
+    if (pos > mkb->size) {
+        BD_DEBUG(DBG_MKB | DBG_CRIT, "mkb_data_size(): invalid or truncated MKB\n");
+        return mkb->size;
+    }
+
     return pos;
 }
 
