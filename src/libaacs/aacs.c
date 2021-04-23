@@ -105,7 +105,6 @@ static int _validate_pk(const uint8_t *pk,
                         const uint8_t *cvalue, const uint8_t *uv, const uint8_t *vd,
                         uint8_t *mk)
 {
-    gcry_cipher_hd_t gcry_h;
     int a;
     uint8_t dec_vd[16];
     char str[40];
@@ -116,17 +115,13 @@ static int _validate_pk(const uint8_t *pk,
     BD_DEBUG(DBG_AACS, "   cvalue: %s\n", str_print_hex(str, cvalue, 16));
     BD_DEBUG(DBG_AACS, "   Verification data: %s\n", str_print_hex(str, vd, 16));
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, pk, 16);
-    gcry_cipher_decrypt(gcry_h, mk, 16, cvalue, 16);
+    crypto_aes128d(pk, cvalue, mk);
 
     for (a = 0; a < 4; a++) {
         mk[a + 12] ^= uv[a];
     }
 
-    gcry_cipher_setkey(gcry_h, mk, 16);
-    gcry_cipher_decrypt (gcry_h, dec_vd, 16, vd, 16);
-    gcry_cipher_close(gcry_h);
+    crypto_aes128d(mk, vd, dec_vd);
 
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
         BD_DEBUG(DBG_AACS, "Processing key %s is valid!\n", str_print_hex(str, pk, 16));
