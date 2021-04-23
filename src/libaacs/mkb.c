@@ -49,6 +49,12 @@ static const uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
             BD_DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (%p)\n", type,
                   (void*)(mkb->buf + pos));
 
+            if (len > mkb->size - pos) {
+                BD_DEBUG(DBG_MKB | DBG_CRIT, "Ignoring truncated MKB record 0x%02x @ %zu, size %zu (%p)\n", type, pos, len,
+                         (void*)(mkb->buf + pos));
+                return NULL;
+            }
+
             return mkb->buf + pos;
         }
 
@@ -112,6 +118,7 @@ size_t mkb_data_size(MKB *mkb)
         return mkb->size;
     }
 
+    BD_DEBUG(DBG_MKB, "MKB data size %zu bytes\n", pos);
     return pos;
 }
 
