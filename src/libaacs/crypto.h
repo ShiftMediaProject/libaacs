@@ -31,6 +31,8 @@ BD_PRIVATE void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk,
                              uint8_t *pk);   // returns left, centre, right keys
 BD_PRIVATE void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac);
 
+BD_PRIVATE void crypto_aacs_decrypt(const uint8_t *key, uint8_t *out, size_t out_size, const uint8_t *in, size_t in_size);
+
 BD_PRIVATE void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
                                  uint8_t *signature,
                                  const uint8_t *nonce, const uint8_t *point);

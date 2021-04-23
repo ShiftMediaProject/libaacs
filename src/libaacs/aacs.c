@@ -94,8 +94,6 @@ struct aacs {
 static const uint8_t empty_key[20] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                        0x00, 0x00, 0x00, 0x00 };
-static const uint8_t aacs_iv[16]   = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
-                                       0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
 
 /*
  * Validate processing key using media key verification data
@@ -1163,7 +1161,6 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
 {
     /* inbuf == NULL means in-place decryption */
 
-    gcry_cipher_hd_t gcry_h;
     int a;
     uint8_t key[16];
 
@@ -1180,32 +1177,17 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
         key[a] ^= out_buf[a]; /* here out_buf is plain data fron in_buf */
     }
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
-    gcry_cipher_setkey(gcry_h, key, 16);
-    gcry_cipher_setiv(gcry_h, aacs_iv, 16);
     if (BD_UNLIKELY(in_buf != NULL)) {
-        gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
+        crypto_aacs_decrypt(key, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
     } else {
-        gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, NULL, 0);
+        crypto_aacs_decrypt(key, out_buf + 16, ALIGNED_UNIT_LEN - 16, NULL, 0);
     }
-    gcry_cipher_close(gcry_h);
 
     if (_verify_ts(out_buf)) {
         return 1;
     }
 
     return 0;
-}
-
-static void _decrypt_bus(AACS *aacs, uint8_t *buf)
-{
-    gcry_cipher_hd_t gcry_h;
-
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
-    gcry_cipher_setkey(gcry_h, aacs->read_data_key, 16);
-    gcry_cipher_setiv(gcry_h, aacs_iv, 16);
-    gcry_cipher_decrypt(gcry_h, buf + 16, SECTOR_LEN - 16, NULL, 0);
-    gcry_cipher_close(gcry_h);
 }
 
 /*
@@ -1365,7 +1347,8 @@ static void _decrypt_unit_bus(AACS *aacs, uint8_t *buf)
     if (aacs->bee && aacs->bec) {
         unsigned int i;
         for (i = 0; i < ALIGNED_UNIT_LEN; i += SECTOR_LEN) {
-            _decrypt_bus(aacs, buf + i);
+            //_decrypt_bus(aacs, buf + i);
+            crypto_aacs_decrypt(aacs->read_data_key, buf + i + 16, SECTOR_LEN - 16, NULL, 0);
         }
     }
 }

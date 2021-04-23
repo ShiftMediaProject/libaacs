@@ -228,6 +228,26 @@ void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key,
     gcry_cipher_close(gcry_h);
 }
 
+/*
+ *
+ */
+
+void crypto_aacs_decrypt(const uint8_t *key, uint8_t *out, size_t out_size, const uint8_t *in, size_t in_size)
+{
+    static const uint8_t aacs_iv[16]   = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
+                                           0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
+    gcry_cipher_hd_t gcry_h;
+
+    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
+    gcry_cipher_setkey(gcry_h, key, 16);
+    gcry_cipher_setiv(gcry_h, aacs_iv, 16);
+    gcry_cipher_decrypt(gcry_h, out, out_size, in, in_size);
+    gcry_cipher_close(gcry_h);
+}
+
+/*
+ *
+ */
 
 #if defined(HAVE_STRERROR_R) && defined(HAVE_LIBGPG_ERROR)
 #define LOG_GCRY_ERROR(msg, func, err)                                  \
