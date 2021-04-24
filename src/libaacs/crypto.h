@@ -25,14 +25,21 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-BD_PRIVATE int  crypto_init(void);
-BD_PRIVATE void crypto_aes128e(const uint8_t *key, const uint8_t *data, uint8_t *dst);
-BD_PRIVATE void crypto_aes128d(const uint8_t *key, const uint8_t *data, uint8_t *dst);
-BD_PRIVATE void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk,
-                             uint8_t *pk);   // returns left, centre, right keys
-BD_PRIVATE void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac);
+BD_PRIVATE void crypto_strerror(int err, char *buf, size_t buf_size);
+#define LOG_CRYPTO_ERROR(flags, str, err) do {                              \
+    char s[64];                                                         \
+    crypto_strerror((err), s, sizeof(s));                               \
+    BD_DEBUG(DBG_CRIT | (flags), "crypto error: %s: %s (%u)\n", (str), s, (unsigned)(err)); \
+  } while (0)
 
-BD_PRIVATE void crypto_aacs_decrypt(const uint8_t *key, uint8_t *out, size_t out_size, const uint8_t *in, size_t in_size);
+BD_PRIVATE int  crypto_init(void);
+BD_PRIVATE int  crypto_aes128e(const uint8_t *key, const uint8_t *data, uint8_t *dst);
+BD_PRIVATE int  crypto_aes128d(const uint8_t *key, const uint8_t *data, uint8_t *dst);
+BD_PRIVATE int  crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk,
+                             uint8_t *pk);   // returns left, centre, right keys
+BD_PRIVATE int  crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac);
+
+BD_PRIVATE int  crypto_aacs_decrypt(const uint8_t *key, uint8_t *out, size_t out_size, const uint8_t *in, size_t in_size);
 
 BD_PRIVATE void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
                                  uint8_t *signature,

@@ -106,18 +106,22 @@ static void _curve_free(elliptic_curve_t *c)
     point_free(&c->G);
 }
 
-static void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
+BD_USED static int _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 {
-    int a;
+    int a, err;
     uint8_t seed[16] = { 0x7B, 0x10, 0x3C, 0x5D, 0xCB, 0x08, 0xC4, 0xE5,
                          0x1A, 0x27, 0xB0, 0x17, 0x99, 0x05, 0x3B, 0xD9 };
     seed[15] += inc;
 
-    crypto_aes128d(src_key, seed, dst_key);
+    err = crypto_aes128d(src_key, seed, dst_key);
+    if (err)
+        return err;
 
     for (a = 0; a < 16; a++) {
         dst_key[a] ^= seed[a];
     }
+
+    return err;
 }
 
 /* Initializes libgcrypt */
@@ -143,39 +147,61 @@ int crypto_init()
     return crypto_init_check;
 }
 
-void crypto_aes128e(const uint8_t *key, const uint8_t *data, uint8_t *dst)
+int crypto_aes128e(const uint8_t *key, const uint8_t *data, uint8_t *dst)
 {
     gcry_cipher_hd_t gcry_h;
+    gcry_error_t err;
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, key, 16);
-    gcry_cipher_encrypt(gcry_h, dst, 16, data, data ? 16 : 0);
+    err = gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+    if (err)
+        return err;
+
+    err = gcry_cipher_setkey(gcry_h, key, 16);
+    if (err)
+        goto error;
+    err = gcry_cipher_encrypt(gcry_h, dst, 16, data, data ? 16 : 0);
+
+ error:
     gcry_cipher_close(gcry_h);
+    return err;
 }
 
-void crypto_aes128d(const uint8_t *key, const uint8_t *data, uint8_t *dst)
+int crypto_aes128d(const uint8_t *key, const uint8_t *data, uint8_t *dst)
 {
     gcry_cipher_hd_t gcry_h;
+    gcry_error_t err;
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, key, 16);
-    gcry_cipher_decrypt(gcry_h, dst, 16, data, 16);
+    err = gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+    if (err)
+        return err;
+
+    err = gcry_cipher_setkey(gcry_h, key, 16);
+    if (err)
+        goto error;
+    err = gcry_cipher_decrypt(gcry_h, dst, 16, data, 16);
+
+ error:
     gcry_cipher_close(gcry_h);
+    return err;
 }
 
-void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
+int crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
 {
+    int err1 = 0, err2 = 0, err3 = 0;
+
     if (lsubk) {
-        _aesg3(D, lsubk, 0);
+        err1 = _aesg3(D, lsubk, 0);
     }
 
     if (pk) {
-        _aesg3(D, pk, 1);
+        err2 = _aesg3(D, pk, 1);
     }
 
     if (rsubk) {
-        _aesg3(D, rsubk, 2);
+        err3 = _aesg3(D, rsubk, 2);
     }
+
+    return err1 ? err1 : err2 ? err2 : err3;
 }
 
 /*
@@ -189,15 +215,18 @@ static void _shl_128(unsigned char *dst, const unsigned char *src)
 
     for (i = 15; i >= 0; i--) {
         dst[i] = (src[i] << 1) | overflow;
-	overflow = src[i] >> 7;
+        overflow = src[i] >> 7;
     }
 }
 
-static void _cmac_key(const unsigned char *aes_key, unsigned char *k1, unsigned char *k2)
+BD_USED static int _cmac_key(const unsigned char *aes_key, unsigned char *k1, unsigned char *k2)
 {
     uint8_t key[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    int err;
 
-    crypto_aes128e(aes_key, NULL, key);
+    err = crypto_aes128e(aes_key, NULL, key);
+    if (err)
+        return err;
 
     _shl_128(k1, key);
     if (key[0] & 0x80) {
@@ -208,42 +237,81 @@ static void _cmac_key(const unsigned char *aes_key, unsigned char *k1, unsigned 
     if (k1[0] & 0x80) {
         k2[15] ^= 0x87;
     }
+
+    return err;
 }
 
-void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac)
+int crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac)
 {
     uint8_t k1[16], k2[16];
     unsigned ii;
+    int err;
 
     /*
      * Simplified version of AES CMAC. Spports only 16-byte input data.
      */
 
     /* generate CMAC keys */
-    _cmac_key(aes_key, k1, k2);
+
+    err = _cmac_key(aes_key, k1, k2);
+    if (err)
+        return err;
+
     memcpy(cmac, data, 16);
     for (ii = 0; ii < 16; ii++) {
         cmac[ii] ^= k1[ii];
     }
 
-    crypto_aes128e(aes_key, NULL, cmac);
+    err = crypto_aes128e(aes_key, NULL, cmac);
+
+    return err;
 }
 
 /*
  *
  */
 
-void crypto_aacs_decrypt(const uint8_t *key, uint8_t *out, size_t out_size, const uint8_t *in, size_t in_size)
+int crypto_aacs_decrypt(const uint8_t *key, uint8_t *out, size_t out_size, const uint8_t *in, size_t in_size)
 {
     static const uint8_t aacs_iv[16]   = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
                                            0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
     gcry_cipher_hd_t gcry_h;
+    gcry_error_t err;
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
-    gcry_cipher_setkey(gcry_h, key, 16);
-    gcry_cipher_setiv(gcry_h, aacs_iv, 16);
-    gcry_cipher_decrypt(gcry_h, out, out_size, in, in_size);
+    err = gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
+    if (err)
+        return err;
+
+    err = gcry_cipher_setkey(gcry_h, key, 16);
+    if (err)
+      goto error;
+    err = gcry_cipher_setiv(gcry_h, aacs_iv, 16);
+    if (err)
+      goto error;
+    err = gcry_cipher_decrypt(gcry_h, out, out_size, in, in_size);
+
+ error:
     gcry_cipher_close(gcry_h);
+    return err;
+}
+
+/*
+ *
+ */
+
+void crypto_strerror(int err, char *buf, size_t buf_size)
+{
+#if defined(HAVE_STRERROR_R) && defined(HAVE_LIBGPG_ERROR)
+  buf[0] = 0;
+  gpg_strerror_r(err, buf, buf_size);
+#else
+  const char *msg = gcry_strerror(err);
+  buf[0] = 0;
+  if (str) {
+    strncpy(buf, str, buf_size);
+    str[buf_size - 1] = 0;
+  }
+#endif
 }
 
 /*
