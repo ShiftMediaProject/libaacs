@@ -68,7 +68,7 @@ int main (int argc, char **argv)
 
     if (argc < 2) {
         fprintf(stderr, "Usage: aacs_info <path-to-disc-root> [<path-to-config-file>]\n");
-	exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
 
     aacs_get_version(&major, &minor, &micro);
@@ -76,7 +76,7 @@ int main (int argc, char **argv)
 
     aacs = aacs_init();
     if (!aacs) {
-	exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
 
     error_code = aacs_open_device(aacs, argv[1], argc > 2 ? argv[2] : NULL);
