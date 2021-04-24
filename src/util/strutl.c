@@ -25,7 +25,6 @@
 #include "strutl.h"
 
 #include "macro.h"
-#include "logging.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -111,7 +110,6 @@ static int _hexstring_to_unsigned_char(uint8_t *value, char c)
         break;
 
       default:
-        BD_DEBUG(DBG_AACS, "Invalid hex value '%c'", c);
         return 0;
     }
 
@@ -214,7 +212,6 @@ static int _str_is_hex_string(const char *str, int len)
 
     /* check end */
     if (isxdigit(str[ii])) {
-        //BD_DEBUG(DBG_AACS, "Invalid hex string (too long): %s", str);
         return 0;
     }
 
