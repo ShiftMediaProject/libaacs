@@ -539,6 +539,7 @@ static int _read_vid(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *vi
 {
     uint8_t mac[16], calc_mac[16];
     char str[512];
+    int err;
 
     BD_DEBUG(DBG_MMC, "Reading VID from drive...\n");
 
@@ -549,7 +550,10 @@ static int _read_vid(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *vi
         }
 
         /* verify MAC */
-        crypto_aes_cmac_16(vid, bus_key, calc_mac);
+        err = crypto_aes_cmac_16(vid, bus_key, calc_mac);
+        if (err) {
+            LOG_CRYPTO_ERROR(DBG_MMC, "VID MAC calculation failed", err);
+        }
         if (memcmp(calc_mac, mac, 16)) {
             BD_DEBUG(DBG_MMC | DBG_CRIT, "VID MAC is incorrect. This means this Volume ID is not correct.\n");
         }
@@ -566,6 +570,7 @@ static int _read_pmsn(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *p
 {
     uint8_t mac[16], calc_mac[16];
     char str[512];
+    int err;
 
     BD_DEBUG(DBG_MMC, "Reading PMSN from drive...\n");
 
@@ -576,7 +581,10 @@ static int _read_pmsn(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *p
         }
 
         /* verify MAC */
-        crypto_aes_cmac_16(pmsn, bus_key, calc_mac);
+        err = crypto_aes_cmac_16(pmsn, bus_key, calc_mac);
+        if (err) {
+            LOG_CRYPTO_ERROR(DBG_MMC, "PMSN MAC calculation failed", err);
+        }
         if (memcmp(calc_mac, mac, 16)) {
             BD_DEBUG(DBG_MMC | DBG_CRIT, "PMSN MAC is incorrect. This means this Pre-recorded Medial Serial Number is not correct.\n");
         }
@@ -599,13 +607,19 @@ static int _read_data_keys(MMC *mmc, uint8_t agid, const uint8_t *bus_key,
 
     if (_mmc_read_data_keys(mmc, agid, encrypted_read_data_key, encrypted_write_data_key)) {
         if (read_data_key) {
-            crypto_aes128d(bus_key, encrypted_read_data_key, read_data_key);
+            int err = crypto_aes128d(bus_key, encrypted_read_data_key, read_data_key);
+            if (err) {
+                LOG_CRYPTO_ERROR(DBG_MMC, "decrypting read data key failed", err);
+            }
             if (DEBUG_KEYS) {
                 BD_DEBUG(DBG_MMC, "READ DATA KEY       : %s\n", str_print_hex(str, read_data_key, 16));
             }
         }
         if (write_data_key) {
-            crypto_aes128d(bus_key, encrypted_write_data_key, write_data_key);
+            int err = crypto_aes128d(bus_key, encrypted_write_data_key, write_data_key);
+            if (err) {
+                LOG_CRYPTO_ERROR(DBG_MMC, "decrypting write data key failed", err);
+            }
             if (DEBUG_KEYS) {
                 BD_DEBUG(DBG_MMC, "WRITE DATA KEY      : %s\n", str_print_hex(str, write_data_key, 16));
             }
