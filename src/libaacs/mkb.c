@@ -122,6 +122,21 @@ size_t mkb_data_size(MKB *mkb)
     return pos;
 }
 
+static const uint8_t *_simple_record(MKB *mkb, uint8_t type, size_t *len)
+{
+    const uint8_t *rec = _record(mkb, type, len);
+
+    if (*len < 4) {
+        return NULL;
+    }
+    if (rec) {
+        rec += 4;
+        *len -= 4;
+    }
+
+    return rec;
+}
+
 
 uint32_t mkb_type(MKB *mkb)
 {
@@ -157,65 +172,24 @@ const uint8_t *mkb_type_and_version_record(MKB *mkb)
     return rec;
 }
 
-
 const uint8_t *mkb_host_revokation_entries(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x21, len);
-
-    if (*len < 4) {
-        return NULL;
-    }
-    if (rec) {
-        rec += 4;
-        *len -= 4;
-    }
-
-    return rec;
+    return _simple_record(mkb, 0x21, len);
 }
 
 const uint8_t *mkb_drive_revokation_entries(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x20, len);
-
-    if (*len < 4) {
-        return NULL;
-    }
-    if (rec) {
-        rec += 4;
-        *len -= 4;
-    }
-
-    return rec;
+    return _simple_record(mkb, 0x20, len);
 }
 
 const uint8_t *mkb_subdiff_records(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x04, len);
-
-    if (*len < 4) {
-        return NULL;
-    }
-    if (rec) {
-        rec += 4;
-        *len -= 4;
-    }
-
-    return rec;
+    return _simple_record(mkb, 0x04, len);
 }
 
 const uint8_t *mkb_cvalues(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x05, len);
-
-    if (*len < 4) {
-        return NULL;
-    }
-    if (rec) {
-        rec += 4;
-        *len -= 4;
-    }
-
-    return rec;
+    return _simple_record(mkb, 0x05, len);
 }
 
 const uint8_t *mkb_mk_dv(MKB *mkb)
@@ -237,14 +211,10 @@ const uint8_t *mkb_mk_dv(MKB *mkb)
             break;
     }
 
-    rec = _record(mkb, dv_record, &len);
+    rec = _simple_record(mkb, dv_record, &len);
 
-    if (len < 20) {
+    if (len < 16) {
         return NULL;
-    }
-
-    if (rec) {
-        rec += 4;
     }
 
     return rec;
@@ -252,18 +222,7 @@ const uint8_t *mkb_mk_dv(MKB *mkb)
 
 const uint8_t *mkb_signature(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x02, len);
-
-    if (*len < 4) {
-        return NULL;
-    }
-    if (rec) {
-        rec += 4;
-        *len -= 4;
-    }
-
-    return rec;
-
+    return _simple_record(mkb, 0x02, len);
 }
 
 static int _cert_is_revoked(const uint8_t *rl, size_t rl_size, const uint8_t *cert_id_bin)
