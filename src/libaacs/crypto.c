@@ -149,7 +149,7 @@ void crypto_aes128e(const uint8_t *key, const uint8_t *data, uint8_t *dst)
 
     gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
     gcry_cipher_setkey(gcry_h, key, 16);
-    gcry_cipher_encrypt(gcry_h, dst, 16, data, 16);
+    gcry_cipher_encrypt(gcry_h, dst, 16, data, data ? 16 : 0);
     gcry_cipher_close(gcry_h);
 }
 
@@ -196,12 +196,8 @@ static void _shl_128(unsigned char *dst, const unsigned char *src)
 static void _cmac_key(const unsigned char *aes_key, unsigned char *k1, unsigned char *k2)
 {
     uint8_t key[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-    gcry_cipher_hd_t gcry_h;
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, aes_key, 16);
-    gcry_cipher_encrypt (gcry_h, key, 16, NULL, 0);
-    gcry_cipher_close(gcry_h);
+    crypto_aes128e(aes_key, NULL, key);
 
     _shl_128(k1, key);
     if (key[0] & 0x80) {
@@ -216,26 +212,21 @@ static void _cmac_key(const unsigned char *aes_key, unsigned char *k1, unsigned 
 
 void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac)
 {
-    gcry_cipher_hd_t gcry_h;
     uint8_t k1[16], k2[16];
     unsigned ii;
 
     /*
-     * Somplified version of AES CMAC. Spports only 16-byte input data.
+     * Simplified version of AES CMAC. Spports only 16-byte input data.
      */
 
     /* generate CMAC keys */
     _cmac_key(aes_key, k1, k2);
-
     memcpy(cmac, data, 16);
     for (ii = 0; ii < 16; ii++) {
         cmac[ii] ^= k1[ii];
     }
- 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, aes_key, 16);
-    gcry_cipher_encrypt (gcry_h, cmac, 16, 0, 16);
-    gcry_cipher_close(gcry_h);
+
+    crypto_aes128e(aes_key, NULL, cmac);
 }
 
 /*
