@@ -307,9 +307,9 @@ void crypto_strerror(int err, char *buf, size_t buf_size)
 #else
   const char *msg = gcry_strerror(err);
   buf[0] = 0;
-  if (str) {
-    strncpy(buf, str, buf_size);
-    str[buf_size - 1] = 0;
+  if (msg) {
+    strncpy(buf, msg, buf_size);
+    buf[buf_size - 1] = 0;
   }
 #endif
 }
