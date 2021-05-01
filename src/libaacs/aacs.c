@@ -99,7 +99,7 @@ static int _validate_pk(const uint8_t *pk,
                         const uint8_t *cvalue, const uint8_t *uv, const uint8_t *vd,
                         uint8_t *mk)
 {
-    int a;
+    int a, crypto_err;
     uint8_t dec_vd[16];
     char str[40];
 
@@ -109,14 +109,19 @@ static int _validate_pk(const uint8_t *pk,
     BD_DEBUG(DBG_AACS, "   cvalue: %s\n", str_print_hex(str, cvalue, 16));
     BD_DEBUG(DBG_AACS, "   Verification data: %s\n", str_print_hex(str, vd, 16));
 
-    crypto_aes128d(pk, cvalue, mk);
+    crypto_err = crypto_aes128d(pk, cvalue, mk);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "decrypting media key failed", crypto_err);
+    }
 
     for (a = 0; a < 4; a++) {
         mk[a + 12] ^= uv[a];
     }
 
-    crypto_aes128d(mk, vd, dec_vd);
-
+    crypto_err = crypto_aes128d(mk, vd, dec_vd);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "decrypting media key verification data failed", crypto_err);
+    }
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
         BD_DEBUG(DBG_AACS, "Processing key %s is valid!\n", str_print_hex(str, pk, 16));
         return AACS_SUCCESS;
@@ -217,8 +222,12 @@ static uint32_t _calc_v_mask(uint32_t uv)
 static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mask, uint32_t dev_key_v_mask)
 {
     unsigned char left_child[16], right_child[16];
+    int crypto_err;
 
-    crypto_aesg3(dk, left_child, right_child, pk);
+    crypto_err = crypto_aesg3(dk, left_child, right_child, pk);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "PK derivation failed", crypto_err);
+    }
 
     while (dev_key_v_mask != v_mask) {
 
@@ -236,7 +245,10 @@ static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mas
             memcpy(curr_key, right_child, 16);
         }
 
-        crypto_aesg3(curr_key, left_child, right_child, pk);
+        crypto_err = crypto_aesg3(curr_key, left_child, right_child, pk);
+        if (crypto_err) {
+            LOG_CRYPTO_ERROR(DBG_AACS, "PK derivation failed", crypto_err);
+        }
 
         dev_key_v_mask = ((int) dev_key_v_mask) >> 1;
     }
@@ -765,7 +777,7 @@ static int _read_pmsn(AACS *aacs, cert_list *hcl)
 
 static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
 {
-    int error_code;
+    int error_code, crypto_err;
 
     /* Skip if retrieved from config file */
     if (memcmp(vuk, empty_key, 16)) {
@@ -797,7 +809,10 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
 
     /* calculate VUK */
 
-    crypto_aes128d(mk, aacs->vid, vuk);
+    crypto_err = crypto_aes128d(mk, aacs->vid, vuk);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "decrypting VUK failed", crypto_err);
+    }
 
     int a;
     for (a = 0; a < 16; a++) {
@@ -1016,6 +1031,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
     /* decrypt unit keys */
 
     for (i = 0; i < aacs->uk->num_uk; i++) {
+        int crypto_err;
 
         /* error out if VUK calculation fails and encrypted CPS unit is found */
         if (vuk_error_code != AACS_SUCCESS) {
@@ -1026,7 +1042,10 @@ static int _calc_uks(AACS *aacs, config_file *cf)
             BD_DEBUG(DBG_AACS | DBG_CRIT, "WARNING: VUK calculation failed but disc seems to be unencrypted.\n");
         }
 
-        crypto_aes128d(vuk, aacs->uk->enc_uk[i].key, aacs->uk->uk[i].key);
+        crypto_err = crypto_aes128d(vuk, aacs->uk->enc_uk[i].key, aacs->uk->uk[i].key);
+        if (crypto_err) {
+            LOG_CRYPTO_ERROR(DBG_AACS, "decrypting unit key failed", crypto_err);
+        }
 
         char str[40];
         BD_DEBUG(DBG_AACS, "Unit key %d: %s\n", i,
@@ -1157,23 +1176,29 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
 {
     /* inbuf == NULL means in-place decryption */
 
-    int a;
+    int a, crypto_err;
     uint8_t key[16];
 
     if (BD_UNLIKELY(in_buf != NULL)) {
         memcpy(out_buf, in_buf, 16); /* first 16 bytes are plain */
     }
 
-    crypto_aes128e(aacs->uk->uk[curr_uk].key, out_buf, key);
+    crypto_err = crypto_aes128e(aacs->uk->uk[curr_uk].key, out_buf, key);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "unit key derivation failed", crypto_err);
+    }
 
     for (a = 0; a < 16; a++) {
         key[a] ^= out_buf[a]; /* here out_buf is plain data fron in_buf */
     }
 
     if (BD_UNLIKELY(in_buf != NULL)) {
-        crypto_aacs_decrypt(key, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
+        crypto_err = crypto_aacs_decrypt(key, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
     } else {
-        crypto_aacs_decrypt(key, out_buf + 16, ALIGNED_UNIT_LEN - 16, NULL, 0);
+        crypto_err = crypto_aacs_decrypt(key, out_buf + 16, ALIGNED_UNIT_LEN - 16, NULL, 0);
+    }
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "decrypting unit failed", crypto_err);
     }
 
     if (_verify_ts(out_buf)) {
@@ -1339,9 +1364,13 @@ static void _decrypt_unit_bus(AACS *aacs, uint8_t *buf)
 {
     if (aacs->bee && aacs->bec) {
         unsigned int i;
+        int crypto_err;
         for (i = 0; i < ALIGNED_UNIT_LEN; i += SECTOR_LEN) {
             //_decrypt_bus(aacs, buf + i);
-            crypto_aacs_decrypt(aacs->read_data_key, buf + i + 16, SECTOR_LEN - 16, NULL, 0);
+            crypto_err = crypto_aacs_decrypt(aacs->read_data_key, buf + i + 16, SECTOR_LEN - 16, NULL, 0);
+            if (crypto_err) {
+                LOG_CRYPTO_ERROR(DBG_AACS, "bus decrypting failed", crypto_err);
+            }
         }
     }
 }
