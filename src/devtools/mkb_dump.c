@@ -143,6 +143,10 @@ static void _dump_record(MKB *mkb, int record)
     for (pos = 0; pos + 4 <= size; pos += len) {
         uint8_t type = data[pos];
         len  = MKINT_BE24(data + pos + 1);
+        if (len > size - pos) {
+            printf("  invalid record 0x%02x size: %zu\n", type, len);
+            break;
+        }
         if (type == record) {
             switch (record) {
                 case 0x02: if (len > 4 && len <= 64) _dump_signature(data + pos + 4, len - 4); break;
