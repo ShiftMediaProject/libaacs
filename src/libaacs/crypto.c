@@ -713,7 +713,7 @@ int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, ui
     return 0;
 }
 
-static int crypto_aacs_verify_cert(const uint8_t *cert)
+static int _aacs_verify_cert(const uint8_t *cert)
 {
     if (MKINT_BE16(cert+2) != 0x5c) {
         BD_DEBUG(DBG_AACS, "Certificate length is invalid (0x%04x), expected 0x005c\n",
@@ -738,7 +738,7 @@ int crypto_aacs_verify_host_cert(const uint8_t *cert)
         return 0;
     }
 
-    if (!crypto_aacs_verify_cert(cert)) {
+    if (!_aacs_verify_cert(cert)) {
         BD_DEBUG(DBG_AACS, "Host certificate signature is invalid\n");
         return 0;
     }
@@ -760,7 +760,7 @@ int crypto_aacs_verify_drive_cert(const uint8_t *cert)
         return 0;
     }
 
-    if (!crypto_aacs_verify_cert(cert)) {
+    if (!_aacs_verify_cert(cert)) {
         BD_DEBUG(DBG_AACS, "Drive certificate signature is invalid\n");
         return 0;
     }
