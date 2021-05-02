@@ -93,6 +93,11 @@ static void _dump_aacs1_rl(const uint8_t *rl, size_t rl_size)
     uint32_t total_entries = MKINT_BE32(rl);
     rl += 4; rl_size -= 4;
 
+    if ((size_t)total_entries > rl_size / 8) {
+        printf("  revocation list size mismatch: total_entries=%u\n", (unsigned)total_entries);
+        return;
+    }
+
     while (total_entries > 0 && rl_size >= 4) {
         uint32_t entries = MKINT_BE32(rl);
         rl += 4; rl_size -= 4;
@@ -120,7 +125,12 @@ static void _dump_aacs1_rl(const uint8_t *rl, size_t rl_size)
         }
         _dump_signature(rl, 40);
         rl += 40; rl_size -= 40;
-        total_entries -= entries;
+        if (total_entries <= entries) {
+            total_entries -= entries;
+        } else {
+            printf("  revocation list size mismatch\n");
+            total_entries = 0;
+        }
     }
 }
 
