@@ -481,12 +481,20 @@ static size_t _read_mkb_file(AACS *aacs, const char *file, void **pdata)
     size_t       data_size = 65536; /* initial alloc */
     uint32_t     chunk_size = 4; /* initial read */
     uint8_t     *data;
+    int64_t      fsize;
 
     *pdata = NULL;
 
     fp = _file_open(aacs, file);
     if (!fp) {
         BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to open %s\n", file);
+        return 0;
+    }
+
+    fsize = file_size(fp);
+    if (fsize < 4) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Empty file: %s\n", file);
+        file_close(fp);
         return 0;
     }
 
@@ -506,6 +514,10 @@ static size_t _read_mkb_file(AACS *aacs, const char *file, void **pdata)
         }
         size += read_size;
         chunk_size = MKINT_BE24(data + size - 4 + 1);
+        if (fsize - size + 4 < (int64_t)chunk_size) {
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid record size %u in %s\n", (unsigned)chunk_size, file);
+            break;
+        }
         if (data_size < size + chunk_size) {
             data_size = 2*size + chunk_size;
             void *tmp = realloc(data, data_size);
