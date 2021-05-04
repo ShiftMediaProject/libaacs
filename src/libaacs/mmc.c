@@ -446,6 +446,7 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
 {
     uint8_t hks[40], dn[20], dkp[40], dks[40];
     char str[512];
+    int crypto_error;
 
     memset(hks, 0, sizeof(hks));
 
@@ -504,8 +505,11 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     }
 
     // sign
-    crypto_aacs_sign(host_cert, host_priv_key, hks, dn,
-                     mmc->host_key_point);
+    crypto_error = crypto_aacs_sign(host_cert, host_priv_key, hks, dn, mmc->host_key_point);
+    if (crypto_error) {
+        LOG_CRYPTO_ERROR(DBG_MMC, "Signing failed", crypto_error);
+        return MMC_ERROR;
+    }
 
     // verify own signature
     if (!_verify_signature(host_cert, hks, dn, mmc->host_key_point)) {

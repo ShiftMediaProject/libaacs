@@ -41,9 +41,9 @@ BD_PRIVATE int  crypto_aes_cmac_16(const unsigned char *data, const unsigned cha
 
 BD_PRIVATE int  crypto_aacs_decrypt(const uint8_t *key, uint8_t *out, size_t out_size, const uint8_t *in, size_t in_size) BD_USED;
 
-BD_PRIVATE void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
+BD_PRIVATE int  crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
                                  uint8_t *signature,
-                                 const uint8_t *nonce, const uint8_t *point);
+                                 const uint8_t *nonce, const uint8_t *point) BD_USED;
 BD_PRIVATE void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash);
 
 BD_PRIVATE int  crypto_aacs_verify(const uint8_t *cert, const uint8_t *signature, const uint8_t *data, uint32_t len) BD_USED;

@@ -557,8 +557,8 @@ error:
  *
  */
 
-void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *signature,
-                      const uint8_t *nonce, const uint8_t *point)
+int crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *signature,
+                     const uint8_t *nonce, const uint8_t *point)
 {
     gcry_sexp_t sexp_key = NULL, sexp_data = NULL, sexp_sig = NULL, sexp_r = NULL, sexp_s = NULL;
     gcry_mpi_t mpi_r = NULL, mpi_s = NULL;
@@ -627,6 +627,8 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     gcry_sexp_release(sexp_s);
     gcry_mpi_release(mpi_r);
     gcry_mpi_release(mpi_s);
+
+    return err;
 }
 
 static int _aacs_verify(const uint8_t *signature, enum gcry_md_algos hash_type,
