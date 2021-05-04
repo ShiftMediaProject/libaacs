@@ -678,7 +678,7 @@ static int _aacs_verify(const uint8_t *signature, enum gcry_md_algos hash_type,
 
 int crypto_aacs_verify(const uint8_t *cert, const uint8_t *signature, const uint8_t *data, uint32_t len)
 {
-    return !_aacs_verify(signature, GCRY_MD_SHA1, cert + 12, cert + 32, data, len);
+    return _aacs_verify(signature, GCRY_MD_SHA1, cert + 12, cert + 32, data, len);
 }
 
 int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, uint32_t len)

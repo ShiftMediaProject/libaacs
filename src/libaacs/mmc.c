@@ -435,11 +435,17 @@ static int _verify_signature(const uint8_t *cert, const uint8_t *signature,
                              const uint8_t *nonce, const uint8_t *point)
 {
     uint8_t data[60];
+    int crypto_error;
 
     memcpy(data,      nonce, 20);
     memcpy(data + 20, point, 40);
 
-    return crypto_aacs_verify(cert, signature, data, 60);
+    crypto_error = crypto_aacs_verify(cert, signature, data, 60);
+    if (crypto_error) {
+        LOG_CRYPTO_ERROR(DBG_MMC, "signature verification failed", crypto_error);
+    }
+
+    return (crypto_error == 0);
 }
 
 static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *bus_key)
