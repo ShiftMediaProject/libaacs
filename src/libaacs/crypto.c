@@ -429,7 +429,6 @@ static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
       );
 
     if (!strfmt) {
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "out of memory\n");
         err = GPG_ERR_ENOMEM;
         goto error;
     }
