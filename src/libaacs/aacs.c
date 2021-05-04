@@ -75,7 +75,7 @@ struct aacs {
 
     /* bus encryption */
     int       bee;        /* bus encryption enabled flag in content certificate */
-    int       bec;        /* bus encryption capable flag in drive certificate */
+    int       bec;        /* bus encryption capable flag in drive certificate. -1 = unread. */
     uint8_t   read_data_key[16];
     uint8_t   drive_cert_hash[20];
 
@@ -1317,6 +1317,8 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
     aacs->path = path ? str_dup(path) : NULL;
 
     aacs->cc = _read_cc_any(aacs);
+    aacs->bee = _get_bus_encryption_enabled(aacs);
+    aacs->bec = -1;
 
     error_code = _calc_title_hash(aacs);
     if (error_code != AACS_SUCCESS) {
@@ -1331,18 +1333,20 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
         BD_DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
     }
 
-    aacs->bee = _get_bus_encryption_enabled(aacs);
-    aacs->bec = _get_bus_encryption_capable(aacs, path);
-
-    if (error_code == AACS_SUCCESS && aacs->bee && aacs->bec) {
+    if (error_code == AACS_SUCCESS && aacs->bee) {
 
         if (!cf) {
             return AACS_ERROR_NO_CONFIG;
         }
 
+        if (aacs->bec < 0) {
+            aacs->bec = _get_bus_encryption_capable(aacs, path);
+        }
+        if (aacs->bec > 0) {
         error_code = _read_read_data_key(aacs, cf->host_cert_list);
         if (error_code != AACS_SUCCESS) {
             BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to initialize bus encryption required by drive and disc\n");
+            }
         }
     }
 
@@ -1374,7 +1378,7 @@ void aacs_close(AACS *aacs)
 
 static void _decrypt_unit_bus(AACS *aacs, uint8_t *buf)
 {
-    if (aacs->bee && aacs->bec) {
+    if (aacs->bee && aacs->bec > 0) {
         unsigned int i;
         int crypto_err;
         for (i = 0; i < ALIGNED_UNIT_LEN; i += SECTOR_LEN) {
@@ -1636,6 +1640,9 @@ void aacs_free_rl(AACS_RL_ENTRY **rl)
 
 uint32_t aacs_get_bus_encryption(AACS *aacs)
 {
+    if (aacs->bec < 0) {
+        aacs->bec = _get_bus_encryption_capable(aacs, aacs->path);
+    }
   return (aacs->bee * AACS_BUS_ENCRYPTION_ENABLED) |
          (aacs->bec * AACS_BUS_ENCRYPTION_CAPABLE);
 }
