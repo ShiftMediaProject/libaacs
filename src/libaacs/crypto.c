@@ -652,8 +652,8 @@ static int _aacs_verify(const uint8_t *signature, enum gcry_md_algos hash_type,
         key_len = 32;
         break;
     default:
-        BD_ASSERT_UNREACHABLE ("invalid signature size");
-        return 0;
+        BD_ASSERT_UNREACHABLE ("invalid signature algorithm");
+        return GPG_ERR_UNSUPPORTED_ALGORITHM;
     }
 
     GCRY_VERIFY("_aacs_sexp_key",
@@ -681,14 +681,14 @@ int crypto_aacs_verify(const uint8_t *cert, const uint8_t *signature, const uint
     return _aacs_verify(signature, GCRY_MD_SHA1, cert + 12, cert + 32, data, len);
 }
 
-int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, uint32_t len)
+int crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, uint32_t len)
 {
     static const uint8_t aacs_la_pubkey_x[] = {0x63, 0xC2, 0x1D, 0xFF, 0xB2, 0xB2, 0x79, 0x8A, 0x13, 0xB5,
                                                0x8D, 0x61, 0x16, 0x6C, 0x4E, 0x4A, 0xAC, 0x8A, 0x07, 0x72 };
     static const uint8_t aacs_la_pubkey_y[] = {0x13, 0x7E, 0xC6, 0x38, 0x81, 0x8F, 0xD9, 0x8F, 0xA4, 0xC3,
                                                0x0B, 0x99, 0x67, 0x28, 0xBF, 0x4B, 0x91, 0x7F, 0x6A, 0x27 };
 
-    return !_aacs_verify(signature, GCRY_MD_SHA1, aacs_la_pubkey_x, aacs_la_pubkey_y, data, len);
+    return _aacs_verify(signature, GCRY_MD_SHA1, aacs_la_pubkey_x, aacs_la_pubkey_y, data, len);
 }
 
 int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, uint32_t len)
@@ -722,7 +722,7 @@ static int _aacs_verify_cert(const uint8_t *cert)
         return 0;
     }
 
-    return crypto_aacs_verify_aacsla(cert + 52, cert, 52);
+    return !crypto_aacs_verify_aacsla(cert + 52, cert, 52);
 }
 
 int crypto_aacs_verify_host_cert(const uint8_t *cert)

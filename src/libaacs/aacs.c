@@ -136,6 +136,8 @@ static int _validate_pk(const uint8_t *pk,
 
 static int _rl_verify_signature(const uint8_t *rl, size_t size)
 {
+    int crypto_err;
+
     if (size < 40) {
         BD_DEBUG(DBG_AACS, "too small revocation list\n");
         return 0;
@@ -153,7 +155,13 @@ static int _rl_verify_signature(const uint8_t *rl, size_t size)
         return 0;
     }
 
-    return crypto_aacs_verify_aacsla(rl + len, rl, len);
+    crypto_err = crypto_aacs_verify_aacsla(rl + len, rl, len);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "revocation list signature verification failed", crypto_err);
+        return 0;
+    }
+
+    return 1;
 }
 
 static void _save_rl(const char *name, uint32_t version, const uint8_t *version_rec,
@@ -173,9 +181,7 @@ static void _save_rl(const char *name, uint32_t version, const uint8_t *version_
     if (data) {
         memcpy(data,      version_rec, 12);
         memcpy(data + 12, rl_rec,      rl_len);
-        if (!_rl_verify_signature(data, rl_len + 12)) {
-            BD_DEBUG(DBG_AACS | DBG_CRIT, "invalid %s signature, not using it\n", name);
-        } else {
+        if (_rl_verify_signature(data, rl_len + 12)) {
             cache_save(name, version, data, rl_len + 12);
         }
         X_FREE(data);
