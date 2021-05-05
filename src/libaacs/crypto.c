@@ -715,13 +715,12 @@ int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, ui
 
 static int _aacs_verify_cert(const uint8_t *cert)
 {
+    /* check length byte */
     if (MKINT_BE16(cert+2) != 0x5c) {
-        BD_DEBUG(DBG_AACS, "Certificate length is invalid (0x%04x), expected 0x005c\n",
-              MKINT_BE16(cert+2));
-        return 0;
+        return GPG_ERR_UNSUPPORTED_CERT;
     }
 
-    return !crypto_aacs_verify_aacsla(cert + 52, cert, 52);
+    return crypto_aacs_verify_aacsla(cert + 52, cert, 52);
 }
 
 int crypto_aacs_verify_host_cert(const uint8_t *cert)
@@ -731,19 +730,13 @@ int crypto_aacs_verify_host_cert(const uint8_t *cert)
         break;
     case 0x12:
         // XXX checking the signature would cause buffer overread (certificate is truncated in config file)
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "AACS 2.0 host certificate not supported\n");
-        return 0;
+        /* BD_DEBUG(DBG_AACS | DBG_CRIT, "AACS 2.0 host certificate not supported\n"); */
+        return GPG_ERR_UNSUPPORTED_CERT;
     default:
-        BD_DEBUG(DBG_AACS, "Host certificate type is invalid (0x%02x)\n", cert[0]);
-        return 0;
+        return GPG_ERR_UNSUPPORTED_CERT;
     }
 
-    if (!_aacs_verify_cert(cert)) {
-        BD_DEBUG(DBG_AACS, "Host certificate signature is invalid\n");
-        return 0;
-    }
-
-    return 1;
+    return _aacs_verify_cert(cert);
 }
 
 int crypto_aacs_verify_drive_cert(const uint8_t *cert)
@@ -760,7 +753,7 @@ int crypto_aacs_verify_drive_cert(const uint8_t *cert)
         return 0;
     }
 
-    if (!_aacs_verify_cert(cert)) {
+    if (_aacs_verify_cert(cert)) {
         BD_DEBUG(DBG_AACS, "Drive certificate signature is invalid\n");
         return 0;
     }

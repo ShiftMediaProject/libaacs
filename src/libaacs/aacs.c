@@ -691,8 +691,11 @@ static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uin
     for (; hcl ; hcl = hcl->next) {
 
         char tmp_str[2*92+1];
+        int crypto_error;
 
-        if (!crypto_aacs_verify_host_cert(hcl->host_cert)) {
+        crypto_error = crypto_aacs_verify_host_cert(hcl->host_cert);
+        if (crypto_error) {
+            LOG_CRYPTO_ERROR(DBG_AACS, "host certificate signature verification failed", crypto_error);
             BD_DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
                   str_print_hex(tmp_str, hcl->host_cert, 92));
             continue;
