@@ -703,15 +703,14 @@ int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, ui
                                                  0x54, 0x5E, 0xCC, 0x27, 0x1E, 0xE4, 0x6C, 0x4A, 0xEF, 0x81, 0xD9, 0x16, 0x9B, 0xF8, 0x41, 0x72 };
     switch (data[0]) {
     case 0x00: /* AACS 1 */
-        return !_aacs_verify(signature, GCRY_MD_SHA1, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
+        return _aacs_verify(signature, GCRY_MD_SHA1, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
     case 0x10: /* AACS 2 */
-        return !_aacs_verify(signature, GCRY_MD_SHA256, aacs2_cc_pubkey_x, aacs2_cc_pubkey_y, data, len);
+        return _aacs_verify(signature, GCRY_MD_SHA256, aacs2_cc_pubkey_x, aacs2_cc_pubkey_y, data, len);
     default:
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unknown content certificate type 0x%02x\n", data[0]);
         break;
     }
 
-    return 0;
+    return GPG_ERR_UNSUPPORTED_CERT;
 }
 
 static int _aacs_verify_cert(const uint8_t *cert)

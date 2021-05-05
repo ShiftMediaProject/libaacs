@@ -72,6 +72,7 @@ CONTENT_CERT *cc_parse(const void *data, size_t len)
     size_t num_digest = MKINT_BE16(p + 12);
 
     size_t cert_data_len = 26 + length_format_specific + num_digest*8;
+    int crypto_error;
 
     if (len < cert_data_len + signature_size) {
         BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid content certificate (length %zu < %zu)\n",
@@ -81,8 +82,9 @@ CONTENT_CERT *cc_parse(const void *data, size_t len)
 
     /* check signature */
 
-    if (!crypto_aacs_verify_aacscc(p + cert_data_len, p, cert_data_len)) {
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid content certificate signature\n");
+    crypto_error = crypto_aacs_verify_aacscc(p + cert_data_len, p, cert_data_len);
+    if (crypto_error) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "content certificate signature verification failed", crypto_error);
         return NULL;
     }
 
