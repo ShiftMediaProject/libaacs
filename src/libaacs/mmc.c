@@ -487,9 +487,15 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
         BD_DEBUG(DBG_MMC, "Drive nonce         : %s\n", str_print_hex(str, dn, 20));
     }
 
+    if (mmc->drive_cert[0] == 0x11) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "WARNING: Drive is using AACS 2.0 certificate\n");
+        return MMC_ERROR;
+    }
+
     // verify drive certificate
-    if (!crypto_aacs_verify_drive_cert(mmc->drive_cert)) {
-        BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
+    crypto_error = crypto_aacs_verify_drive_cert(mmc->drive_cert);
+    if (crypto_error) {
+        LOG_CRYPTO_ERROR(DBG_MMC, "drive certificate signature verification failed", crypto_error);
         return MMC_ERROR;
     }
 
@@ -702,6 +708,7 @@ int mmc_read_auth(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_ce
 int mmc_read_drive_cert(MMC *mmc, uint8_t *drive_cert)
 {
     uint8_t buf[116];
+    int crypto_error;
 
     if (mmc->drive_cert[0] == 0x01) {
         memcpy(drive_cert, mmc->drive_cert, 92);
@@ -719,8 +726,9 @@ int mmc_read_drive_cert(MMC *mmc, uint8_t *drive_cert)
         return MMC_ERROR;
     }
 
-    if (!crypto_aacs_verify_drive_cert(buf + 4)) {
-        BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
+    crypto_error = crypto_aacs_verify_drive_cert(buf + 4);
+    if (crypto_error) {
+        LOG_CRYPTO_ERROR(DBG_MMC, "drive certificate signature verification failed", crypto_error);
         return MMC_ERROR;
     }
 

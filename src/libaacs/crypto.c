@@ -745,20 +745,14 @@ int crypto_aacs_verify_drive_cert(const uint8_t *cert)
     case 0x01:
         break;
     case 0x11:
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "WARNING: Drive is using AACS 2.0 certificate\n");
+        /* BD_DEBUG(DBG_AACS | DBG_CRIT, "WARNING: Drive is using AACS 2.0 certificate\n"); */
         // XXX checking the signature would cause buffer overread (certificate is truncated at MMC layer)
-        return 0;
+        return GPG_ERR_UNSUPPORTED_CERT;
     default:
-        BD_DEBUG(DBG_AACS, "Drive certificate type is invalid (0x%02x)\n", cert[0]);
-        return 0;
+        return GPG_ERR_UNSUPPORTED_CERT;
     }
 
-    if (_aacs_verify_cert(cert)) {
-        BD_DEBUG(DBG_AACS, "Drive certificate signature is invalid\n");
-        return 0;
-    }
-
-    return 1;
+    return _aacs_verify_cert(cert);
 }
 
 void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)
