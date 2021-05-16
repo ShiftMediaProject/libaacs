@@ -112,6 +112,7 @@ static int _validate_pk(const uint8_t *pk,
     crypto_err = crypto_aes128d(pk, cvalue, mk);
     if (crypto_err) {
         LOG_CRYPTO_ERROR(DBG_AACS, "decrypting media key failed", crypto_err);
+        return AACS_ERROR_UNKNOWN;
     }
 
     for (a = 0; a < 4; a++) {
@@ -121,6 +122,7 @@ static int _validate_pk(const uint8_t *pk,
     crypto_err = crypto_aes128d(mk, vd, dec_vd);
     if (crypto_err) {
         LOG_CRYPTO_ERROR(DBG_AACS, "decrypting media key verification data failed", crypto_err);
+        return AACS_ERROR_UNKNOWN;
     }
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
         BD_DEBUG(DBG_AACS, "Processing key %s is valid!\n", str_print_hex(str, pk, 16));
@@ -225,7 +227,7 @@ static uint32_t _calc_v_mask(uint32_t uv)
     return v_mask;
 }
 
-static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mask, uint32_t dev_key_v_mask)
+static int _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mask, uint32_t dev_key_v_mask)
 {
     unsigned char left_child[16], right_child[16];
     int crypto_err;
@@ -233,6 +235,7 @@ static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mas
     crypto_err = crypto_aesg3(dk, left_child, right_child, pk);
     if (crypto_err) {
         LOG_CRYPTO_ERROR(DBG_AACS, "PK derivation failed", crypto_err);
+        return AACS_ERROR_UNKNOWN;
     }
 
     while (dev_key_v_mask != v_mask) {
@@ -254,6 +257,7 @@ static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mas
         crypto_err = crypto_aesg3(curr_key, left_child, right_child, pk);
         if (crypto_err) {
             LOG_CRYPTO_ERROR(DBG_AACS, "PK derivation failed", crypto_err);
+            return AACS_ERROR_UNKNOWN;
         }
 
         dev_key_v_mask = ((int) dev_key_v_mask) >> 1;
@@ -261,6 +265,7 @@ static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mas
 
     char str[40];
     BD_DEBUG(DBG_AACS, "Processing key: %s\n",  str_print_hex(str, pk, 16));
+    return AACS_SUCCESS;
 }
 
 static dk_list *_find_dk(dk_list *dkl, uint32_t *p_dev_key_v_mask, uint32_t uv, uint32_t u_mask)
@@ -394,7 +399,10 @@ static int _calc_mk_dks(MKB *mkb, dk_list *dkl, uint8_t *mk)
         /* calculate processing key */
 
         uint8_t pk[16];
-        _calc_pk(dk->key, pk, uv, v_mask, dev_key_v_mask);
+        if (_calc_pk(dk->key, pk, uv, v_mask, dev_key_v_mask) != AACS_SUCCESS) {
+            /* try next device */
+            continue;
+        }
 
         /* calculate and verify media key */
 
@@ -833,6 +841,7 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
     crypto_err = crypto_aes128d(mk, aacs->vid, vuk);
     if (crypto_err) {
         LOG_CRYPTO_ERROR(DBG_AACS, "decrypting VUK failed", crypto_err);
+        return AACS_ERROR_UNKNOWN;
     }
 
     int a;
@@ -1066,6 +1075,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
         crypto_err = crypto_aes128d(vuk, aacs->uk->enc_uk[i].key, aacs->uk->uk[i].key);
         if (crypto_err) {
             LOG_CRYPTO_ERROR(DBG_AACS, "decrypting unit key failed", crypto_err);
+            return AACS_ERROR_UNKNOWN;
         }
 
         char str[40];
@@ -1252,6 +1262,7 @@ const char *aacs_error_str(int err)
        [-AACS_ERROR_MMC_OPEN]         = "Failed opening MMC device",
        [-AACS_ERROR_MMC_FAILURE]      = "MMC failure",
        [-AACS_ERROR_NO_DK]            = "No matching device key",
+       [-AACS_ERROR_UNKNOWN]          = "Error",
     };
     err = -err;
     if (err < 0 || (size_t)err >= sizeof(str) / sizeof(str[0]) || !str[err]) {
