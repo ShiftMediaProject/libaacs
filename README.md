@@ -1,6 +1,15 @@
-# libaacs
+# Libaacs
 
 **libaacs** is a research project for a cross-platform open-source implementation of the AACS specification.
+
+
+## Goals and features
+
+This research project provides, through an open-source library, a way to understand how the AACS works.
+
+This research project is mainly developed by an international team of developers from **Doom9**.
+
+Currently supported platforms are GNU/Linux, Windows, MacOS X. The main dependency is libgcrypt for all cryptographic functions.
 
 # Disclaimer
 
@@ -44,6 +53,10 @@ https://code.videolan.org/videolan/libaacs
 ## CoC
 
 The [VideoLAN Code of Conduct](https://wiki.videolan.org/CoC) applies to this project.
+
+## Mailing list
+
+You can discuss about libaacs on the [libaacs-devel mailing list](https://mailman.videolan.org/listinfo/libaacs-devel)
 
 ## CLA
 
