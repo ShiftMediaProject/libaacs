@@ -1220,7 +1220,7 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
     }
 
     for (a = 0; a < 16; a++) {
-        key[a] ^= out_buf[a]; /* here out_buf is plain data fron in_buf */
+        key[a] ^= out_buf[a]; /* here out_buf is plain data from in_buf */
     }
 
     if (BD_UNLIKELY(in_buf != NULL)) {
@@ -1271,7 +1271,7 @@ const char *aacs_error_str(int err)
     return str[err];
 }
 
-/* aacs_open2() wrapper for backwards compability */
+/* aacs_open2() wrapper for backwards compatibility */
 AACS *aacs_open(const char *path, const char *configfile_path)
 {
     int error_code;
@@ -1286,7 +1286,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
     return NULL;
 }
 
-/* aacs_open_device() wrapper for backward compability */
+/* aacs_open_device() wrapper for backward compatibility */
 AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
 {
     AACS *aacs = aacs_init();

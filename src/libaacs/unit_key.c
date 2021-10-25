@@ -66,7 +66,7 @@ static int _parse_header(AACS_UK *uk, const uint8_t *p, size_t size)
     uk->num_bdmv_dir = p[17];
     uk->use_skb_mkb  = p[18] >> 7;
 
-    /* check if suported */
+    /* check if supported */
 
     if (uk->num_bdmv_dir < 1) {
         BD_DEBUG(DBG_UK | DBG_CRIT, "No BDMV directories\n");

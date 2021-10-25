@@ -77,7 +77,7 @@ BD_PRIVATE int mkb_drive_cert_is_revoked(MKB *mkb, const uint8_t *cert_id);
  *          0                        | type = 0x21
  *          1-3                      | length
  *          4-7                      | total entries
- *          8-11                     | entires in signature block 1 (N1)
+ *          8-11                     | entries in signature block 1 (N1)
  *          12-19                    | host revokation list entry 0
  *          .
  *          .
@@ -93,7 +93,7 @@ BD_PRIVATE int mkb_drive_cert_is_revoked(MKB *mkb, const uint8_t *cert_id);
  *          0                        | type = 0x20
  *          1-3                      | length
  *          4-7                      | total entries
- *          8-11                     | entires in signature block 1 (N1)
+ *          8-11                     | entries in signature block 1 (N1)
  *          12-19                    | drive revokation list entry 0
  *          .
  *          .

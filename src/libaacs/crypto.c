@@ -248,7 +248,7 @@ int crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, 
     int err;
 
     /*
-     * Simplified version of AES CMAC. Spports only 16-byte input data.
+     * Simplified version of AES CMAC. Supports only 16-byte input data.
      */
 
     /* generate CMAC keys */
@@ -568,7 +568,7 @@ int crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sign
     GCRY_VERIFY("_aacs_sexp_key",
                 _aacs_sexp_key(&sexp_key, cert + 12, cert + 32, priv_key, _aacs1_curve(), 20));
 
-    /* Calculate the sha1 hash from the nonce and host key point and covert
+    /* Calculate the sha1 hash from the nonce and host key point and convert
      * the hash into an MPI.
      */
     memcpy(&block[0], nonce, 20);

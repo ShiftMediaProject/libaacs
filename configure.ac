@@ -18,7 +18,7 @@ m4_define([lt_current],  7)
 m4_define([lt_age],      7)
 m4_define([lt_revision], 1)
 
-dnl initilization
+dnl initialization
 AC_INIT([libaacs], aacs_version, [http://www.videolan.org/developers/libaacs.html])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
