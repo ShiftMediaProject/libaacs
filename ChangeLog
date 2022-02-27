@@ -1,3 +1,8 @@
+2022-02-27: Version 0.11.1
+- Faster start with MacOS when disc does not use bus encryption.
+- Improve error logging.
+- Improve error resilience.
+
 2020-07-22: Version 0.11.0
 - Add more AACS2 support (still not complete).
 - Add support for partial unit keys in KEYDB.CFG.
