@@ -27,10 +27,17 @@
 #include <string.h>
 #include <errno.h>
 
+#include "util/strutl.h"
+
 #define MAX_LINKS 32
 
-char *aacs_resolve_path(const char *path, char *resolved_path)
+#ifndef AACS_PATH_MAX
+#define AACS_PATH_MAX 1024
+#endif
+
+char *aacs_resolve_path(const char *path)
 {
+    char resolved_path[AACS_PATH_MAX];
     char tmp_path[AACS_PATH_MAX];
     char link[AACS_PATH_MAX];
     char *new_path = resolved_path;
@@ -133,14 +140,13 @@ char *aacs_resolve_path(const char *path, char *resolved_path)
     }
 
     *new_path = 0;
-    return resolved_path;
+    return str_dup(resolved_path);
 }
 
 #ifdef TEST_AACS_RESOLVE_PATH
 #include <stdio.h>
 void main(int argc, char *argv[]) {
-    char path[AACS_PATH_MAX];
-    printf("%s -> %s\n", argv[0], aacs_resolve_path(argv[0], path));
-    printf("%s -> %s\n", argv[1], aacs_resolve_path(argv[1], path));
+    printf("%s -> %s\n", argv[0], aacs_resolve_path(argv[0]));
+    printf("%s -> %s\n", argv[1], aacs_resolve_path(argv[1]));
 }
 #endif

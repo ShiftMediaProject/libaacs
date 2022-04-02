@@ -259,6 +259,11 @@ static uint8_t *_mmc_read_mkb(MMC *mmc, uint8_t agid, int address, int *size)
 
         BD_DEBUG(DBG_MMC, "got mkb: pack 0/%d %d bytes\n", num_packs, len);
 
+        if (len <= 0 || len > 32768) {
+              BD_DEBUG(DBG_MMC | DBG_CRIT, "invalid pack\n");
+              return NULL;
+        }
+
         mkb = malloc(32768 * num_packs);
         if (!mkb) {
               BD_DEBUG(DBG_MMC | DBG_CRIT, "out of memory\n");
@@ -272,7 +277,10 @@ static uint8_t *_mmc_read_mkb(MMC *mmc, uint8_t agid, int address, int *size)
             if (_mmc_report_disc_structure(mmc, agid, 0x83, layer, pack, buf, sizeof(buf))) {
                 len = MKINT_BE16(buf) - 2;
                 BD_DEBUG(DBG_MMC, "got mkb: pack %d/%d %d bytes\n", pack, num_packs, len);
-
+                if (len <= 0 || len > 32768) {
+                    BD_DEBUG(DBG_MMC | DBG_CRIT, "invalid pack\n");
+                    break;
+                }
                 memcpy(mkb + *size, buf + 4, len);
                 *size += len;
             } else {
@@ -427,17 +435,24 @@ static int _verify_signature(const uint8_t *cert, const uint8_t *signature,
                              const uint8_t *nonce, const uint8_t *point)
 {
     uint8_t data[60];
+    int crypto_error;
 
     memcpy(data,      nonce, 20);
     memcpy(data + 20, point, 40);
 
-    return crypto_aacs_verify(cert, signature, data, 60);
+    crypto_error = crypto_aacs_verify(cert, signature, data, 60);
+    if (crypto_error) {
+        LOG_CRYPTO_ERROR(DBG_MMC, "signature verification failed", crypto_error);
+    }
+
+    return (crypto_error == 0);
 }
 
 static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *bus_key)
 {
     uint8_t hks[40], dn[20], dkp[40], dks[40];
     char str[512];
+    int crypto_error;
 
     memset(hks, 0, sizeof(hks));
 
@@ -472,9 +487,15 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
         BD_DEBUG(DBG_MMC, "Drive nonce         : %s\n", str_print_hex(str, dn, 20));
     }
 
+    if (mmc->drive_cert[0] == 0x11) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "WARNING: Drive is using AACS 2.0 certificate\n");
+        return MMC_ERROR;
+    }
+
     // verify drive certificate
-    if (!crypto_aacs_verify_drive_cert(mmc->drive_cert)) {
-        BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
+    crypto_error = crypto_aacs_verify_drive_cert(mmc->drive_cert);
+    if (crypto_error) {
+        LOG_CRYPTO_ERROR(DBG_MMC, "drive certificate signature verification failed", crypto_error);
         return MMC_ERROR;
     }
 
@@ -496,8 +517,11 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     }
 
     // sign
-    crypto_aacs_sign(host_cert, host_priv_key, hks, dn,
-                     mmc->host_key_point);
+    crypto_error = crypto_aacs_sign(host_cert, host_priv_key, hks, dn, mmc->host_key_point);
+    if (crypto_error) {
+        LOG_CRYPTO_ERROR(DBG_MMC, "Signing failed", crypto_error);
+        return MMC_ERROR;
+    }
 
     // verify own signature
     if (!_verify_signature(host_cert, hks, dn, mmc->host_key_point)) {
@@ -531,6 +555,7 @@ static int _read_vid(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *vi
 {
     uint8_t mac[16], calc_mac[16];
     char str[512];
+    int err;
 
     BD_DEBUG(DBG_MMC, "Reading VID from drive...\n");
 
@@ -541,9 +566,14 @@ static int _read_vid(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *vi
         }
 
         /* verify MAC */
-        crypto_aes_cmac_16(vid, bus_key, calc_mac);
+        err = crypto_aes_cmac_16(vid, bus_key, calc_mac);
+        if (err) {
+            LOG_CRYPTO_ERROR(DBG_MMC, "VID MAC calculation failed", err);
+            return MMC_ERROR;
+        }
         if (memcmp(calc_mac, mac, 16)) {
             BD_DEBUG(DBG_MMC | DBG_CRIT, "VID MAC is incorrect. This means this Volume ID is not correct.\n");
+            return MMC_ERROR;
         }
 
         return MMC_SUCCESS;
@@ -558,6 +588,7 @@ static int _read_pmsn(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *p
 {
     uint8_t mac[16], calc_mac[16];
     char str[512];
+    int err;
 
     BD_DEBUG(DBG_MMC, "Reading PMSN from drive...\n");
 
@@ -568,9 +599,14 @@ static int _read_pmsn(MMC *mmc, uint8_t agid, const uint8_t *bus_key, uint8_t *p
         }
 
         /* verify MAC */
-        crypto_aes_cmac_16(pmsn, bus_key, calc_mac);
+        err = crypto_aes_cmac_16(pmsn, bus_key, calc_mac);
+        if (err) {
+            LOG_CRYPTO_ERROR(DBG_MMC, "PMSN MAC calculation failed", err);
+            return MMC_ERROR;
+        }
         if (memcmp(calc_mac, mac, 16)) {
             BD_DEBUG(DBG_MMC | DBG_CRIT, "PMSN MAC is incorrect. This means this Pre-recorded Medial Serial Number is not correct.\n");
+            return MMC_ERROR;
         }
 
         return MMC_SUCCESS;
@@ -591,13 +627,21 @@ static int _read_data_keys(MMC *mmc, uint8_t agid, const uint8_t *bus_key,
 
     if (_mmc_read_data_keys(mmc, agid, encrypted_read_data_key, encrypted_write_data_key)) {
         if (read_data_key) {
-            crypto_aes128d(bus_key, encrypted_read_data_key, read_data_key);
+            int err = crypto_aes128d(bus_key, encrypted_read_data_key, read_data_key);
+            if (err) {
+                LOG_CRYPTO_ERROR(DBG_MMC, "decrypting read data key failed", err);
+                return MMC_ERROR;
+            }
             if (DEBUG_KEYS) {
                 BD_DEBUG(DBG_MMC, "READ DATA KEY       : %s\n", str_print_hex(str, read_data_key, 16));
             }
         }
         if (write_data_key) {
-            crypto_aes128d(bus_key, encrypted_write_data_key, write_data_key);
+            int err = crypto_aes128d(bus_key, encrypted_write_data_key, write_data_key);
+            if (err) {
+                LOG_CRYPTO_ERROR(DBG_MMC, "decrypting write data key failed", err);
+                return MMC_ERROR;
+            }
             if (DEBUG_KEYS) {
                 BD_DEBUG(DBG_MMC, "WRITE DATA KEY      : %s\n", str_print_hex(str, write_data_key, 16));
             }
@@ -664,6 +708,7 @@ int mmc_read_auth(MMC *mmc, const uint8_t *host_priv_key, const uint8_t *host_ce
 int mmc_read_drive_cert(MMC *mmc, uint8_t *drive_cert)
 {
     uint8_t buf[116];
+    int crypto_error;
 
     if (mmc->drive_cert[0] == 0x01) {
         memcpy(drive_cert, mmc->drive_cert, 92);
@@ -681,8 +726,9 @@ int mmc_read_drive_cert(MMC *mmc, uint8_t *drive_cert)
         return MMC_ERROR;
     }
 
-    if (!crypto_aacs_verify_drive_cert(buf + 4)) {
-        BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
+    crypto_error = crypto_aacs_verify_drive_cert(buf + 4);
+    if (crypto_error) {
+        LOG_CRYPTO_ERROR(DBG_MMC, "drive certificate signature verification failed", crypto_error);
         return MMC_ERROR;
     }
 

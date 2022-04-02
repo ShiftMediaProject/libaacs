@@ -24,14 +24,12 @@
 
 #include "util/macro.h"  /* MKINT_BE48 */
 
-static const char *_hex2str(const uint8_t *s, unsigned n)
+static const char *_hex2str(char *str, const uint8_t *s, unsigned n)
 {
     static const char hex[] = "0123456789ABCDEF";
-    static char *str = NULL;
 
     unsigned ii;
 
-    str = realloc(str, n*2 + 1);
     for (ii = 0; ii < n; ii++) {
         str[2*ii]     = hex[ s[ii] >> 4];
         str[2*ii + 1] = hex[ s[ii] & 0x0f];
@@ -70,7 +68,7 @@ int main (int argc, char **argv)
 
     if (argc < 2) {
         fprintf(stderr, "Usage: aacs_info <path-to-disc-root> [<path-to-config-file>]\n");
-	exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
 
     aacs_get_version(&major, &minor, &micro);
@@ -78,7 +76,7 @@ int main (int argc, char **argv)
 
     aacs = aacs_init();
     if (!aacs) {
-	exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
 
     error_code = aacs_open_device(aacs, argv[1], argc > 2 ? argv[2] : NULL);
@@ -98,18 +96,19 @@ int main (int argc, char **argv)
     const uint8_t *binding_id = aacs_get_device_binding_id(aacs);
     const uint8_t *bdj_hash   = aacs_get_bdj_root_cert_hash(aacs);
     const uint8_t *cc_id      = aacs_get_content_cert_id(aacs);
+    char           s[41];
 
-    printf("Disc ID: %s\n", id  ? _hex2str(id,  20) : "???");
-    printf("VID    : %s\n", vid ? _hex2str(vid, 16) : "???");
-    printf("MK     : %s\n", mk  ? _hex2str(mk, 16) : "???");
+    printf("Disc ID: %s\n", id  ? _hex2str(s, id,  20) : "???");
+    printf("VID    : %s\n", vid ? _hex2str(s, vid, 16) : "???");
+    printf("MK     : %s\n", mk  ? _hex2str(s, mk, 16) : "???");
     printf("MKBv   : %d\n", aacs_get_mkb_version(aacs));
-    printf("PMSN   : %s\n", pmsn ? _hex2str(pmsn, 16) : "???");
+    printf("PMSN   : %s\n", pmsn ? _hex2str(s, pmsn, 16) : "???");
     printf("Bus encryption:\n");
     printf("  Device support:   %s\n", (bec & AACS_BUS_ENCRYPTION_CAPABLE) ? "yes" : "no");
     printf("  Enabled in media: %s\n", (bec & AACS_BUS_ENCRYPTION_ENABLED) ? "yes" : "no");
-    printf("Content Certificate ID: %s\n", cc_id      ? _hex2str(cc_id,      6)  : "???");
-    printf("BD-J Root Cert hash:    %s\n", bdj_hash   ? _hex2str(bdj_hash,   20) : "???");
-    printf("Device binding ID:      %s\n", binding_id ? _hex2str(binding_id, 16) : "???");
+    printf("Content Certificate ID: %s\n", cc_id      ? _hex2str(s, cc_id,      6)  : "???");
+    printf("BD-J Root Cert hash:    %s\n", bdj_hash   ? _hex2str(s, bdj_hash,   20) : "???");
+    printf("Device binding ID:      %s\n", binding_id ? _hex2str(s, binding_id, 16) : "???");
 
 
     aacs_close(aacs);

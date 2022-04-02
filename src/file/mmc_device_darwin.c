@@ -548,7 +548,7 @@ void device_close(MMCDEV **pp)
          * a USB BD drive which sometimes can take really long to
          * be in a mountable state again.
          * For internal drives this is probably much faster
-         * so the long timeout shouldnt do much harm for thse
+         * so the long timeout shouldn't do much harm for thse
          * cases.
          */
         dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, 20 * 1E+9);

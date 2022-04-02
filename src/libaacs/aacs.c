@@ -42,10 +42,6 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
-#include <gcrypt.h>
 
 
 #define SECTOR_LEN       2048  /* bus encryption block size */
@@ -79,7 +75,7 @@ struct aacs {
 
     /* bus encryption */
     int       bee;        /* bus encryption enabled flag in content certificate */
-    int       bec;        /* bus encryption capable flag in drive certificate */
+    int       bec;        /* bus encryption capable flag in drive certificate. -1 = unread. */
     uint8_t   read_data_key[16];
     uint8_t   drive_cert_hash[20];
 
@@ -94,8 +90,6 @@ struct aacs {
 static const uint8_t empty_key[20] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                        0x00, 0x00, 0x00, 0x00 };
-static const uint8_t aacs_iv[16]   = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
-                                       0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
 
 /*
  * Validate processing key using media key verification data
@@ -105,8 +99,7 @@ static int _validate_pk(const uint8_t *pk,
                         const uint8_t *cvalue, const uint8_t *uv, const uint8_t *vd,
                         uint8_t *mk)
 {
-    gcry_cipher_hd_t gcry_h;
-    int a;
+    int a, crypto_err;
     uint8_t dec_vd[16];
     char str[40];
 
@@ -116,18 +109,21 @@ static int _validate_pk(const uint8_t *pk,
     BD_DEBUG(DBG_AACS, "   cvalue: %s\n", str_print_hex(str, cvalue, 16));
     BD_DEBUG(DBG_AACS, "   Verification data: %s\n", str_print_hex(str, vd, 16));
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, pk, 16);
-    gcry_cipher_decrypt(gcry_h, mk, 16, cvalue, 16);
+    crypto_err = crypto_aes128d(pk, cvalue, mk);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "decrypting media key failed", crypto_err);
+        return AACS_ERROR_UNKNOWN;
+    }
 
     for (a = 0; a < 4; a++) {
         mk[a + 12] ^= uv[a];
     }
 
-    gcry_cipher_setkey(gcry_h, mk, 16);
-    gcry_cipher_decrypt (gcry_h, dec_vd, 16, vd, 16);
-    gcry_cipher_close(gcry_h);
-
+    crypto_err = crypto_aes128d(mk, vd, dec_vd);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "decrypting media key verification data failed", crypto_err);
+        return AACS_ERROR_UNKNOWN;
+    }
     if (!memcmp(dec_vd, "\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8)) {
         BD_DEBUG(DBG_AACS, "Processing key %s is valid!\n", str_print_hex(str, pk, 16));
         return AACS_SUCCESS;
@@ -142,6 +138,8 @@ static int _validate_pk(const uint8_t *pk,
 
 static int _rl_verify_signature(const uint8_t *rl, size_t size)
 {
+    int crypto_err;
+
     if (size < 40) {
         BD_DEBUG(DBG_AACS, "too small revocation list\n");
         return 0;
@@ -159,7 +157,13 @@ static int _rl_verify_signature(const uint8_t *rl, size_t size)
         return 0;
     }
 
-    return crypto_aacs_verify_aacsla(rl + len, rl, len);
+    crypto_err = crypto_aacs_verify_aacsla(rl + len, rl, len);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "revocation list signature verification failed", crypto_err);
+        return 0;
+    }
+
+    return 1;
 }
 
 static void _save_rl(const char *name, uint32_t version, const uint8_t *version_rec,
@@ -179,9 +183,7 @@ static void _save_rl(const char *name, uint32_t version, const uint8_t *version_
     if (data) {
         memcpy(data,      version_rec, 12);
         memcpy(data + 12, rl_rec,      rl_len);
-        if (!_rl_verify_signature(data, rl_len + 12)) {
-            BD_DEBUG(DBG_AACS | DBG_CRIT, "invalid %s signature, not using it\n", name);
-        } else {
+        if (_rl_verify_signature(data, rl_len + 12)) {
             cache_save(name, version, data, rl_len + 12);
         }
         X_FREE(data);
@@ -225,11 +227,16 @@ static uint32_t _calc_v_mask(uint32_t uv)
     return v_mask;
 }
 
-static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mask, uint32_t dev_key_v_mask)
+static int _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mask, uint32_t dev_key_v_mask)
 {
     unsigned char left_child[16], right_child[16];
+    int crypto_err;
 
-    crypto_aesg3(dk, left_child, right_child, pk);
+    crypto_err = crypto_aesg3(dk, left_child, right_child, pk);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "PK derivation failed", crypto_err);
+        return AACS_ERROR_UNKNOWN;
+    }
 
     while (dev_key_v_mask != v_mask) {
 
@@ -247,13 +254,18 @@ static void _calc_pk(const uint8_t *dk, uint8_t *pk, uint32_t uv, uint32_t v_mas
             memcpy(curr_key, right_child, 16);
         }
 
-        crypto_aesg3(curr_key, left_child, right_child, pk);
+        crypto_err = crypto_aesg3(curr_key, left_child, right_child, pk);
+        if (crypto_err) {
+            LOG_CRYPTO_ERROR(DBG_AACS, "PK derivation failed", crypto_err);
+            return AACS_ERROR_UNKNOWN;
+        }
 
         dev_key_v_mask = ((int) dev_key_v_mask) >> 1;
     }
 
     char str[40];
     BD_DEBUG(DBG_AACS, "Processing key: %s\n",  str_print_hex(str, pk, 16));
+    return AACS_SUCCESS;
 }
 
 static dk_list *_find_dk(dk_list *dkl, uint32_t *p_dev_key_v_mask, uint32_t uv, uint32_t u_mask)
@@ -387,7 +399,10 @@ static int _calc_mk_dks(MKB *mkb, dk_list *dkl, uint8_t *mk)
         /* calculate processing key */
 
         uint8_t pk[16];
-        _calc_pk(dk->key, pk, uv, v_mask, dev_key_v_mask);
+        if (_calc_pk(dk->key, pk, uv, v_mask, dev_key_v_mask) != AACS_SUCCESS) {
+            /* try next device */
+            continue;
+        }
 
         /* calculate and verify media key */
 
@@ -480,12 +495,20 @@ static size_t _read_mkb_file(AACS *aacs, const char *file, void **pdata)
     size_t       data_size = 65536; /* initial alloc */
     uint32_t     chunk_size = 4; /* initial read */
     uint8_t     *data;
+    int64_t      fsize;
 
     *pdata = NULL;
 
     fp = _file_open(aacs, file);
     if (!fp) {
         BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to open %s\n", file);
+        return 0;
+    }
+
+    fsize = file_size(fp);
+    if (fsize < 4) {
+        BD_DEBUG(DBG_AACS | DBG_CRIT, "Empty file: %s\n", file);
+        file_close(fp);
         return 0;
     }
 
@@ -505,8 +528,12 @@ static size_t _read_mkb_file(AACS *aacs, const char *file, void **pdata)
         }
         size += read_size;
         chunk_size = MKINT_BE24(data + size - 4 + 1);
+        if (fsize - size + 4 < (int64_t)chunk_size) {
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid record size %u in %s\n", (unsigned)chunk_size, file);
+            break;
+        }
         if (data_size < size + chunk_size) {
-            for ( ; data_size < size + chunk_size; data_size *= 2) ;
+            data_size = 2*size + chunk_size;
             void *tmp = realloc(data, data_size);
             if (!tmp) {
                 X_FREE(data);
@@ -672,8 +699,11 @@ static int _mmc_read_auth(AACS *aacs, cert_list *hcl, int type, uint8_t *p1, uin
     for (; hcl ; hcl = hcl->next) {
 
         char tmp_str[2*92+1];
+        int crypto_error;
 
-        if (!crypto_aacs_verify_host_cert(hcl->host_cert)) {
+        crypto_error = crypto_aacs_verify_host_cert(hcl->host_cert);
+        if (crypto_error) {
+            LOG_CRYPTO_ERROR(DBG_AACS, "host certificate signature verification failed", crypto_error);
             BD_DEBUG(DBG_AACS, "Not using invalid host certificate %s.\n",
                   str_print_hex(tmp_str, hcl->host_cert, 92));
             continue;
@@ -776,7 +806,7 @@ static int _read_pmsn(AACS *aacs, cert_list *hcl)
 
 static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
 {
-    int error_code;
+    int error_code, crypto_err;
 
     /* Skip if retrieved from config file */
     if (memcmp(vuk, empty_key, 16)) {
@@ -808,7 +838,11 @@ static int _calc_vuk(AACS *aacs, uint8_t *mk, uint8_t *vuk, config_file *cf)
 
     /* calculate VUK */
 
-    crypto_aes128d(mk, aacs->vid, vuk);
+    crypto_err = crypto_aes128d(mk, aacs->vid, vuk);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "decrypting VUK failed", crypto_err);
+        return AACS_ERROR_UNKNOWN;
+    }
 
     int a;
     for (a = 0; a < 16; a++) {
@@ -1027,6 +1061,7 @@ static int _calc_uks(AACS *aacs, config_file *cf)
     /* decrypt unit keys */
 
     for (i = 0; i < aacs->uk->num_uk; i++) {
+        int crypto_err;
 
         /* error out if VUK calculation fails and encrypted CPS unit is found */
         if (vuk_error_code != AACS_SUCCESS) {
@@ -1037,7 +1072,11 @@ static int _calc_uks(AACS *aacs, config_file *cf)
             BD_DEBUG(DBG_AACS | DBG_CRIT, "WARNING: VUK calculation failed but disc seems to be unencrypted.\n");
         }
 
-        crypto_aes128d(vuk, aacs->uk->enc_uk[i].key, aacs->uk->uk[i].key);
+        crypto_err = crypto_aes128d(vuk, aacs->uk->enc_uk[i].key, aacs->uk->uk[i].key);
+        if (crypto_err) {
+            LOG_CRYPTO_ERROR(DBG_AACS, "decrypting unit key failed", crypto_err);
+            return AACS_ERROR_UNKNOWN;
+        }
 
         char str[40];
         BD_DEBUG(DBG_AACS, "Unit key %d: %s\n", i,
@@ -1168,49 +1207,36 @@ static int _decrypt_unit(AACS *aacs, uint8_t *out_buf, const uint8_t *in_buf, ui
 {
     /* inbuf == NULL means in-place decryption */
 
-    gcry_cipher_hd_t gcry_h;
-    int a;
+    int a, crypto_err;
     uint8_t key[16];
 
     if (BD_UNLIKELY(in_buf != NULL)) {
         memcpy(out_buf, in_buf, 16); /* first 16 bytes are plain */
     }
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, aacs->uk->uk[curr_uk].key, 16);
-    gcry_cipher_encrypt(gcry_h, key, 16, out_buf, 16); /* here out_buf is plain data fron in_buf */
-    gcry_cipher_close(gcry_h);
+    crypto_err = crypto_aes128e(aacs->uk->uk[curr_uk].key, out_buf, key);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "unit key derivation failed", crypto_err);
+    }
 
     for (a = 0; a < 16; a++) {
-        key[a] ^= out_buf[a]; /* here out_buf is plain data fron in_buf */
+        key[a] ^= out_buf[a]; /* here out_buf is plain data from in_buf */
     }
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
-    gcry_cipher_setkey(gcry_h, key, 16);
-    gcry_cipher_setiv(gcry_h, aacs_iv, 16);
     if (BD_UNLIKELY(in_buf != NULL)) {
-        gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
+        crypto_err = crypto_aacs_decrypt(key, out_buf + 16, ALIGNED_UNIT_LEN - 16, in_buf + 16, ALIGNED_UNIT_LEN - 16);
     } else {
-        gcry_cipher_decrypt(gcry_h, out_buf + 16, ALIGNED_UNIT_LEN - 16, NULL, 0);
+        crypto_err = crypto_aacs_decrypt(key, out_buf + 16, ALIGNED_UNIT_LEN - 16, NULL, 0);
     }
-    gcry_cipher_close(gcry_h);
+    if (crypto_err) {
+        LOG_CRYPTO_ERROR(DBG_AACS, "decrypting unit failed", crypto_err);
+    }
 
     if (_verify_ts(out_buf)) {
         return 1;
     }
 
     return 0;
-}
-
-static void _decrypt_bus(AACS *aacs, uint8_t *buf)
-{
-    gcry_cipher_hd_t gcry_h;
-
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
-    gcry_cipher_setkey(gcry_h, aacs->read_data_key, 16);
-    gcry_cipher_setiv(gcry_h, aacs_iv, 16);
-    gcry_cipher_decrypt(gcry_h, buf + 16, SECTOR_LEN - 16, NULL, 0);
-    gcry_cipher_close(gcry_h);
 }
 
 /*
@@ -1236,6 +1262,7 @@ const char *aacs_error_str(int err)
        [-AACS_ERROR_MMC_OPEN]         = "Failed opening MMC device",
        [-AACS_ERROR_MMC_FAILURE]      = "MMC failure",
        [-AACS_ERROR_NO_DK]            = "No matching device key",
+       [-AACS_ERROR_UNKNOWN]          = "Error",
     };
     err = -err;
     if (err < 0 || (size_t)err >= sizeof(str) / sizeof(str[0]) || !str[err]) {
@@ -1244,7 +1271,7 @@ const char *aacs_error_str(int err)
     return str[err];
 }
 
-/* aacs_open2() wrapper for backwards compability */
+/* aacs_open2() wrapper for backwards compatibility */
 AACS *aacs_open(const char *path, const char *configfile_path)
 {
     int error_code;
@@ -1259,7 +1286,7 @@ AACS *aacs_open(const char *path, const char *configfile_path)
     return NULL;
 }
 
-/* aacs_open_device() wrapper for backward compability */
+/* aacs_open_device() wrapper for backward compatibility */
 AACS *aacs_open2(const char *path, const char *configfile_path, int *error_code)
 {
     AACS *aacs = aacs_init();
@@ -1310,6 +1337,8 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
     aacs->path = path ? str_dup(path) : NULL;
 
     aacs->cc = _read_cc_any(aacs);
+    aacs->bee = _get_bus_encryption_enabled(aacs);
+    aacs->bec = -1;
 
     error_code = _calc_title_hash(aacs);
     if (error_code != AACS_SUCCESS) {
@@ -1324,18 +1353,20 @@ int aacs_open_device(AACS *aacs, const char *path, const char *configfile_path)
         BD_DEBUG(DBG_AACS, "Failed to initialize AACS!\n");
     }
 
-    aacs->bee = _get_bus_encryption_enabled(aacs);
-    aacs->bec = _get_bus_encryption_capable(aacs, path);
-
-    if (error_code == AACS_SUCCESS && aacs->bee && aacs->bec) {
+    if (error_code == AACS_SUCCESS && aacs->bee) {
 
         if (!cf) {
             return AACS_ERROR_NO_CONFIG;
         }
 
+        if (aacs->bec < 0) {
+            aacs->bec = _get_bus_encryption_capable(aacs, path);
+        }
+        if (aacs->bec > 0) {
         error_code = _read_read_data_key(aacs, cf->host_cert_list);
         if (error_code != AACS_SUCCESS) {
             BD_DEBUG(DBG_AACS | DBG_CRIT, "Unable to initialize bus encryption required by drive and disc\n");
+            }
         }
     }
 
@@ -1367,10 +1398,15 @@ void aacs_close(AACS *aacs)
 
 static void _decrypt_unit_bus(AACS *aacs, uint8_t *buf)
 {
-    if (aacs->bee && aacs->bec) {
+    if (aacs->bee && aacs->bec > 0) {
         unsigned int i;
+        int crypto_err;
         for (i = 0; i < ALIGNED_UNIT_LEN; i += SECTOR_LEN) {
-            _decrypt_bus(aacs, buf + i);
+            //_decrypt_bus(aacs, buf + i);
+            crypto_err = crypto_aacs_decrypt(aacs->read_data_key, buf + i + 16, SECTOR_LEN - 16, NULL, 0);
+            if (crypto_err) {
+                LOG_CRYPTO_ERROR(DBG_AACS, "bus decrypting failed", crypto_err);
+            }
         }
     }
 }
@@ -1624,6 +1660,9 @@ void aacs_free_rl(AACS_RL_ENTRY **rl)
 
 uint32_t aacs_get_bus_encryption(AACS *aacs)
 {
+    if (aacs->bec < 0) {
+        aacs->bec = _get_bus_encryption_capable(aacs, aacs->path);
+    }
   return (aacs->bee * AACS_BUS_ENCRYPTION_ENABLED) |
          (aacs->bec * AACS_BUS_ENCRYPTION_CAPABLE);
 }

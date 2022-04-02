@@ -1,7 +1,7 @@
 dnl library version number
 m4_define([aacs_major], 0)
 m4_define([aacs_minor], 11)
-m4_define([aacs_micro], 0)
+m4_define([aacs_micro], 1)
 m4_define([aacs_version],[aacs_major.aacs_minor.aacs_micro])
 
 dnl shared library version (.so version)
@@ -16,9 +16,9 @@ dnl Library file name will be libaacs.(current-age).age.revision
 
 m4_define([lt_current],  7)
 m4_define([lt_age],      7)
-m4_define([lt_revision], 1)
+m4_define([lt_revision], 2)
 
-dnl initilization
+dnl initialization
 AC_INIT([libaacs], aacs_version, [http://www.videolan.org/developers/libaacs.html])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
@@ -36,12 +36,12 @@ case "${host_os}" in
   "")
     SYS=unknown
     ;;
-  *mingw32* | *cygwin* | *wince* | *mingwce*)
+  *mingw* | *cygwin* | *wince* | *mingwce*)
     case "${host_os}" in
       *wince* | *mingwce* | *mingw32ce*)
         SYS=mingwce
         ;;
-      *mingw32*)
+      *mingw*)
         SYS=mingw32
         AC_DEFINE([_WIN32_WINNT], 0x0501, [Define to '0x0500' for Windows XP APIs.])
         AC_DEFINE([_WIN32_IE], 0x0501, [Define to '0x0501' for IE 5.01.])

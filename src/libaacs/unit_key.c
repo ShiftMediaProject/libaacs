@@ -66,7 +66,7 @@ static int _parse_header(AACS_UK *uk, const uint8_t *p, size_t size)
     uk->num_bdmv_dir = p[17];
     uk->use_skb_mkb  = p[18] >> 7;
 
-    /* check if suported */
+    /* check if supported */
 
     if (uk->num_bdmv_dir < 1) {
         BD_DEBUG(DBG_UK | DBG_CRIT, "No BDMV directories\n");
@@ -105,6 +105,11 @@ static int _assign_titles(AACS_UK *uk, const uint8_t *p, size_t size)
     first_play = MKINT_BE16(p + 20);
     top_menu   = MKINT_BE16(p + 22);
     num_titles = MKINT_BE16(p + 24);
+
+    if (num_titles > 0xffff - 2) {
+        BD_DEBUG(DBG_UK | DBG_CRIT, "Invalid title count %u\n", num_titles);
+        return -1;
+    }
 
     BD_DEBUG(DBG_UK, "Title FP : CPS unit %d\n", first_play);
     BD_DEBUG(DBG_UK, "Title TM : CPS unit %d\n", top_menu);
@@ -148,6 +153,9 @@ static int _parse_uks(AACS_UK *uk, const uint8_t *p, size_t size, int aacs2)
     const uint8_t empty_key[16] = {0};
     uint32_t uk_pos;
     unsigned int i;
+    unsigned num_uk;
+
+    uk->num_uk = 0;
 
     if (size < 4) {
         BD_DEBUG(DBG_UK | DBG_CRIT, "Empty unit key file\n");
@@ -158,23 +166,27 @@ static int _parse_uks(AACS_UK *uk, const uint8_t *p, size_t size, int aacs2)
 
     uk_pos = MKINT_BE32(p);
 
-    if (size < uk_pos + 2) {
+    if (size - 2 < uk_pos) {
         BD_DEBUG(DBG_UK | DBG_CRIT, "Unexpected EOF (key data missing)\n");
         return -1;
     }
 
-    uk->num_uk = MKINT_BE16(p + uk_pos);
-    if (uk->num_uk < 1) {
+    num_uk = MKINT_BE16(p + uk_pos);
+    if (num_uk < 1) {
         BD_DEBUG(DBG_UK | DBG_CRIT, "No unit keys\n");
         return 0;
     }
 
-    if (size < uk_pos + 48 * uk->num_uk + 16) {
+    if (size - uk_pos < 16) {
+        BD_DEBUG(DBG_UK | DBG_CRIT, "Unexpected EOF (key data truncated)\n");
+        return -1;
+    }
+    if ((size - uk_pos - 16) / 48 < num_uk) {
         BD_DEBUG(DBG_UK | DBG_CRIT, "Unexpected EOF (key data truncated)\n");
         return -1;
     }
 
-    if (aacs2 && uk->num_uk > 1) {
+    if (aacs2 && num_uk > 1) {
         /* do some sanity checks ... */
         if (!memcmp(empty_key, p + 48 + 48 + 16, 16)) {
             BD_DEBUG(DBG_UK | DBG_CRIT, "AACS2 unit key not found from expected location ?\n");
@@ -187,17 +199,17 @@ static int _parse_uks(AACS_UK *uk, const uint8_t *p, size_t size, int aacs2)
 
     /* alloc storage for keys */
 
-    uk->enc_uk = calloc(uk->num_uk, sizeof(AACS_UK));
+    uk->enc_uk = calloc(num_uk, sizeof(AACS_UK));
     if (!uk->enc_uk) {
         BD_DEBUG(DBG_UK | DBG_CRIT, "Out of memory\n");
         return -1;
     }
 
-    BD_DEBUG(DBG_UK, "%d CPS unit keys (AACS%d)\n", uk->num_uk, aacs2 ? 2 : 1);
+    BD_DEBUG(DBG_UK, "%d CPS unit keys (AACS%d)\n", num_uk, aacs2 ? 2 : 1);
 
     /* get encrypted keys */
 
-    for (i = 0; i < uk->num_uk; i++) {
+    for (i = 0; i < num_uk; i++) {
         uk_pos += 48;
         memcpy(uk->enc_uk[i].key, p + uk_pos, 16);
 
@@ -212,6 +224,7 @@ static int _parse_uks(AACS_UK *uk, const uint8_t *p, size_t size, int aacs2)
         }
     }
 
+    uk->num_uk = num_uk;
     return 0;
 }
 

@@ -93,6 +93,11 @@ static void _dump_aacs1_rl(const uint8_t *rl, size_t rl_size)
     uint32_t total_entries = MKINT_BE32(rl);
     rl += 4; rl_size -= 4;
 
+    if ((size_t)total_entries > rl_size / 8) {
+        printf("  revocation list size mismatch: total_entries=%u\n", (unsigned)total_entries);
+        return;
+    }
+
     while (total_entries > 0 && rl_size >= 4) {
         uint32_t entries = MKINT_BE32(rl);
         rl += 4; rl_size -= 4;
@@ -120,7 +125,12 @@ static void _dump_aacs1_rl(const uint8_t *rl, size_t rl_size)
         }
         _dump_signature(rl, 40);
         rl += 40; rl_size -= 40;
-        total_entries -= entries;
+        if (total_entries <= entries) {
+            total_entries -= entries;
+        } else {
+            printf("  revocation list size mismatch\n");
+            total_entries = 0;
+        }
     }
 }
 
@@ -143,12 +153,16 @@ static void _dump_record(MKB *mkb, int record)
     for (pos = 0; pos + 4 <= size; pos += len) {
         uint8_t type = data[pos];
         len  = MKINT_BE24(data + pos + 1);
+        if (len > size - pos) {
+            printf("  invalid record 0x%02x size: %zu\n", type, len);
+            break;
+        }
         if (type == record) {
             switch (record) {
-                case 0x02: _dump_signature(data + pos + 4, len - 4); break;
-                case 0x10: _dump_type_and_version(data + pos + 4, len - 4); break;
+                case 0x02: if (len > 4 && len <= 64) _dump_signature(data + pos + 4, len - 4); break;
+                case 0x10: if (len > 4)              _dump_type_and_version(data + pos + 4, len - 4); break;
                 case 0x20:
-                case 0x21: _dump_aacs1_rl(data + pos + 4, len - 4); break;
+                case 0x21: if (len > 4)              _dump_aacs1_rl(data + pos + 4, len - 4); break;
             }
             printf("  Raw data (%zu bytes):\n", len - 4);
             const uint8_t *p = data + pos + 4;
@@ -194,7 +208,7 @@ static void _list_records(MKB *mkb, uint8_t *seen_map)
         uint8_t type = data[pos];
         len  = MKINT_BE24(data + pos + 1);
         printf("    record 0x%02x: %10zu bytes  %s\n", type, len, rec_name(type));
-        seen_map[type] = 1;
+        seen_map[type & 0xff] = 1;
         if (len == 0) {
             printf("    UNKNOWN:     %10zu bytes\n", size - pos);
             break;

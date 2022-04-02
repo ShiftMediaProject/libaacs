@@ -106,18 +106,22 @@ static void _curve_free(elliptic_curve_t *c)
     point_free(&c->G);
 }
 
-static void _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
+BD_USED static int _aesg3(const uint8_t *src_key, uint8_t *dst_key, uint8_t inc)
 {
-    int a;
+    int a, err;
     uint8_t seed[16] = { 0x7B, 0x10, 0x3C, 0x5D, 0xCB, 0x08, 0xC4, 0xE5,
                          0x1A, 0x27, 0xB0, 0x17, 0x99, 0x05, 0x3B, 0xD9 };
     seed[15] += inc;
 
-    crypto_aes128d(src_key, seed, dst_key);
+    err = crypto_aes128d(src_key, seed, dst_key);
+    if (err)
+        return err;
 
     for (a = 0; a < 16; a++) {
         dst_key[a] ^= seed[a];
     }
+
+    return err;
 }
 
 /* Initializes libgcrypt */
@@ -143,29 +147,61 @@ int crypto_init()
     return crypto_init_check;
 }
 
-void crypto_aes128d(const uint8_t *key, const uint8_t *data, uint8_t *dst)
+int crypto_aes128e(const uint8_t *key, const uint8_t *data, uint8_t *dst)
 {
     gcry_cipher_hd_t gcry_h;
+    gcry_error_t err;
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, key, 16);
-    gcry_cipher_decrypt(gcry_h, dst, 16, data, 16);
+    err = gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+    if (err)
+        return err;
+
+    err = gcry_cipher_setkey(gcry_h, key, 16);
+    if (err)
+        goto error;
+    err = gcry_cipher_encrypt(gcry_h, dst, 16, data, data ? 16 : 0);
+
+ error:
     gcry_cipher_close(gcry_h);
+    return err;
 }
 
-void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
+int crypto_aes128d(const uint8_t *key, const uint8_t *data, uint8_t *dst)
 {
+    gcry_cipher_hd_t gcry_h;
+    gcry_error_t err;
+
+    err = gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
+    if (err)
+        return err;
+
+    err = gcry_cipher_setkey(gcry_h, key, 16);
+    if (err)
+        goto error;
+    err = gcry_cipher_decrypt(gcry_h, dst, 16, data, 16);
+
+ error:
+    gcry_cipher_close(gcry_h);
+    return err;
+}
+
+int crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk, uint8_t *pk)
+{
+    int err1 = 0, err2 = 0, err3 = 0;
+
     if (lsubk) {
-        _aesg3(D, lsubk, 0);
+        err1 = _aesg3(D, lsubk, 0);
     }
 
     if (pk) {
-        _aesg3(D, pk, 1);
+        err2 = _aesg3(D, pk, 1);
     }
 
     if (rsubk) {
-        _aesg3(D, rsubk, 2);
+        err3 = _aesg3(D, rsubk, 2);
     }
+
+    return err1 ? err1 : err2 ? err2 : err3;
 }
 
 /*
@@ -179,19 +215,18 @@ static void _shl_128(unsigned char *dst, const unsigned char *src)
 
     for (i = 15; i >= 0; i--) {
         dst[i] = (src[i] << 1) | overflow;
-	overflow = src[i] >> 7;
+        overflow = src[i] >> 7;
     }
 }
 
-static void _cmac_key(const unsigned char *aes_key, unsigned char *k1, unsigned char *k2)
+BD_USED static int _cmac_key(const unsigned char *aes_key, unsigned char *k1, unsigned char *k2)
 {
     uint8_t key[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-    gcry_cipher_hd_t gcry_h;
+    int err;
 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, aes_key, 16);
-    gcry_cipher_encrypt (gcry_h, key, 16, NULL, 0);
-    gcry_cipher_close(gcry_h);
+    err = crypto_aes128e(aes_key, NULL, key);
+    if (err)
+        return err;
 
     _shl_128(k1, key);
     if (key[0] & 0x80) {
@@ -202,32 +237,86 @@ static void _cmac_key(const unsigned char *aes_key, unsigned char *k1, unsigned 
     if (k1[0] & 0x80) {
         k2[15] ^= 0x87;
     }
+
+    return err;
 }
 
-void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac)
+int crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac)
 {
-    gcry_cipher_hd_t gcry_h;
     uint8_t k1[16], k2[16];
     unsigned ii;
+    int err;
 
     /*
-     * Somplified version of AES CMAC. Spports only 16-byte input data.
+     * Simplified version of AES CMAC. Supports only 16-byte input data.
      */
 
     /* generate CMAC keys */
-    _cmac_key(aes_key, k1, k2);
+
+    err = _cmac_key(aes_key, k1, k2);
+    if (err)
+        return err;
 
     memcpy(cmac, data, 16);
     for (ii = 0; ii < 16; ii++) {
         cmac[ii] ^= k1[ii];
     }
- 
-    gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_ECB, 0);
-    gcry_cipher_setkey(gcry_h, aes_key, 16);
-    gcry_cipher_encrypt (gcry_h, cmac, 16, 0, 16);
-    gcry_cipher_close(gcry_h);
+
+    err = crypto_aes128e(aes_key, NULL, cmac);
+
+    return err;
 }
 
+/*
+ *
+ */
+
+int crypto_aacs_decrypt(const uint8_t *key, uint8_t *out, size_t out_size, const uint8_t *in, size_t in_size)
+{
+    static const uint8_t aacs_iv[16]   = { 0x0b, 0xa0, 0xf8, 0xdd, 0xfe, 0xa6, 0x1f, 0xb3,
+                                           0xd8, 0xdf, 0x9f, 0x56, 0x6a, 0x05, 0x0f, 0x78 };
+    gcry_cipher_hd_t gcry_h;
+    gcry_error_t err;
+
+    err = gcry_cipher_open(&gcry_h, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_CBC, 0);
+    if (err)
+        return err;
+
+    err = gcry_cipher_setkey(gcry_h, key, 16);
+    if (err)
+      goto error;
+    err = gcry_cipher_setiv(gcry_h, aacs_iv, 16);
+    if (err)
+      goto error;
+    err = gcry_cipher_decrypt(gcry_h, out, out_size, in, in_size);
+
+ error:
+    gcry_cipher_close(gcry_h);
+    return err;
+}
+
+/*
+ *
+ */
+
+void crypto_strerror(int err, char *buf, size_t buf_size)
+{
+#if defined(HAVE_STRERROR_R) && defined(HAVE_LIBGPG_ERROR)
+  buf[0] = 0;
+  gpg_strerror_r(err, buf, buf_size);
+#else
+  const char *msg = gcry_strerror(err);
+  buf[0] = 0;
+  if (msg) {
+    strncpy(buf, msg, buf_size);
+    buf[buf_size - 1] = 0;
+  }
+#endif
+}
+
+/*
+ *
+ */
 
 #if defined(HAVE_STRERROR_R) && defined(HAVE_LIBGPG_ERROR)
 #define LOG_GCRY_ERROR(msg, func, err)                                  \
@@ -340,7 +429,6 @@ static gcry_error_t _aacs_sexp_key(gcry_sexp_t *p_sexp_key,
       );
 
     if (!strfmt) {
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "out of memory\n");
         err = GPG_ERR_ENOMEM;
         goto error;
     }
@@ -473,8 +561,8 @@ error:
  *
  */
 
-void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *signature,
-                      const uint8_t *nonce, const uint8_t *point)
+int crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *signature,
+                     const uint8_t *nonce, const uint8_t *point)
 {
     gcry_sexp_t sexp_key = NULL, sexp_data = NULL, sexp_sig = NULL, sexp_r = NULL, sexp_s = NULL;
     gcry_mpi_t mpi_r = NULL, mpi_s = NULL;
@@ -484,7 +572,7 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     GCRY_VERIFY("_aacs_sexp_key",
                 _aacs_sexp_key(&sexp_key, cert + 12, cert + 32, priv_key, _aacs1_curve(), 20));
 
-    /* Calculate the sha1 hash from the nonce and host key point and covert
+    /* Calculate the sha1 hash from the nonce and host key point and convert
      * the hash into an MPI.
      */
     memcpy(&block[0], nonce, 20);
@@ -543,6 +631,8 @@ void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key, uint8_t *sig
     gcry_sexp_release(sexp_s);
     gcry_mpi_release(mpi_r);
     gcry_mpi_release(mpi_s);
+
+    return err;
 }
 
 static int _aacs_verify(const uint8_t *signature, enum gcry_md_algos hash_type,
@@ -566,8 +656,8 @@ static int _aacs_verify(const uint8_t *signature, enum gcry_md_algos hash_type,
         key_len = 32;
         break;
     default:
-        BD_ASSERT_UNREACHABLE ("invalid signature size");
-        return 0;
+        BD_ASSERT_UNREACHABLE ("invalid signature algorithm");
+        return GPG_ERR_UNSUPPORTED_ALGORITHM;
     }
 
     GCRY_VERIFY("_aacs_sexp_key",
@@ -592,17 +682,17 @@ static int _aacs_verify(const uint8_t *signature, enum gcry_md_algos hash_type,
 
 int crypto_aacs_verify(const uint8_t *cert, const uint8_t *signature, const uint8_t *data, uint32_t len)
 {
-    return !_aacs_verify(signature, GCRY_MD_SHA1, cert + 12, cert + 32, data, len);
+    return _aacs_verify(signature, GCRY_MD_SHA1, cert + 12, cert + 32, data, len);
 }
 
-int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, uint32_t len)
+int crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, uint32_t len)
 {
     static const uint8_t aacs_la_pubkey_x[] = {0x63, 0xC2, 0x1D, 0xFF, 0xB2, 0xB2, 0x79, 0x8A, 0x13, 0xB5,
                                                0x8D, 0x61, 0x16, 0x6C, 0x4E, 0x4A, 0xAC, 0x8A, 0x07, 0x72 };
     static const uint8_t aacs_la_pubkey_y[] = {0x13, 0x7E, 0xC6, 0x38, 0x81, 0x8F, 0xD9, 0x8F, 0xA4, 0xC3,
                                                0x0B, 0x99, 0x67, 0x28, 0xBF, 0x4B, 0x91, 0x7F, 0x6A, 0x27 };
 
-    return !_aacs_verify(signature, GCRY_MD_SHA1, aacs_la_pubkey_x, aacs_la_pubkey_y, data, len);
+    return _aacs_verify(signature, GCRY_MD_SHA1, aacs_la_pubkey_x, aacs_la_pubkey_y, data, len);
 }
 
 int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, uint32_t len)
@@ -617,23 +707,21 @@ int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, ui
                                                  0x54, 0x5E, 0xCC, 0x27, 0x1E, 0xE4, 0x6C, 0x4A, 0xEF, 0x81, 0xD9, 0x16, 0x9B, 0xF8, 0x41, 0x72 };
     switch (data[0]) {
     case 0x00: /* AACS 1 */
-        return !_aacs_verify(signature, GCRY_MD_SHA1, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
+        return _aacs_verify(signature, GCRY_MD_SHA1, aacs_cc_pubkey_x, aacs_cc_pubkey_y, data, len);
     case 0x10: /* AACS 2 */
-        return !_aacs_verify(signature, GCRY_MD_SHA256, aacs2_cc_pubkey_x, aacs2_cc_pubkey_y, data, len);
+        return _aacs_verify(signature, GCRY_MD_SHA256, aacs2_cc_pubkey_x, aacs2_cc_pubkey_y, data, len);
     default:
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Unknown content certificate type 0x%02x\n", data[0]);
         break;
     }
 
-    return 0;
+    return GPG_ERR_UNSUPPORTED_CERT;
 }
 
-static int crypto_aacs_verify_cert(const uint8_t *cert)
+static int _aacs_verify_cert(const uint8_t *cert)
 {
+    /* check length byte */
     if (MKINT_BE16(cert+2) != 0x5c) {
-        BD_DEBUG(DBG_AACS, "Certificate length is invalid (0x%04x), expected 0x005c\n",
-              MKINT_BE16(cert+2));
-        return 0;
+        return GPG_ERR_UNSUPPORTED_CERT;
     }
 
     return crypto_aacs_verify_aacsla(cert + 52, cert, 52);
@@ -646,19 +734,13 @@ int crypto_aacs_verify_host_cert(const uint8_t *cert)
         break;
     case 0x12:
         // XXX checking the signature would cause buffer overread (certificate is truncated in config file)
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "AACS 2.0 host certificate not supported\n");
-        return 0;
+        /* BD_DEBUG(DBG_AACS | DBG_CRIT, "AACS 2.0 host certificate not supported\n"); */
+        return GPG_ERR_UNSUPPORTED_CERT;
     default:
-        BD_DEBUG(DBG_AACS, "Host certificate type is invalid (0x%02x)\n", cert[0]);
-        return 0;
+        return GPG_ERR_UNSUPPORTED_CERT;
     }
 
-    if (!crypto_aacs_verify_cert(cert)) {
-        BD_DEBUG(DBG_AACS, "Host certificate signature is invalid\n");
-        return 0;
-    }
-
-    return 1;
+    return _aacs_verify_cert(cert);
 }
 
 int crypto_aacs_verify_drive_cert(const uint8_t *cert)
@@ -667,20 +749,14 @@ int crypto_aacs_verify_drive_cert(const uint8_t *cert)
     case 0x01:
         break;
     case 0x11:
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "WARNING: Drive is using AACS 2.0 certificate\n");
+        /* BD_DEBUG(DBG_AACS | DBG_CRIT, "WARNING: Drive is using AACS 2.0 certificate\n"); */
         // XXX checking the signature would cause buffer overread (certificate is truncated at MMC layer)
-        return 0;
+        return GPG_ERR_UNSUPPORTED_CERT;
     default:
-        BD_DEBUG(DBG_AACS, "Drive certificate type is invalid (0x%02x)\n", cert[0]);
-        return 0;
+        return GPG_ERR_UNSUPPORTED_CERT;
     }
 
-    if (!crypto_aacs_verify_cert(cert)) {
-        BD_DEBUG(DBG_AACS, "Drive certificate signature is invalid\n");
-        return 0;
-    }
-
-    return 1;
+    return _aacs_verify_cert(cert);
 }
 
 void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash)

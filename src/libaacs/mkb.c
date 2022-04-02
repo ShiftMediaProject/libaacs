@@ -41,13 +41,19 @@ static const uint8_t *_record(MKB *mkb, uint8_t type, size_t *rec_len)
     while (pos + 4 <= mkb->size) {
         len = MKINT_BE24(mkb->buf + pos + 1);
 
-        if (rec_len) {
-            *rec_len = len;
-        }
-
         if (mkb->buf[pos] == type) {
             BD_DEBUG(DBG_MKB, "Retrieved MKB record 0x%02x (%p)\n", type,
                   (void*)(mkb->buf + pos));
+
+            if (len > mkb->size - pos) {
+                BD_DEBUG(DBG_MKB | DBG_CRIT, "Ignoring truncated MKB record 0x%02x @ %zu, size %zu (%p)\n", type, pos, len,
+                         (void*)(mkb->buf + pos));
+                return NULL;
+            }
+
+            if (rec_len) {
+                *rec_len = len;
+            }
 
             return mkb->buf + pos;
         }
@@ -107,7 +113,28 @@ size_t mkb_data_size(MKB *mkb)
         pos += MKINT_BE24(mkb->buf + pos + 1);
     }
 
+    if (pos > mkb->size) {
+        BD_DEBUG(DBG_MKB | DBG_CRIT, "mkb_data_size(): invalid or truncated MKB\n");
+        return mkb->size;
+    }
+
+    BD_DEBUG(DBG_MKB, "MKB data size %zu bytes\n", pos);
     return pos;
+}
+
+static const uint8_t *_simple_record(MKB *mkb, uint8_t type, size_t *len)
+{
+    const uint8_t *rec = _record(mkb, type, len);
+
+    if (*len < 4) {
+        return NULL;
+    }
+    if (rec) {
+        rec += 4;
+        *len -= 4;
+    }
+
+    return rec;
 }
 
 
@@ -145,65 +172,24 @@ const uint8_t *mkb_type_and_version_record(MKB *mkb)
     return rec;
 }
 
-
 const uint8_t *mkb_host_revokation_entries(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x21, len);
-
-    if (*len < 4) {
-        return NULL;
-    }
-    if (rec) {
-        rec += 4;
-        *len -= 4;
-    }
-
-    return rec;
+    return _simple_record(mkb, 0x21, len);
 }
 
 const uint8_t *mkb_drive_revokation_entries(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x20, len);
-
-    if (*len < 4) {
-        return NULL;
-    }
-    if (rec) {
-        rec += 4;
-        *len -= 4;
-    }
-
-    return rec;
+    return _simple_record(mkb, 0x20, len);
 }
 
 const uint8_t *mkb_subdiff_records(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x04, len);
-
-    if (*len < 4) {
-        return NULL;
-    }
-    if (rec) {
-        rec += 4;
-        *len -= 4;
-    }
-
-    return rec;
+    return _simple_record(mkb, 0x04, len);
 }
 
 const uint8_t *mkb_cvalues(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x05, len);
-
-    if (*len < 4) {
-        return NULL;
-    }
-    if (rec) {
-        rec += 4;
-        *len -= 4;
-    }
-
-    return rec;
+    return _simple_record(mkb, 0x05, len);
 }
 
 const uint8_t *mkb_mk_dv(MKB *mkb)
@@ -225,14 +211,10 @@ const uint8_t *mkb_mk_dv(MKB *mkb)
             break;
     }
 
-    rec = _record(mkb, dv_record, &len);
+    rec = _simple_record(mkb, dv_record, &len);
 
-    if (len < 20) {
+    if (len < 16) {
         return NULL;
-    }
-
-    if (rec) {
-        rec += 4;
     }
 
     return rec;
@@ -240,18 +222,7 @@ const uint8_t *mkb_mk_dv(MKB *mkb)
 
 const uint8_t *mkb_signature(MKB *mkb, size_t *len)
 {
-    const uint8_t *rec = _record(mkb, 0x02, len);
-
-    if (*len < 4) {
-        return NULL;
-    }
-    if (rec) {
-        rec += 4;
-        *len -= 4;
-    }
-
-    return rec;
-
+    return _simple_record(mkb, 0x02, len);
 }
 
 static int _cert_is_revoked(const uint8_t *rl, size_t rl_size, const uint8_t *cert_id_bin)

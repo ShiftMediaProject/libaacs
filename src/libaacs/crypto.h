@@ -25,22 +25,32 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-BD_PRIVATE int  crypto_init(void);
-BD_PRIVATE void crypto_aes128d(const uint8_t *key, const uint8_t *data, uint8_t *dst);
-BD_PRIVATE void crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk,
-                             uint8_t *pk);   // returns left, centre, right keys
-BD_PRIVATE void crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac);
+BD_PRIVATE void crypto_strerror(int err, char *buf, size_t buf_size);
+#define LOG_CRYPTO_ERROR(flags, str, err) do {                              \
+    char s[64];                                                         \
+    crypto_strerror((err), s, sizeof(s));                               \
+    BD_DEBUG(DBG_CRIT | (flags), "crypto error: %s: %s (%u)\n", (str), s, (unsigned)(err)); \
+  } while (0)
 
-BD_PRIVATE void crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
+BD_PRIVATE int  crypto_init(void) BD_USED;
+BD_PRIVATE int  crypto_aes128e(const uint8_t *key, const uint8_t *data, uint8_t *dst) BD_USED;
+BD_PRIVATE int  crypto_aes128d(const uint8_t *key, const uint8_t *data, uint8_t *dst) BD_USED;
+BD_PRIVATE int  crypto_aesg3(const uint8_t *D, uint8_t *lsubk, uint8_t* rsubk,
+                             uint8_t *pk) BD_USED;   // returns left, centre, right keys
+BD_PRIVATE int  crypto_aes_cmac_16(const unsigned char *data, const unsigned char *aes_key, unsigned char *cmac) BD_USED;
+
+BD_PRIVATE int  crypto_aacs_decrypt(const uint8_t *key, uint8_t *out, size_t out_size, const uint8_t *in, size_t in_size) BD_USED;
+
+BD_PRIVATE int  crypto_aacs_sign(const uint8_t *cert, const uint8_t *priv_key,
                                  uint8_t *signature,
-                                 const uint8_t *nonce, const uint8_t *point);
+                                 const uint8_t *nonce, const uint8_t *point) BD_USED;
 BD_PRIVATE void crypto_aacs_title_hash(const uint8_t *ukf, uint64_t len, uint8_t *hash);
 
-BD_PRIVATE int  crypto_aacs_verify(const uint8_t *cert, const uint8_t *signature, const uint8_t *data, uint32_t len);
-BD_PRIVATE int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, uint32_t len);
-BD_PRIVATE int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, uint32_t len);
-BD_PRIVATE int  crypto_aacs_verify_host_cert(const uint8_t *cert);
-BD_PRIVATE int  crypto_aacs_verify_drive_cert(const uint8_t *cert);
+BD_PRIVATE int  crypto_aacs_verify(const uint8_t *cert, const uint8_t *signature, const uint8_t *data, uint32_t len) BD_USED;
+BD_PRIVATE int  crypto_aacs_verify_aacsla(const uint8_t *signature, const uint8_t *data, uint32_t len) BD_USED;
+BD_PRIVATE int  crypto_aacs_verify_aacscc(const uint8_t *signature, const uint8_t *data, uint32_t len) BD_USED;
+BD_PRIVATE int  crypto_aacs_verify_host_cert(const uint8_t *cert) BD_USED;
+BD_PRIVATE int  crypto_aacs_verify_drive_cert(const uint8_t *cert) BD_USED;
 
 BD_PRIVATE void crypto_create_host_key_pair(uint8_t *key, uint8_t *key_point);
 BD_PRIVATE void crypto_create_nonce(uint8_t *buf, size_t len);

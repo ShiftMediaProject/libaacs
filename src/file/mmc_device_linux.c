@@ -89,10 +89,12 @@ int device_send_cmd(MMCDEV *dev, const uint8_t *cmd, uint8_t *buf, size_t tx, si
     result = ioctl(dev->fd, CDROM_SEND_PACKET, &cgc);
 
     BD_DEBUG(DBG_MMC, "Send LINUX MMC cmd %s:\n", str_print_hex(str, cmd, 16));
+    if (buf) {
     if (tx) {
         BD_DEBUG(DBG_MMC, "  Buffer: %s ->\n", str_print_hex(str, buf, tx>255?255:tx));
     } else {
         BD_DEBUG(DBG_MMC, "  Buffer: %s <-\n", str_print_hex(str, buf, rx>255?255:rx));
+    }
     }
 
     if (result >= 0) {
@@ -103,6 +105,7 @@ int device_send_cmd(MMCDEV *dev, const uint8_t *cmd, uint8_t *buf, size_t tx, si
     BD_DEBUG(DBG_MMC, "  Send failed! [%d] %s\n", result, strerror(errno));
 #else
 #warning no MMC drive support
+    (void)dev; (void)cmd; (void)buf; (void)tx; (void)rx;
     BD_DEBUG(DBG_MMC | DBG_CRIT, "No MMC drive support\n");
 #endif
 
@@ -132,12 +135,13 @@ static int _open_block_device(const char *path)
 
 MMCDEV *device_open(const char *path)
 {
-    char        resolved_path[AACS_PATH_MAX];
+    char       *resolved_path;
     size_t      path_len;
     int         fd;
 
     /* resolve path */
-    if (!aacs_resolve_path(path, resolved_path)) {
+    resolved_path = aacs_resolve_path(path);
+    if (!resolved_path) {
         BD_DEBUG(DBG_MMC | DBG_CRIT, "Failed resolving path %s\n", path);
         return NULL;
     }
@@ -182,9 +186,12 @@ MMCDEV *device_open(const char *path)
         }
 #else
         BD_DEBUG(DBG_MMC | DBG_CRIT, "Only block devices supported\n");
+        X_FREE(resolved_path);
         return NULL;
 #endif
     }
+
+    X_FREE(resolved_path);
 
     if (fd >= 0) {
         MMCDEV *dev = calloc(1, sizeof(MMCDEV));
