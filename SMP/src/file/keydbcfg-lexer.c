@@ -833,9 +833,6 @@ static const flex_int32_t yy_rule_can_match_eol[33] =
 
 int isatty(int i) { return 0; }
 
-#if 0
-static char *trim_string(const char *string);
-#endif
 /* Options to generate reentrant lexer that's POSIX lex compatible. The
  * bison-bridge option is also set since bison forces the use of a parameter
  * used to get yylval. This is handy anyway and some implementations of byacc
@@ -1189,7 +1186,6 @@ YY_RULE_SETUP
 case 2:
 YY_RULE_SETUP
 {
-                            //yylval->string = trim_string(yytext);
                             yylval->string = yytext;
                             BEGIN INITIAL;
                             return DISC_TITLE;
@@ -2479,21 +2475,3 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#if 0
-/* Function used to trim leading and trailing space from a string */
-static char *trim_string(const char *string)
-{
-  int start = 0;
-  int end = strlen(string);
-  while (string[start] == ' ' || string[start] == '\t')
-    start++;
-  while (string[end] == '\0' || string[end] == ' ' || string[end] == '\t')
-    end--;
-  int size = end - start + 1;
-
-  char *new_string = (char*)malloc(size + 1);
-  strncpy(new_string, string + start, size);
-  new_string[size] = '\0';
-  return new_string;
-}
-#endif

@@ -157,18 +157,18 @@ index 9f77a2e..aafbdab 100644
  {
      return file_get_data_home();
 diff --git a/src/file/keydb.h b/src/file/keydb.h
-index db63638..feee396 100644
+index c2d013f..07eaa0d 100644
 --- a/src/file/keydb.h
 +++ b/src/file/keydb.h
 @@ -1,20 +1,11 @@
  
  /* encrypted keys */
  
--static const uint8_t internal_dk_list[][21] = {
+-static const uint8_t internal_dk_list[][23] = {
 -  {
 -  },
 -};
-+static const uint8_t internal_dk_list[][21] = {0};
++static const uint8_t internal_dk_list[][23] = {0};
  
 -static const uint8_t internal_pk_list[][16] = {
 -  {
@@ -229,10 +229,10 @@ index f78dd1c..0319ddd 100644
                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
          if (fd == INVALID_HANDLE_VALUE) {
 diff --git a/src/libaacs/crypto.c b/src/libaacs/crypto.c
-index eed93fe..51e208c 100644
+index ec3f6b2..4c10a0d 100644
 --- a/src/libaacs/crypto.c
 +++ b/src/libaacs/crypto.c
-@@ -396,22 +396,26 @@ static gcry_error_t _aacs_sexp_hash(gcry_sexp_t *p_sexp_data,
+@@ -484,22 +484,26 @@ static gcry_error_t _aacs_sexp_hash(gcry_sexp_t *p_sexp_data,
      }
  
      /* Build an s-expression for the hash */

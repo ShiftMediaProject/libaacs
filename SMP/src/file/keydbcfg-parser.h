@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.7.6.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -31,8 +31,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 #ifndef YY_LIBAACS_YY_SMP_SRC_FILE_KEYDBCFG_PARSER_H_INCLUDED
 # define YY_LIBAACS_YY_SMP_SRC_FILE_KEYDBCFG_PARSER_H_INCLUDED
@@ -65,41 +66,50 @@ typedef struct {
 
 
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    HEXSTRING = 258,
-    DISC_TITLE = 259,
-    DIGIT = 260,
-    KEYWORD_DEVICE_KEY = 261,
-    KEYWORD_DEVICE_NODE = 262,
-    KEYWORD_KEY_UV = 263,
-    KEYWORD_KEY_U_MASK_SHIFT = 264,
-    KEYWORD_HOST_PRIV_KEY = 265,
-    KEYWORD_HOST_CERT = 266,
-    KEYWORD_HOST_NONCE = 267,
-    KEYWORD_HOST_KEY_POINT = 268,
-    PUNCT_EQUALS_SIGN = 269,
-    PUNCT_VERTICAL_BAR = 270,
-    PUNCT_HYPHEN = 271,
-    ENTRY_ID_DK = 272,
-    ENTRY_ID_PK = 273,
-    ENTRY_ID_HC = 274,
-    ENTRY_ID_DATE = 275,
-    ENTRY_ID_MEK = 276,
-    ENTRY_ID_VID = 277,
-    ENTRY_ID_BN = 278,
-    ENTRY_ID_VUK = 279,
-    ENTRY_ID_PAK = 280,
-    ENTRY_ID_TK = 281,
-    ENTRY_ID_UK = 282,
-    NEWLINE = 283,
-    BAD_ENTRY = 284
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    HEXSTRING = 258,               /* HEXSTRING  */
+    DISC_TITLE = 259,              /* DISC_TITLE  */
+    DIGIT = 260,                   /* DIGIT  */
+    KEYWORD_DEVICE_KEY = 261,      /* KEYWORD_DEVICE_KEY  */
+    KEYWORD_DEVICE_NODE = 262,     /* KEYWORD_DEVICE_NODE  */
+    KEYWORD_KEY_UV = 263,          /* KEYWORD_KEY_UV  */
+    KEYWORD_KEY_U_MASK_SHIFT = 264, /* KEYWORD_KEY_U_MASK_SHIFT  */
+    KEYWORD_HOST_PRIV_KEY = 265,   /* KEYWORD_HOST_PRIV_KEY  */
+    KEYWORD_HOST_CERT = 266,       /* KEYWORD_HOST_CERT  */
+    KEYWORD_HOST_NONCE = 267,      /* KEYWORD_HOST_NONCE  */
+    KEYWORD_HOST_KEY_POINT = 268,  /* KEYWORD_HOST_KEY_POINT  */
+    PUNCT_EQUALS_SIGN = 269,       /* PUNCT_EQUALS_SIGN  */
+    PUNCT_VERTICAL_BAR = 270,      /* PUNCT_VERTICAL_BAR  */
+    PUNCT_HYPHEN = 271,            /* PUNCT_HYPHEN  */
+    ENTRY_ID_DK = 272,             /* ENTRY_ID_DK  */
+    ENTRY_ID_PK = 273,             /* ENTRY_ID_PK  */
+    ENTRY_ID_HC = 274,             /* ENTRY_ID_HC  */
+    ENTRY_ID_DATE = 275,           /* ENTRY_ID_DATE  */
+    ENTRY_ID_MEK = 276,            /* ENTRY_ID_MEK  */
+    ENTRY_ID_VID = 277,            /* ENTRY_ID_VID  */
+    ENTRY_ID_BN = 278,             /* ENTRY_ID_BN  */
+    ENTRY_ID_VUK = 279,            /* ENTRY_ID_VUK  */
+    ENTRY_ID_PAK = 280,            /* ENTRY_ID_PAK  */
+    ENTRY_ID_TK = 281,             /* ENTRY_ID_TK  */
+    ENTRY_ID_UK = 282,             /* ENTRY_ID_UK  */
+    NEWLINE = 283,                 /* NEWLINE  */
+    BAD_ENTRY = 284                /* BAD_ENTRY  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define HEXSTRING 258
 #define DISC_TITLE 259
 #define DIGIT 260
